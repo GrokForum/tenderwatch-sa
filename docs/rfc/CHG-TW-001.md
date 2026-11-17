@@ -215,7 +215,7 @@ Promotion, if ever, is same-bytes (same commit or tag) and a separate RFC.
 | **POPIA / personal information** | Organisation awards only. Drop contacts and addresses at parse time. Never store director IDs, SA IDs, or personal contact details. Four-eyes on anything that would later name a supplier in public. See §4.3 and §13. |
 | **Defamation / over-claiming** | Indicator wording only; fact labels; no accusation. Almost all live rows will be Unknown on age, which must remain visible. |
 | **Over-matching suppliers** | Two-detail rule; name-only matches rejected. |
-| **Licence inconsistency (PDDL vs CC BY 4.0 vs LearnMore terms)** | Attribute National Treasury / OCPO, link to the source and to https://data.etenders.gov.za/Home/LearnMore. Do not claim a single licence as settled. **Unknown** which text controls. |
+| **Licence inconsistency (PDDL vs CC BY 4.0 vs LearnMore terms)** | Attribute National Treasury / OCPO, link to the source and to https://data.etenders.gov.za/Home/LearnMore. Do not claim a single licence as settled. **Unknown** which text controls; owner decided 17 Nov 2026 to proceed with credit plus links (§16 Q6). |
 | **Incomplete coverage** | eTenders is not a complete record of SA procurement (official policy). Portal headline counts (73,785 awards on 17 Nov 2026) dwarf the compiled mirror (9,551). The pilot will say what it does not know. |
 | **Unstable API and messy monthly CSV** | Prefer the monthly JSON and the OCP / PublicFunds compiled corpus; treat the API as a best-effort delta, as PublicFunds already does. |
 | **Value quality** | Keep PublicFunds placeholder and implausible-value notes; do not present raw amounts as audited. |
@@ -357,6 +357,7 @@ The following remain open. They are not a GO. A GO must name this RFC (CHG-TW-00
 5. **Right of reply and naming.** For a later change, not this one: may we draft (not send) right-of-reply notes to official City / supplier channels if an indicator is ever `yes`? Flags that would name a supplier in public would follow PublicFunds four-eyes plus your GO.
    - **Resolved 17 Nov 2026 (owner, directly in TenderWatch chat): yes.** In a later change, TenderWatch may draft right-of-reply notes to official City or supplier channels when an indicator is `yes`. Drafts only; the owner sends personally and records stay `Right of reply: pending` until he records the outcome. Public naming still follows PublicFunds four-eyes plus the owner's GO.
 6. **Licence and attribution.** Are you content to attribute National Treasury / OCPO and link to the source while the PDDL / CC BY 4.0 / LearnMore wording remains inconsistent, or should we first draft (not send) an enquiry to the contact address published on the eTenders LearnMore page?
+   - **Resolved 17 Nov 2026 (owner, directly in TenderWatch chat): credit plus links.** Attribute National Treasury / OCPO and link to the source and the LearnMore policy. No enquiry. All three texts (LearnMore, CC BY 4.0, PDDL) permit reuse; attribution satisfies the strictest. The inconsistency stays logged in SOURCES.md and §11.
 
 ## 17. CAB review
 

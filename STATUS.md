@@ -14,3 +14,4 @@
 | Date | RFC | Env | Result | Rollback SHA |
 |---|---|---|---|---|
 | 2026-11-17 | CHG-TW-001 | DEV (docs, samples, classifier tests) | DRAFT. Draft PR #1 raised at `c75e5ef` 11:48 SAST; `009ea171` pushed 11:59 SAST, both by Cavus under the standing GO cited above. Owner decision: proceed as a PublicFunds extension on a separate track. Q7 accepted; Q3 implied resolved. Cavus PASS_WITH_CONCERNS on `c75e5ef` and on `009ea171`. | b812102eb8d5eea0c6a486e8a332a1bf62e08d76 |
+- 17 Nov 2026 12:09 SAST: owner resolved Q4 (indicator = same year or year before; age bands same / -1 / -2 recorded for trending) and Q5 (RoR drafts allowed, owner sends). Q6 (licence) open. RFC §5-6 wording on Trust tightened (Cavus nit).

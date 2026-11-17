@@ -9,7 +9,7 @@
 | Rollback reference | `258dc778a019ac939067dce0307439228723b7d4`; snapshot tag `snapshot-2026-11-17-pre-tw-pr4` → `f63f5d2ef02621f9a991c4c353788f7377ab2aa7` |
 | Author | the author (TenderWatch) |
 | Reviewers | reviewer A (project lead), reviewer B |
-| Status | Draft for CAB and the owner's decisions (§9). |
+| Status | Draft for CAB. Owner questions decided by the project lead under delegated authority (relayed); owner confirmation: pending (§9.1). Rule A is adopted in principle only; no build under this record. |
 
 ## 1. Question (owner input, relayed by the project lead, 17 Nov 2026)
 
@@ -63,7 +63,7 @@ Input: the CHG-TW-002 DEV classification of the 291 Cape Town award-supplier row
 | …where the linked City spellings disagree on the canonical suffix | 0 (6 rows have more than one City spelling, all with the same suffix) |
 | Sub-type of the 59 | 51 company, 8 close corporation |
 | Award year of the 59 | 2021: 5, 2022: 16, 2023: 10, 2024: 12, 2025: 16 |
-| Gap from award date to the nearest linked City row date | ≤12 months: 12; 13–24: 11; 25–36: 8; >36: 26; date not resolved: 2 (City rows without a decision date use the middle of the register month) |
+| Gap from award date to the nearest linked City **decision date** (days counted inclusively, both dates included) | ≤365 days: 6; 366–730: 11; 731–1095: 9; >1095: 22; undated: 11 (every linked City row gives only a register month, so the row counts as undated) |
 | OCDS supplier names with any trailing suffix, all 291 rows | 2 |
 | Tight links (`tender_ref`, 5 rows) with suffix in both sources | 0 |
 | City stems seen with **two different** canonical suffixes in the register | 1 of 352 |
@@ -76,7 +76,7 @@ The two extra counts are warnings, not proof. The same stem with two suffixes in
 
 ## 5. Exceptions and risks (analysis c)
 
-* **Names change over time.** A name can be freed by deregistration and taken by a new entity, after 0 to 6 months depending on the period (L10), or changed by the company or by a Tribunal order (L11). Awards span 2021–2025 and the City data covers 2026; 34 of the 59 have a gap over 24 months. Uniqueness at the City date does not prove the same holder at the award date.
+* **Names change over time.** A name can be freed by deregistration and taken by a new entity, after 0 to 6 months depending on the period (L10), or changed by the company or by a Tribunal order (L11). Awards span 2021–2025 and the City data covers 2026; 31 of the 59 have a gap over 730 days, and 11 have no City decision date. Uniqueness at the City date does not prove the same holder at the award date.
 * **Do not merge legal forms.** Normalisation must keep the canonical suffix: (Pty) Ltd ≠ Ltd ≠ SOC Ltd ≠ Inc ≠ NPC ≠ CC, and the "(RF)" qualifier is part of the registered name (L2). CHG-TW-002's `legal_sub_type` groups the private, public and Inc forms together as `company`, so this rule must compare the **canonical suffix plus the RF flag**, not the sub-type. Under L6, two live entities should not share a stem whatever their suffixes. A stem with two suffixes therefore signals an error or a time change; treat it as a conflict, never as two confirmed entities.
 * **The source may print the name wrongly.** For example, a suffix added to a trading name, a missing "(RF)", a wrong suffix, PDF wrapping, or several vendors on one line. A single source's printing is evidence of what it says, not proof of the register.
 * **Trading names and `t/a`.** CIPC does not register trading names (L9). A suffix after `t/a` is never a registered name, and a bare name may be a trading name of anyone.
@@ -93,7 +93,7 @@ The two extra counts are warnings, not proof. The same stem with two suffixes in
 1. Both records print a name ending in a statutory suffix (L2): (Pty) Ltd / Proprietary Limited, Ltd / Limited, SOC Ltd, Inc / Incorporated, NPC, or CC / Close Corporation.
 2. After normalisation (case, spacing and punctuation only; "&" and "and" are **not** treated as equal), the stems are identical **and** the canonical suffixes are identical **and** the RF flag is identical.
 3. Neither name has `t/a` / "trading as", and neither is multi-entity, a trust or a JV (CHG-TW-002 rules).
-4. **Time window:** the award date and the City row date are within **12 months** of each other (§9 Q2). Justification: L10 shows a deregistered name can pass to a new entity within 0–6 months, and names can be changed (L11). A window does not remove this risk; it only keeps it small. Outside the window the link stays Reported.
+4. **Time window:** the award date and the actual City **decision date** are within **365 days, counted inclusively** (both dates count as days; for example 1 March 2025 to 28 February 2026 is 365 days and falls inside; 1 March 2025 to 1 March 2026 is 366 days and falls outside) (§9.1 Q2). A City row that gives only a register month and no decision date is **undated**: it never meets the window and the link stays Reported. Justification: L10 shows a deregistered name can pass to a new entity within 0–6 months, and names can be changed (L11). A window does not remove this risk; it only keeps it small. Outside the window the link stays Reported.
 5. **No conflict:** the stem is not seen with a different suffix in either source, and the OCDS name is not tied to more than one eTenders supplier id.
 6. POPIA holds and the two-person check queue are unchanged. A held name stays withheld whatever its label.
 
@@ -105,7 +105,7 @@ The two extra counts are warnings, not proof. The same stem with two suffixes in
 
 Unit tests for a future build CHG under its own GO:
 
-* Exact match: "Qwertane Widget Supplies (Pty) Ltd" in both, dates 3 months apart → Confirmed.
+* Exact match: "Qwertane Widget Supplies (Pty) Ltd" in both, award date 2025-03-01 and City decision date 2025-06-01 → Confirmed.
 * Punctuation, case and spacing variants of the same suffix ("Qwertane Widget Supplies Pty. Ltd.", "QWERTANE WIDGET SUPPLIES (PTY) LTD") → Confirmed.
 * Different form: "(Pty) Ltd" vs "Ltd", "(Pty) Ltd" vs "SOC Ltd", "CC" vs "(Pty) Ltd", "NPC" vs "(Pty) Ltd" → stays Reported and is flagged as a conflict.
 * RF: "Zephyra Holdings (RF) (Pty) Ltd" vs "Zephyra Holdings (Pty) Ltd" → stays Reported.
@@ -113,7 +113,7 @@ Unit tests for a future build CHG under its own GO:
 * "&" vs "and" ("Testburg & Sons (Pty) Ltd" vs "Testburg and Sons (Pty) Ltd") → stays Reported (no fuzzy match).
 * `t/a`: "Qwertane Widget Supplies (Pty) Ltd t/a Widget World" vs the same → stays Reported.
 * Trust ("Example Bursary Trust"), JV ("Acme Widgets JV"), multi-entity → excluded, unchanged.
-* Window: exact match 13 months apart → stays Reported; 12 months → Confirmed. Missing date → stays Reported.
+* Window (365 days, inclusive): award 2025-03-01, City decision 2026-02-28 (365 days) → Confirmed; City decision 2026-03-01 (366 days) → stays Reported. City row with a register month only (e.g. "2026-02", no decision date) → undated, stays Reported. Missing award date → stays Reported.
 * Conflict: same stem seen with "CC" elsewhere in either source → stays Reported.
 * Held row ("J Q Testerman and Associates (Pty) Ltd") → label may change, name still withheld in the public export.
 * Invariants: no row changes status; only `legal_form_fact_label` and `supplier_name_fact_label` may change; the public export still labels every named row; no tracked file carries a queued or held name.
@@ -129,11 +129,24 @@ Unit tests for a future build CHG under its own GO:
 ## 9. Owner questions (analysis h)
 
 1. **Adopt rule A even though it changes 0 of 59 today?** The alternative is to defer until a source prints suffixes in award records.
-2. **Time window:** 12 months (proposed), the same calendar year, or another value? Or no window, accepting the reuse risk in L10?
+2. **Time window:** 12 months (proposed; defined in §6 as 365 days counted inclusively between the award date and the actual City decision date), the same calendar year, or another value? Or no window, accepting the reuse risk in L10?
 3. **Stem-only matches** (City registered name vs OCDS bare name, the 59 rows): keep them Reported (recommended), or accept stem uniqueness (L6) as enough? Accepting it would rely on CIPC guidance (Reported), not statute, and would ignore trading names (L9).
 4. **Different suffixes on one stem:** treat them as a conflict (recommended), given that L6 implies two live entities should not share a stem?
 5. **Second detail for the 59:** may a later CHG use free public documents (for example CSD numbers or CIPC numbers printed in public tender documents) as the independent detail? A CIPC login or paid data stays out of scope unless the owner gives a named GO.
 6. **Clarification from CIPC:** would the owner like to ask CIPC in writing whether the "same as" test ignores the suffix (L7)? That would be the owner's own message; the author drafts only.
+
+### 9.1 Decisions on the questions
+
+**Decided by the project lead under delegated authority (relayed); owner confirmation: pending.**
+
+| Q | Decision |
+|---|---|
+| Q1 | Adopt rule A in principle. Build it only once a source prints suffixes on award records. |
+| Q2 | 12 months, defined as 365 days counted inclusively between the award date and the actual City decision date; a City row with only a register month is undated and stays Reported (§6 condition 4). |
+| Q3 | Yes: the 59 City-suffix vs OCDS-bare rows stay Reported. |
+| Q4 | Yes: different suffixes on one name stem count as a conflict. |
+| Q5 | Yes. The next change is an RFC for a second independent detail from CSD or CIPC numbers in free public documents: RFC first, no build, and only after this PR merges. |
+| Q6 | No CIPC letter for now; that remains the owner's call. |
 
 ## 10. Rollback (analysis g)
 

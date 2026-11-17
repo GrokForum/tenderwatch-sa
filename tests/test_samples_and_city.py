@@ -77,3 +77,43 @@ def test_sample_zutari_would_match_city_row_on_two_details() -> None:
         "tender_title": "293C/2024/25",
     }
     assert can_link(award, city) is True
+
+
+def test_city_layout_parser_attaches_pending_vendors() -> None:
+    from tw.city_register import parse_layout_text
+
+    text = """
+TTS Reference   Decision Reference   Description          Vendor                         Date of decision
+                                                      Fixture Plant (Pty) Ltd.
+123S/2026/27    SCMB 01/10/26        HIRE OF EQUIPMENT    Fixture Trucks (Pty) Ltd.      10/5/2026
+"""
+    # Build a header with realistic columns by padding
+    header = (
+        "TTS Reference   Decision Reference   Description"
+        + " " * 20
+        + "Vendor"
+        + " " * 20
+        + "Date of decision"
+    )
+    pending = " " * header.find("Vendor") + "Fixture Plant (Pty) Ltd."
+    row = (
+        "123S/2026/27    SCMB 01/10/26        HIRE OF EQUIPMENT"
+        + " " * (header.find("Vendor") - len("123S/2026/27    SCMB 01/10/26        HIRE OF EQUIPMENT"))
+        + "Fixture Trucks (Pty) Ltd."
+        + " " * 4
+        + "10/5/2026"
+    )
+    text = "\n".join([header, pending, row, ""])
+    rows = parse_layout_text(
+        text,
+        source_url="https://example.example/tenders-awarded-october-2026.pdf",
+        source_file="fixture.pdf",
+        retrieved_at="2026-11-17 10:57 SAST (Africa/Johannesburg)",
+        period="2026-10",
+    )
+    names = [r["supplier_name"] for r in rows]
+    assert "Fixture Plant (Pty) Ltd" in names
+    assert "Fixture Trucks (Pty) Ltd" in names
+    assert all(r["tts_reference"] == "123S/2026/27" for r in rows)
+    assert all(r["award_date"] == "2026-10-05" for r in rows)
+    assert all(r["supplier_type"] == "juristic" for r in rows)

@@ -83,6 +83,13 @@ def run(report_path: Path | None = None) -> dict:
     by_band = Counter(a.get("age_band") for a in awards)
     n_matched_awards = sum(1 for a in awards if a.get("city_matches"))
     n_match_links = sum(len(a.get("city_matches") or []) for a in awards)
+    from collections import Counter as _C
+    match_combos = _C()
+    for a in awards:
+        for h in a.get("city_matches") or []:
+            match_combos[",".join(h["details"])] += 1
+    n_city_tts = len({c.get("tts_reference") for c in city_rows if c.get("tts_reference")})
+    n_city_named = sum(1 for c in city_rows if c.get("supplier_name"))
     n_public_names = sum(1 for r in public if r.get("supplier_name"))
     n_juristic_public = sum(1 for r in public if r.get("supplier_type") == "juristic" and r.get("supplier_name"))
 
@@ -111,7 +118,10 @@ def run(report_path: Path | None = None) -> dict:
         "matches": {
             "awards_with_at_least_one_city_link": n_matched_awards,
             "link_pairs": n_match_links,
+            "by_details": dict(match_combos),
         },
+        "city_register_unique_tts": n_city_tts,
+        "city_register_named_rows": n_city_named,
         "public_export_rows": len(public),
         "public_export_named_suppliers": n_public_names,
         "public_export_named_juristic": n_juristic_public,
@@ -133,7 +143,7 @@ def _write_report(path: Path, report: dict) -> None:
 
 Environment: **DEV** (local box only). No push, no Pages, no TEST/PROD, no PublicFunds edits.
 
-- Run: {report['run_at']} to {report['finished_at']} (Africa/Johannesburg)
+- Run: {report['run_at']} to {report['finished_at']}
 - PublicFunds pin: `{report['publicfunds_pin']}` (read-only)
 - OCDS input: `{report['ocds_path']}`
 - SHA-256: `{report['ocds_sha256']}` (matches the RFC / survey file)
@@ -155,15 +165,19 @@ Environment: **DEV** (local box only). No push, no Pages, no TEST/PROD, no Publi
 | Age band `-2` | {band.get('-2', 0)} |
 | Age band `older` | {band.get('older', 0)} |
 | Age band `unknown` | {band.get('unknown', 0)} |
-| City register rows ingested | {report['city_register_rows']} |
+| City register rows ingested (vendor-award lines) | {report['city_register_rows']} |
+| City register unique TTS references | {report['city_register_unique_tts']} |
+| City register rows with a vendor name | {report['city_register_named_rows']} |
 | Awards with at least one two-detail City link | {report['matches']['awards_with_at_least_one_city_link']} |
 | City link pairs (two-detail rule) | {report['matches']['link_pairs']} |
 | Public export rows | {report['public_export_rows']} |
 | Named suppliers in the public export (juristic only) | {report['public_export_named_suppliers']} |
 
-City register source: {report['city_register_source']}.
+City register source: {report['city_register_source']}. Light fetch was limited to the official 2026 monthly `tenders-awarded` PDFs linked from the City index, after checking robots.txt (Allow: /). Files already on disk were reused.
 
-Light fetch: fetched={fetch.get('fetched') or []}; skipped={fetch.get('skipped') or []}; errors={fetch.get('errors') or []}; parsed_rows={fetch.get('parsed_rows')}.
+Match breakdown (agreeing details): {report['matches'].get('by_details')}. Links on `name_key,buyer` only mean the same normalised name in the same jurisdiction, not necessarily the same tender. Links that also share a tender/TTS reference are the tighter comparison.
+
+Light fetch log: fetched={len(fetch.get('fetched') or [])} URLs; skipped={fetch.get('skipped') or []}; errors={fetch.get('errors') or []}; parsed_rows={fetch.get('parsed_rows')}.
 
 All award rows are fact-labelled **Confirmed** as published by the source. Registration year and the young-supplier indicator are **Unknown** unless a sourced CIPC number in a free public document supplied a year (labelled Confirmed, with a link). `Right of reply: pending` is stored on every row. Nothing was sent or published.
 

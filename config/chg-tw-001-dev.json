@@ -23,9 +23,10 @@
   "city_register": {
     "index_url": "https://www.capetown.gov.za/work-and-business/doing-business-with-the-city/tenders-rfqs-and-supply/tenders-awarded/",
     "robots_url": "https://www.capetown.gov.za/robots.txt",
-    "known_pdf": "https://www.capetown.gov.za/media/nb1fgwta/tenders-awarded-october-2026.pdf"
+    "known_pdf": "https://www.capetown.gov.za/media/nb1fgwta/tenders-awarded-october-2026.pdf",
+    "request_pause_s": 1.5
   },
   "right_of_reply": "Right of reply: pending",
-  "indicator_window_label": "The registration year on the CIPC number is the same as, or the year before, the award year (0–23 months)",
+  "indicator_window_label": "The registration year on the CIPC number is the same as, or the year before, the award year (0\u201323 months)",
   "data_dir": "data/local"
 }

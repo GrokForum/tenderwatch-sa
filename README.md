@@ -18,3 +18,8 @@ The PR is not docs-only. At `c75e5ef` it added:
 
 Later commits on that review branch addressed CAB comments (classifier, tests, identifier counts) before the merge. The DEV implementation and local run report are on `dev/CHG-TW-001-build`; see [`docs/dev/CHG-TW-001-run-report.md`](docs/dev/CHG-TW-001-run-report.md) and [`STATUS.md`](STATUS.md).
 
+## Requirements
+
+- Python 3.11 or newer. Runtime dependencies are the standard library only (see `pyproject.toml`).
+- `pdftotext` from the `poppler-utils` system package, used to parse City of Cape Town monthly award-register PDFs.
+- `pytest` for the test suite: `pip install -e ".[test]"`.

@@ -2,7 +2,7 @@
 
 ## Current (17 Nov 2026, Africa/Johannesburg)
 
-- Repo: local clone of private `GrokForum/tenderwatch-sa`.
+- Repo: `GrokForum/tenderwatch-sa` (private data repo).
 - [PR #1](https://github.com/GrokForum/tenderwatch-sa/pull/1) was merged to `main` on the owner's GO at 17 Nov 2026 15:44:49 SAST (PR `mergedAt` 2026-11-17T13:44:49Z). Merge commit `fb5a4bcc` (full `fb5a4bcc3ca25724a8c5ebdf0cf1fe0caf6ad17c`). Merged head was `10862ba5` (full `10862ba565fbf3ac70bc3993d19f7ab1fe28ef3d`). Rollback tag `snapshot-2026-11-17-pre-tw-pr1` points at `b812102eb8d5eea0c6a486e8a332a1bf62e08d76`.
 - CAB recorded a GO for the CHG-TW-001 **build, DEV only** (relayed by Cavus, 17 Nov 2026). That is not a GO to push, merge further work, publish, or open TEST/PROD.
 - Branch `dev/CHG-TW-001-build` starts from `origin/main` (`fb5a4bcc`) and holds the DEV pilot implementation. This work tree does not push. Owner standing GO, given in Cavus's chat on 17 Nov 2026 and relayed by Cavus: "You can push review branches without asking". Merges and publishing still need the owner's GO on the exact head.

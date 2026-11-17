@@ -398,5 +398,13 @@ A DEV implementation succeeds only if all of the following hold:
 7. **Zero non-juristic names in the public export:** every `natural_person` and `unknown` supplier name is withheld (see `public_export_rows`).
 8. **Age bands** are recorded for every juristic supplier with a sourced year: `same`, `-1`, `-2`, or `older` (and `unknown` when there is no sourced year). The indicator is `yes` only for `same` and `-1` (award year or the year before; 0–23 months, stated on the label). `-2` is stored for trends and does not set the indicator. Consistent with §16 Q4.
 
+## 19. Publish preconditions
+
+These rules apply before any later publish (this RFC does not authorise a publish). They do not change the DEV warehouse, which may still store name-plus-buyer links for exploration.
+
+1. **Tight matches only.** A link may be presented as a confirmed or tight match only when the records **share a tender reference** (TTS / tender id / OCID, §5 item 4). A link that agrees only on a normalised name plus the same buyer or jurisdiction is a **name-only match within one buyer**. It must not be presented as a confirmed match.
+
+2. **POPIA check on every juristic name.** A juristic name can contain a person's name (for example a firm named after its founder). At publish time, every juristic name in the public output gets a POPIA check before it is released.
+
 ---
 *POPIA check: PASS. See §13.*

@@ -128,3 +128,72 @@ def test_implausible_vendor_fragments_are_dropped() -> None:
     assert not is_plausible_vendor("CC;")
     assert not is_plausible_vendor("2026/03/23")
     assert not is_plausible_vendor("")
+
+
+def test_light_fetch_pauses_between_requests(tmp_path) -> None:
+    """Offline: injected sleep records the configured pause between City requests."""
+    from tw.city_register import light_fetch
+
+    pauses: list[float] = []
+    urls: list[str] = []
+
+    def fake_sleep(seconds: float) -> None:
+        pauses.append(seconds)
+
+    def fake_get(url: str, dest=None, timeout: int = 60) -> bytes:
+        urls.append(url)
+        if "robots" in url:
+            body = b"User-agent: *\nAllow: /\n"
+        else:
+            body = b"<html><body>no pdfs</body></html>"
+        if dest is not None:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(body)
+        return body
+
+    cfg = {
+        "city_register": {
+            "robots_url": "https://example.example/robots.txt",
+            "index_url": "https://example.example/tenders-awarded/",
+            "known_pdf": None,
+            "request_pause_s": 1.5,
+        }
+    }
+    result = light_fetch(tmp_path, cfg, sleep=fake_sleep, http_get=fake_get)
+    assert urls == [
+        "https://example.example/robots.txt",
+        "https://example.example/tenders-awarded/",
+    ]
+    assert pauses == [1.5]
+    assert result["errors"] == []
+    assert "https://example.example/robots.txt" in result["fetched"]
+
+
+def test_robots_unavailable_fails_closed(tmp_path) -> None:
+    """Offline: if robots.txt cannot be read, no further City requests are made."""
+    from tw.city_register import light_fetch
+
+    urls: list[str] = []
+
+    def fake_sleep(seconds: float) -> None:
+        raise AssertionError("must not pause or continue after a robots failure")
+
+    def fake_get(url: str, dest=None, timeout: int = 60) -> bytes:
+        urls.append(url)
+        raise OSError("robots unavailable")
+
+    cfg = {
+        "city_register": {
+            "robots_url": "https://example.example/robots.txt",
+            "index_url": "https://example.example/tenders-awarded/",
+            "known_pdf": "https://example.example/tenders-awarded-october-2026.pdf",
+        }
+    }
+    result = light_fetch(tmp_path, cfg, sleep=fake_sleep, http_get=fake_get)
+    assert urls == ["https://example.example/robots.txt"]
+    assert result["rows"] == []
+    assert result["fetched"] == []
+    assert any("robots.txt" in e for e in result["errors"])
+    assert any("fail closed" in s for s in result["skipped"])
+    blob = " ".join(result["errors"] + result["skipped"])
+    assert "Allow: /" not in blob

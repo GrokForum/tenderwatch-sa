@@ -1,6 +1,6 @@
 # CHG-TW-001 DEV run report
 
-Environment: **DEV** (local box only). No push, no Pages, no TEST/PROD, no PublicFunds edits.
+Environment: **DEV** (local box only). No Pages, no TEST/PROD, no PublicFunds edits; review-branch push only.
 
 - Run: 2026-11-17 15:55 SAST (Africa/Johannesburg) to 2026-11-17 15:55 SAST (Africa/Johannesburg)
 - PublicFunds pin: `de37f666c12d1d6b7a815860894af0372514ba7f` (read-only)

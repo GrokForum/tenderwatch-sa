@@ -12,3 +12,5 @@
 | Date | RFC | Env | Result | Rollback SHA |
 |---|---|---|---|---|
 | 2026-11-17 | CHG-TW-001 | DEV (docs and samples only) | DRAFT, awaiting CAB. Owner decision (relayed by Cavus): proceed as a PublicFunds extension on a separate track. Identifier options added as an open question. | b812102eb8d5eea0c6a486e8a332a1bf62e08d76 |
+
+- 17 Nov 2026 11:48 SAST: owner accepted the §15 supplier-identifier default (CHG-TW-001 §16 Q7 resolved). Awaiting CAB review (Cavus, Cassian). No push, no build.

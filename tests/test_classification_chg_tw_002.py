@@ -352,3 +352,38 @@ def test_export_rejects_named_row_with_wrong_label() -> None:
            "classification_status": "confirmed_juristic", "popia_hold": False, "legal_form_link": "name_and_buyer_only"}
     assert to_public_row(row)["supplier_name_fact_label"] == "Reported"
     assert bpe([row])[0]["supplier_name_fact_label"] == "Reported"
+
+
+# --- reviewer A, PR #4: outer brackets are ignored (invented names only) ---
+
+@pytest.mark.parametrize("wrapped,plain", [
+    ("(J Q Testerman and Associates)", "J Q Testerman and Associates"),
+    ("[A B Fakename & Sons]", "A B Fakename & Sons"),
+    ("  ( R Qwertane Consulting )  ", "R Qwertane Consulting"),
+    ("((J. T. Sampleton))", "J. T. Sampleton"),
+    ("{Testburg Family Trust}", "Testburg Family Trust"),
+])
+def test_outer_brackets_do_not_change_the_hold(wrapped: str, plain: str) -> None:
+    assert looks_like_personal_name(wrapped) is True
+    w, p = classify_supplier(wrapped, []), classify_supplier(plain, [])
+    assert (w.status, w.queue_reason, w.popia_hold) == (p.status, p.queue_reason, p.popia_hold)
+    assert w.popia_hold is True
+
+
+@pytest.mark.parametrize("wrapped,sub", [
+    ("(Northriver Widgets (Pty) Ltd)", "company"),
+    ("[Harbour Lights CC]", "close_corporation"),
+    ("( Example Relief NPC )", "npc"),
+])
+def test_outer_brackets_do_not_change_the_suffix(wrapped: str, sub: str) -> None:
+    form = trailing_legal_form(wrapped)
+    assert form is not None and form.sub_type == sub
+
+
+def test_inner_brackets_are_kept() -> None:
+    from tw.supplier_type import strip_outer_brackets
+
+    assert strip_outer_brackets("(Pty) Ltd") == "(Pty) Ltd"
+    assert strip_outer_brackets("(RF) Holdings (Pty) Ltd") == "(RF) Holdings (Pty) Ltd"
+    assert strip_outer_brackets("(Northriver Widgets (Pty) Ltd)") == "Northriver Widgets (Pty) Ltd"
+    assert strip_outer_brackets("(Alpha) and (Beta)") == "(Alpha) and (Beta)"

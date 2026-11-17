@@ -8,7 +8,7 @@
 | Pre-change commit (rollback) | `f63f5d2ef02621f9a991c4c353788f7377ab2aa7` (`main` after PR #2). Earlier snapshot tag `snapshot-2026-11-17-pre-tw-pr2` → `fb5a4bcc3ca25724a8c5ebdf0cf1fe0caf6ad17c` |
 | Author | the author (TenderWatch) |
 | Reviewers | reviewer A (project lead), reviewer B |
-| Status | Draft for CAB. Revision 2, with the fixes from reviewer A's review on draft [PR #3](https://github.com/GrokForum/tenderwatch-sa/pull/3) (§11). This revision supersedes PR #3; PR #3 is not to be merged, so its per-name report stays off `main`. |
+| Status | Draft for CAB. Revision 2, with the fixes from reviewer A's review on draft [PR #3](https://github.com/GrokForum/tenderwatch-sa/pull/3) (§11). [PR #3](https://github.com/GrokForum/tenderwatch-sa/pull/3) was closed unmerged on 17 Nov 2026 (17:41:53 SAST) and replaced by [PR #4](https://github.com/GrokForum/tenderwatch-sa/pull/4), so its per-name report stays off `main`. |
 
 ## 1. Owner decision (relayed by the project lead, 17 Nov 2026)
 
@@ -100,7 +100,7 @@ Unchanged rule: needs a sourced CIPC year. Confirming a legal form gives no year
 
 ## 5. DEV result (17 Nov 2026, Africa/Johannesburg)
 
-See `docs/dev/CHG-TW-002-classification-report.md` (revision 2 rules). Over the 291 rows: **66 `confirmed_juristic`** (64 `city_register_suffix`, 2 `ocds_suffix`; 56 company, 8 close corporation, 1 JV, 1 other juristic; link: 59 name + buyer only → Reported, 5 tender reference + 2 same record → Confirmed) and **225 `check_queue`** (192 `no_suffix`, 26 `looks_like_personal_name`, 7 `name_mismatch_between_sources`, 0 `trust_personal_name`, 0 `ambiguous_suffix`). `popia_hold` on 31 rows (26 queued, 5 confirmed). Local public export: 291 rows, 61 named (54 Reported, 7 Confirmed, label next to the name). Classified 291 of 291; none hidden. Age indicator: Unknown on all 291 (no sourced CIPC year). Revision 1 had 194 `no_suffix`, 24 `looks_like_personal_name` and 29 holds; the initials-plus-business-word rule moved 2 rows.
+See `docs/dev/CHG-TW-002-classification-report.md` (revision 2 rules). Over the 291 rows: **66 `confirmed_juristic`** (64 `city_register_suffix`, 2 `ocds_suffix`; 56 company, 8 close corporation, 1 JV, 1 other juristic; link: 59 name + buyer only → Reported, 5 tender reference + 2 same record → Confirmed) and **225 `check_queue`** (192 `no_suffix`, 27 `looks_like_personal_name`, 6 `name_mismatch_between_sources`, 0 `trust_personal_name`, 0 `ambiguous_suffix`). `popia_hold` on 32 rows (27 queued, 5 confirmed). Local public export: 291 rows, 61 named (54 Reported, 7 Confirmed, label next to the name). Classified 291 of 291; none hidden. Age indicator: Unknown on all 291 (no sourced CIPC year). Revision 1 had 194 `no_suffix`, 24 `looks_like_personal_name` and 29 holds; the initials-plus-business-word rule moved 2 rows, and the outer-bracket fix (§11 item 6) moved 1 row from `name_mismatch_between_sources` to `looks_like_personal_name` (held).
 
 ## 6. Risks
 
@@ -161,6 +161,11 @@ Reviewer A returned PASS_WITH_CONCERNS on PR #3. Fixed in this revision:
 4. **Reported label on public surfaces.** `supplier_name_fact_label` next to the name in the export, enforced in `build_public_export` and tested.
 5. **Wording.** The report states "DEV run; publishes nothing."
 
-This revision is one commit on `f63f5d2e` and supersedes PR #3 (PR #3 is not to be merged).
+This revision starts as one commit on `f63f5d2e`. [PR #3](https://github.com/GrokForum/tenderwatch-sa/pull/3) was closed unmerged on 17 Nov 2026 (17:41:53 SAST) and replaced by [PR #4](https://github.com/GrokForum/tenderwatch-sa/pull/4).
+
+Follow-ups from reviewer A on PR #4:
+
+6. **Outer brackets.** A name wrapped in outer brackets or parentheses (for example "(<initials> <surname> and Associates)") is matched the same as without them: the wrapper and surrounding whitespace are stripped before both the hold rule and the suffix rule. Inner brackets such as "(Pty) Ltd" are kept. Tests use invented names only.
+7. **Skip message.** The tracked-file name test says why it skips on a fresh clone: the git-ignored `data/local/check_queue.csv` is absent until the DEV classification runs.
 ---
 *POPIA check: PASS. No ID numbers, contact details or addresses. No supplier names; examples use placeholders. No queued or held name appears in any committed file (tested).*

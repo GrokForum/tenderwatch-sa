@@ -1,7 +1,7 @@
 # CHG-TW-002 DEV classification report
 
 Environment: **DEV** (local box only). DEV run; publishes nothing. This report carries counts only: no supplier name, queued, held or confirmed.
-Run: 2026-11-17 17:40 SAST (Africa/Johannesburg). Input: the 291 City of Cape Town award-supplier rows of the CHG-TW-001 DEV run
+Run: 2026-11-17 17:44 SAST (Africa/Johannesburg). Input: the 291 City of Cape Town award-supplier rows of the CHG-TW-001 DEV run
 (OCDS SHA-256 `a2849a632148ca1eb59c0ceabeb45de16be0698a1804a485cf93417542435225`, PublicFunds pin `de37f666c12d1d6b7a815860894af0372514ba7f`, read-only) and the
 508 City register rows from the same run. No new network fetch.
 
@@ -29,7 +29,7 @@ Plain reading:
 | `check_queue` | 225 |
 | **Total classified** | **291** of 291 input rows (no row unclassified, none hidden) |
 
-Before (CHG-TW-001 rule): {'unknown': 289, 'juristic': 2}. After: {'unknown': 199, 'juristic': 66, 'natural_person': 26}.
+Before (CHG-TW-001 rule): {'unknown': 289, 'juristic': 2}. After: {'unknown': 198, 'juristic': 66, 'natural_person': 27}.
 
 ### By method
 
@@ -65,9 +65,9 @@ Confirmed rows where some City spellings of the same name lacked a suffix (noted
 
 | Reason | Rows | of which `popia_hold` | not held |
 |---|---|---|---|
-| `looks_like_personal_name` | 26 | 26 | 0 |
+| `looks_like_personal_name` | 27 | 27 | 0 |
 | `trust_personal_name` | 0 | 0 | 0 |
-| `name_mismatch_between_sources` | 7 | 0 | 7 |
+| `name_mismatch_between_sources` | 6 | 0 | 6 |
 | `ambiguous_suffix` | 0 | 0 | 0 |
 | `no_suffix` | 192 | 0 | 192 |
 | `empty_name` | 0 | 0 | 0 |
@@ -79,7 +79,7 @@ Distinct supplier names in the queue: 191.
 
 ### POPIA hold
 
-`popia_hold` = true on **31** rows ({'check_queue': 26, 'confirmed_juristic': 5}). The rule is deliberately over-inclusive:
+`popia_hold` = true on **32** rows ({'check_queue': 27, 'confirmed_juristic': 5}). The rule is deliberately over-inclusive:
 `t/a` without a legal suffix on the legal name, initials plus surname (alone or followed by business words, e.g. "<initial> <surname> and Associates"), a title, a trust with a family or person-style stem,
 or a bare two-to-four-word name with no business word, digit or legal word. Many held names will turn out to be businesses;
 the two-person check releases them. Held names are not written to this report or to any public file.

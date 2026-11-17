@@ -78,7 +78,10 @@ def test_committed_report_has_no_name_table() -> None:
 
 def _local_queue_names() -> set[str]:
     if not CHECK_QUEUE_PATH.is_file():
-        pytest.skip("local check_queue.csv not present (git-ignored DEV file)")
+        pytest.skip(
+            "skipped: data/local/check_queue.csv is git-ignored and absent on a fresh clone; "
+            "run the DEV classification first (scripts/run_chg_tw_002_classify.py)"
+        )
     names: set[str] = set()
     with CHECK_QUEUE_PATH.open(encoding="utf-8") as fh:
         for r in csv.DictReader(fh):

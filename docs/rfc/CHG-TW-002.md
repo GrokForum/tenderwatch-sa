@@ -8,7 +8,7 @@
 | Pre-change commit (rollback) | `f63f5d2ef02621f9a991c4c353788f7377ab2aa7` (`main` after PR #2). Earlier snapshot tag `snapshot-2026-11-17-pre-tw-pr2` → `fb5a4bcc3ca25724a8c5ebdf0cf1fe0caf6ad17c` |
 | Author | the author (TenderWatch) |
 | Reviewers | reviewer A (project lead), reviewer B |
-| Status | Draft for CAB. DEV build done locally; not pushed. |
+| Status | Draft for CAB. DEV build submitted for review and CAB on draft [PR #3](https://github.com/GrokForum/tenderwatch-sa/pull/3). |
 
 ## 1. Owner decision (relayed by the project lead, 17 Nov 2026)
 

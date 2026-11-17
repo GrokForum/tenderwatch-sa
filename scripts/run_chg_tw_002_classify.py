@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CHG-TW-002 DEV: classify the CHG-TW-001 award suppliers and write the DEV report. Local only."""
+"""CHG-TW-002 DEV: classify the CHG-TW-001 award suppliers and write the DEV report. Writes a local DEV export; publishes nothing."""
 from __future__ import annotations
 
 import json

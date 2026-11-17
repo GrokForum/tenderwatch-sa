@@ -109,8 +109,8 @@ Director ID numbers, SA ID numbers, home or business street addresses, personal 
 `supplier_type` is derived only from the official supplier name, in this order:
 
 1. **`natural_person`** if the name contains `t/a` or `trading as` (even when the trading style has a juristic suffix), or if the whole name matches an initials-plus-surname pattern (one to three initials, optional particles such as van/de/du, then a surname, and nothing else).
-2. **`juristic`** if the name carries a legal suffix such as Pty Ltd, (Pty) Ltd, Ltd, Limited, Inc, Incorporated, NPC, SOC, SOC Ltd, CC, Close Corporation, Trust, JV, Joint Venture, (RF) or Proprietary Limited.
-3. **`unknown`** for everything else, including empty names and organisation-like strings with no recognised suffix (common in the eTenders dump).
+2. **`juristic`** if, after normalisation, the name **ends** with a legal suffix such as Pty Ltd, (Pty) Ltd, Ltd, Limited, Inc, Incorporated, NPC, SOC, SOC Ltd, CC, Close Corporation, JV, Joint Venture, (RF), RF or Proprietary Limited. Those tokens are never matched as bare words in the middle of a name (so "Limited Edition Printers", "Inc Design Studio" and "Rf Holdings" are not juristic).
+3. **`unknown`** for everything else, including empty names, organisation-like strings with no recognised trailing suffix (common in the eTenders dump), and names containing **Trust**. A family trust can carry a private person's name, so "Trust" is not treated as juristic unless a later, named check (out of scope here) says otherwise.
 
 The young-supplier indicator is computed **only** for `juristic` suppliers. Names classified `natural_person` or `unknown` must **never** appear in any public output (they may be stored internally for matching, then withheld or replaced with a placeholder in any export or page). The classifier lives in `tw/supplier_type.py` and is covered by synthetic fixture tests in `tests/test_supplier_type.py` (no real private people's names).
 
@@ -155,7 +155,7 @@ The indicator is a **mechanical comparison of two official public dates**, label
 - **Coverage today is effectively zero** on the pilot source. In DEV, almost every Cape Town award will show `young_supplier_indicator = unknown` and `registration_year = Unknown`. That is the correct output, not a defect.
 - **False comfort the other way:** a company can be old on paper and still be a shell; a young company can be a legitimate start-up. The indicator does not distinguish these.
 - **Enterprise type and re-registrations** are not interpreted in this RFC.
-- **Natural persons, sole traders, and `unknown` names** are not given a registration year and must not be forced into this indicator. They must never appear in any public output.
+- **Natural persons, sole traders, `unknown` names, and trusts** are not given a registration year and must not be forced into this indicator. A name with "Trust" is classified `unknown` unless further checked, because a family trust can carry a private person's name. These names must never appear in any public output.
 
 Until a registration-year source exists, the fixture suite should include synthetic CIPC numbers to prove the rule, and real OCDS rows to prove the Unknown path.
 
@@ -238,7 +238,7 @@ To be run in DEV after a GO, before any request to merge:
 7. Parser drops `contactPoint`, street addresses and `contactPerson`; tests fail if those keys reach the warehouse.
 8. A small real-file smoke test on the sanitized samples and, in DEV only, on a *read-only* pinned PublicFunds OCDS copy (`main` `de37f666`, see §18) or one official monthly JSON, filtered to City of Cape Town, counting Unknown rates.
 9. No network login and no write to `tenderwatch-site` or to `origin`.
-10. `supplier_type` classifier fixtures in `tests/test_supplier_type.py` (synthetic names only): legal suffixes → `juristic`; `t/a` and initials-plus-surname → `natural_person`; otherwise `unknown`.
+10. `supplier_type` classifier fixtures in `tests/test_supplier_type.py` (synthetic names only): a *trailing* legal suffix → `juristic`; `t/a` and initials-plus-surname → `natural_person`; "Trust" and bare mid-name words such as Limited/Inc/RF → `unknown`.
 11. The indicator stays `unknown` for `natural_person` and `unknown` types even when a registration year is present.
 12. A public-export helper emits **zero** non-juristic names (`natural_person` and `unknown` are withheld).
 
@@ -358,11 +358,11 @@ The following remain open. They are not a GO. A GO must name this RFC (CHG-TW-00
 
 ## 17. CAB review
 
-Reviewers: **Cavus** and **Cassian**, as four checks (expert, shadow, charter, drift). They review this draft; they do not implement it under this record, and they cannot authorise TEST, PROD, or a send. Review-branch pushes are done by Cavus under the owner's standing GO to push review branches.
+Reviewers: **Cavus** and **Cassian**, as four checks (expert, shadow, charter, drift). They review this draft; they do not implement it under this record, and they cannot authorise TEST, PROD, or a send. Review-branch pushes are done by Cavus under the owner's standing GO, given in Cavus's chat on 17 Nov 2026 and relayed by Cavus: "You can push review branches without asking". Merges and publishing still need the owner's GO on the exact head.
 
 Implementation starts only after: (a) both reviewers have signed the draft or a revised draft, and (b) the owner gives a quoted GO for CHG-TW-001 in DEV.
 
-**Result:** Cavus, on `c75e5ef` (draft PR #1): **PASS_WITH_CONCERNS**. The concerns (records that denied the push, sole-proprietor handling, reproducible identifier counts, DEV acceptance criteria, and Q3) are addressed in the revision after that SHA. Cassian: not yet recorded. Still DRAFT; not a GO to implement.
+**Result:** Cavus, on `c75e5ef`: **PASS_WITH_CONCERNS** (addressed in `009ea171`). Cavus, on `009ea171` (draft PR #1, pushed 17 Nov 2026 11:59 SAST): **PASS_WITH_CONCERNS**. The remaining concerns (standing-GO citation, trailing-suffix / Trust classification, and the STATUS push record) are addressed in the revision after that SHA. Cassian: not yet recorded. Still DRAFT; not a GO to implement, merge, or publish.
 
 ## 18. DEV acceptance criteria
 

@@ -10,7 +10,7 @@
 | Author | the author (TenderWatch) |
 | Reviewers | reviewer A (project lead), reviewer B |
 | Basis | CHG-TW-003 §9.1 Q5 (decided by the project lead, confirmed by the owner): the next change is an RFC for a second independent detail from CIPC or CSD numbers in free public documents. Owner input on his own manual CIPC lookups, given in the author's chat on 17 Nov 2026 at 18:16 SAST (summarised in §4, not quoted). Revision 7: owner's answers, 17 Nov 2026 21:51 SAST, relayed by the project lead (§13.2). |
-| Status | Revisions 1–6 merged via [PR #6](https://github.com/GrokForum/tenderwatch-sa/pull/6) (`a6443326`). Revision 7 records the owner's answers to §13 Q1–Q11 (relayed, §13.2) and the legal basis (§15); draft for CAB on its own pull request. Records only. New owner questions in §13.6. |
+| Status | Revisions 1–6 merged via [PR #6](https://github.com/GrokForum/tenderwatch-sa/pull/6) (`a6443326`). Revision 7 records the owner's answers to §13 Q1–Q11 (relayed, §13.2) and the legal basis (§15); draft for CAB on its own pull request. Records only. Owner questions §13.6 A–E: all closed (answers relayed by the project lead, 22:29–22:30 SAST). |
 
 ## 1. Summary
 
@@ -273,26 +273,34 @@ Revision 7 (records only) changes `docs/rfc/CHG-TW-004.md` and `STATUS.md` on `d
 
 ### 13.2 Owner answers (revision 7, records only)
 
-**Provenance.** Owner's answers, 17 Nov 2026 21:51 SAST, given in the project lead's (Cavus) chat and relayed by the project lead; the author has not heard them from the owner directly.
+**Provenance.** Owner's answers, 17 Nov 2026 21:51 SAST, given in the project lead's chat and relayed by the project lead; the author has not heard them from the owner directly. Reviewer B reviewed revision 7 against the owner's answers as relayed by the project lead and did not hear them from the owner directly.
 
-**Numbering.** The answers were relayed as Q1–Q11. The questions in this file are §13 Q1–Q11 (this RFC has no §9.1; that section number belongs to CHG-TW-003). Q1–Q6 match by number and topic. From Q7 on, the relayed numbers are one lower than this file's, because §13 Q7 (CIPC permission) was already answered in §13.1. The author maps them by topic as below. The mapping of relayed Q8 to §13 Q9 is the author's reading and is for the owner or the project lead to confirm (§13.6 A).
+**Provenance (§13.6 answers).** Owner's answers to §13.6 C–E, 17 Nov 2026 22:29 SAST, and to §13.6 B, 17 Nov 2026 22:30 SAST (after briefly reconsidering it), given in the project lead's chat and relayed by the project lead; the author has not heard them from the owner directly.
+
+**Numbering.** The answers were relayed as Q1–Q11. The questions in this file are §13 Q1–Q11 (this RFC has no §9.1; that section number belongs to CHG-TW-003). Q1–Q6 match by number and topic. From Q7 on, the relayed numbers are one lower than this file's, because §13 Q7 (CIPC permission) was already answered in §13.1. The author maps them by topic as below. The owner's text for relayed Q8 was literally "8 yes, keep development structured"; the project lead confirmed that it answers §13 Q9 (§13.6 A, closed).
 
 | Relayed | §13 question | Owner's answer (as relayed) | Recorded effect |
 |---|---|---|---|
 | Q1 | Q1 Publication of derived years | Publish the registration year with its fact label. | `registration_year` and `registration_year_label` may go into the public export in a later build CHG. The recommendation to hold the year internal (§4.6) is not adopted. The CIPC terms point (§4.6, §4(7)) is unchanged and the letter to CIPC Legal Services stays drafted for the owner to send. |
-| Q2 | Q2 Reported age bands | Reported age bands stay internal, as recommended. | The public row shows `unknown` for any age band whose label is not Confirmed (§6, unchanged). See §13.6 B on the year itself. |
+| Q2 | Q2 Reported age bands | Reported age bands stay internal, as recommended. | The public row shows `unknown` for any age band whose label is not Confirmed (§6, unchanged). On the year itself (§13.6 B, closed): only Confirmed years are published, each with its label; Reported years stay internal until they are confirmed, and then they show. |
 | Q3 | Q3 Ranking weights | Ranking accepted as is. | §4.3 unchanged. |
 | Q4 | Q4 Batch size | Batch of 10 accepted. | §4.4 unchanged. |
-| Q5 | Q5 One-person businesses | One-person businesses may be on the lookup list, but the public display masks the name to its first and last letter (example given: `C*****************a`), so only someone who already knows the name can match it. | The 3 held registered names (5 rows, all Reported links) may join the lookup list: 48 entities by count (6 Confirmed-link, 42 Reported). The §4.3 ranking and batch order are **not** recomputed in this records-only revision; the build CHG re-runs the script. The 14 personal-looking bare names (27 rows) have no suffix, so §4.2 still keeps them off the list. POPIA note below. |
+| Q5 | Q5 One-person businesses | One-person businesses may be on the lookup list, but the public display masks the name to its first and last letter (example given: `C*****************a`), so only someone who already knows the name can match it. | The 3 held registered names (5 rows, all Reported links) may join the lookup list: 48 entities by count (6 Confirmed-link, 42 Reported). The §4.3 ranking and batch order are **not** recomputed in this records-only revision; the build CHG re-runs the script. The 14 personal-looking bare names (27 rows) have no suffix, so §4.2 still keeps them off the list. Public display uses the fixed-length mask defined below (§13.6 C). POPIA note below. |
 | Q6 | Q6 Bare names (192 no-suffix rows) | The 192 bare-name rows must be recorded; the RFC proposes how. | Proposal in §13.3. |
 | Q7 | Q8 C4 threshold | The C4 threshold of 3 young winners at one buyer within 365 days is accepted. Also: indicators for repeat awards to the same supplier and for other patterns worth a closer look, as a neutral, sourced list. | C4 threshold fixed at 3 (§7.2). Indicator proposal in §13.4. |
-| Q8 | Q9 Periodic part-1 checks (author's reading) | Keep development structured. | Read as: the S8 and S10 surveys and every later step go through their own records-only CHG, with RFC, review and the owner's GO, as now. |
+| Q8 | Q9 Periodic part-1 checks (mapping confirmed by the project lead) | "8 yes, keep development structured" | **Yes.** The S8 (other metros) and S10 (gazettes) surveys go ahead in a later records-only CHG; every later step goes through its own CHG, with RFC, review and the owner's GO, as now. |
 | Q9 | Q10 Local DEV reading of City registers | Publish links to the City documents, and download the City award PDFs to the box for the owner to read. | Done for reading only (below). Links to City documents go into the public output with each City fact. |
 | Q10/Q11 | Q10 and Q11 (and §13.1 City option (i)) | "Public data is public data, act accordingly." | Replaces the link-only rule of §13.1 (below). |
 
-**Q5 POPIA note (author; the owner's decision is not changed).** A mask that keeps the first letter, the last letter **and the length** is pseudonymous, not anonymous: the length narrows the name a great deal, and the same row also shows the buyer, date, value and a citation to the City document, which prints the name in full. Anyone who opens the cited source can read the name, so the mask stops only a casual reader. Possible safeguards, for the owner to choose (§13.6 C): (1) a fixed-length mask (for example first letter, three asterisks, last letter, whatever the name's length); (2) no other identifying detail next to a masked name beyond what the award itself needs; (3) for masked rows, cite the City document at the register level rather than the row level. The POPIA rules in §8 stay: only number, date and status are recorded from a lookup, and no personal contact or identity data is recorded at all.
+**Q5 POPIA note and the fixed-length mask (owner's answer to §13.6 C).** The first draft of the mask kept the name's length, which leaked a great deal about the name. The owner has chosen a **fixed-length mask**, which resolves that point:
 
-**Q9 City PDFs (done).** On 17 Nov 2026 the author downloaded every award-register PDF linked from the City's tenders-awarded page (https://www.capetown.gov.za/work-and-business/doing-business-with-the-city/tenders-rfqs-and-supply/tenders-awarded/): **150 PDFs** (150 links, 0 errors after one retry of a timed-out file; about 82 MB; registers from 2016 to 2026). robots.txt (`User-agent: * / Allow: /`) was checked first; one request at a time with a 2-second pause and an identifying user agent. They are stored on the box at `/home/box/tenderwatch-private/city-pdfs/` for the owner to read, **outside the repository and never committed**. A private manifest beside them (`/home/box/tenderwatch-private/manifest.json`, SHA-256 `5a5259a9…1fc4`) records the count and, per file, the URL, size, SHA-256 and retrieval time. They are not parsed or used for any count in this revision.
+* **Mask definition.** Take the name stem: the name as printed with any legal-form suffix (CHG-TW-002 suffix list) and any outer brackets removed. Take its first and last letter or digit (ASCII-folded; the first shown in upper case, the last in lower case). The mask is that first character, then **exactly five asterisks**, then that last character: always **7 characters**, whatever the name's length (invented example: "Qwertane Widget Supplies" → `Q*****s`). A stem with fewer than two letters or digits shows `*******`. The length, word count, spacing and suffix of the name are never shown.
+* **No other identifying detail next to a mask.** A masked row shows only the award facts the register exists for: buyer, award date, usable value and tender title. It shows no tender reference, OCDS id or release link, no registration number or year, no CIPC status and no indicator; the legal form shows only as a category (for example "private company") on the 5 held company rows, and as Unknown on the 27 personal-looking rows. (This list is the author's reading of "no extra identifying detail", for review in the build CHG.)
+* **Citation at register level only.** A masked row cites the City register document (or the eTenders dataset page) as a whole, never the row or release.
+* **Residual risk, stated plainly.** A reader who searches the public source by buyer, date, value and title may still find the row. The mask is pseudonymisation against casual matching, not anonymity; the controls above keep it from being trivial.
+* The POPIA rules in §8 stay: only number, date and status are recorded from a lookup, and no ID numbers, addresses or contact details are recorded or shown.
+
+**Q9 City PDFs (done).** On 17 Nov 2026 the author downloaded every award-register PDF linked from the City's tenders-awarded page (https://www.capetown.gov.za/work-and-business/doing-business-with-the-city/tenders-rfqs-and-supply/tenders-awarded/): **150 PDFs** (150 links, 0 errors after one retry of a timed-out file; about 82 MB; registers from 2016 to 2026). robots.txt (`User-agent: * / Allow: /`) was checked first; one request at a time with a 2-second pause and an identifying user agent. They are stored in a private folder outside the repo for the owner to read and are **never committed**. A private manifest in a private folder outside the repo (SHA-256 `5a5259a9…1fc4`) records the count and, per file, the URL, size, SHA-256 and retrieval time. They are not parsed or used for any count in this revision.
 
 **Q10/Q11 Public data is public data.** The owner's answer replaces City option (i): City of Cape Town register facts may be published, each cited to the City document it comes from. The public site stays labelled **DRAFT**. If challenged, the answer is that it is a draft built only from the public record, presented as found. For the record, once: the City's website terms (§3 S7, §11) do not permit redistribution of its content without the City's express written permission; the owner has decided to publish anyway, and the permission letter to the City remains drafted for him to send. Nothing is published under this revision; the export and site changes need their own CHG and the owner's GO on the exact head.
 
@@ -302,14 +310,14 @@ On the DEV data, 192 award rows (157 distinct names) carry no legal-form suffix 
 
 1. **Every row is recorded and shown** as an award: buyer, award date, usable value, tender reference and title, all from eTenders (CC BY 4.0), with links to the eTenders source.
 2. **Legal form: "Unknown"** with the fact label **Unknown** and the reason "no legal-form suffix in any source". No age indicator (it needs a juristic supplier, §6).
-3. **Name display.** The supplier name is shown only after the two-person check (CHG-TW-002) finds that it is not a personal name. Until then the row shows "Supplier name pending check", so no personal name is exposed. If the owner prefers, the Q5 mask can be used instead (§13.6 C applies).
+3. **Name display.** The supplier name is shown only after the two-person check (CHG-TW-002) finds that it is not a personal name. Until then the row shows "Supplier name pending check", so no personal name is exposed. If the owner prefers, the fixed-length mask (§13.2) can be used instead.
 4. **Two-person check queue.** The 157 names go through the existing queue, ranked by usable value; each check records only the outcome (`not_personal`, `personal`, `unclear`) and the date, in the git-ignored local file. A `personal` outcome keeps the name withheld; `unclear` stays pending.
 5. **Upgrade path.** A row leaves the Unknown state only on a sourced suffix (a later City register, a public document under part 1, or an owner lookup that matches under §5), never on a guess.
 6. Counts in the public method page: rows recorded, rows with legal form Unknown, names pending check.
 
 ### 13.4 Proposal: neutral, sourced indicator list (Q7)
 
-Rules for every indicator: it is a pattern in the public record that may merit a closer look, never a finding about anyone. It cites its source documents, states counts and dates rather than adjectives, carries "Right of reply: pending", and uses the wording below. The private churn notes C1–C6 (§7) stay private; C4's threshold is now fixed at 3 (owner, relayed). Thresholds marked "proposed" are for the owner to confirm (§13.6 D). DEV measurements are counts on the 291 rows (one buyer, City of Cape Town; award dates 2021-08-20 to 2025-11-07).
+Rules for every indicator: it is a pattern in the public record that may merit a closer look, never a finding about anyone. It cites its source documents, states counts and dates rather than adjectives, carries "Right of reply: pending", and uses the wording below. The private churn notes C1–C6 (§7) stay private; C4's threshold is now fixed at 3 (owner, relayed). The thresholds marked "proposed" were accepted by the owner as proposed (§13.6 D, closed). DEV measurements are counts on the 291 rows (one buyer, City of Cape Town; award dates 2021-08-20 to 2025-11-07).
 
 | Id | Indicator | Definition | Data source | Threshold | Public wording (template) | DEV measurement | Status |
 |---|---|---|---|---|---|---|---|
@@ -324,31 +332,35 @@ Rules for every indicator: it is a pattern in the public record that may merit a
 
 General wording on the method page (draft): "An indicator is a pattern in the public record that may merit a closer look. It is not a finding that anyone did anything wrong. Every indicator links to its sources, and each supplier named has a right of reply."
 
-### 13.5 Knock-on recomputed (public data is public data)
+### 13.5 Knock-on recomputed (public data is public data; §13.6 B, C and E)
 
-Counts from the same DEV outputs as §13.1 (`data/local/warehouse/awards_classified_chg_tw_002.jsonl`, 291 rows; the `.out.json` counts are unchanged). "Publishable" means allowed under the owner's answers, subject to the POPIA gate; nothing is published under this RFC.
+Counts from the same DEV outputs as §13.1 (`data/local/warehouse/awards_classified_chg_tw_002.jsonl`, 291 rows; the `.out.json` counts are unchanged). "Can show" means allowed under the owner's answers, subject to the POPIA gate; nothing is published under this RFC. "Before" is revision 7 as first drafted (`d4e6a239`); "after" applies the §13.6 answers.
 
-| Measure | Under link-only (§13.1) | Now |
-|---|---|---|
-| Confirmed legal-form rows (CHG-TW-002 `confirmed_juristic`, 66) that can show their legal form | 2 (OCDS suffix only) | **61**: 59 City-derived + 2 OCDS. The other 5 (City-derived) are POPIA-held and show only under the Q5 mask, if the owner applies it to held rows (§13.6 C) |
-| Of those 61, the award link label | n/a | 7 Confirmed (5 by tender reference, 2 same record), 54 Reported (name and buyer only) |
-| City cross-links (59 Reported) that can be shown with their City citation | 0 | 54, plus 5 held rows under the mask |
-| Lookup entities whose registered name can be shown | 1 (eTenders-derived) | **45** of 45 (44 City-derived, 1 eTenders); with Q5, 48 (the 3 added names masked) |
-| Rows that can carry a Confirmed registration year after all lookups (§5) | 6 (held under the §4.6 recommendation) | **6** (Q1: published with its label) |
-| Rows whose year would be Reported (Reported link) | 54 | 54 (59 with the 5 held rows); whether the year itself is shown is open (§13.6 B); the age band stays internal (Q2) |
-| Bare-name rows recorded (Q6) | not addressed | 192 rows (157 names), legal form Unknown, names pending the two-person check (§13.3) |
-| Personal-looking queue rows (`looks_like_personal_name`, POPIA-held) | withheld | 27 rows (14 names): still withheld; whether the Q5 mask applies to them is open (§13.6 E) |
-| Name-mismatch queue rows | withheld | 6 rows: unchanged, pending the two-person check |
+| Measure | Under link-only (§13.1) | Revision 7, before §13.6 answers | After §13.6 B–E |
+|---|---|---|---|
+| Confirmed legal-form rows (66) shown with a legal form | 2 | 61 unmasked; 5 held rows only if the mask applied (open) | **61 unmasked** (59 City-derived, 2 OCDS) + **5 masked** (3 names; legal form as a category) = 66 |
+| Of the 61 unmasked, award link label | n/a | 7 Confirmed, 54 Reported | 7 Confirmed, 54 Reported (unchanged) |
+| City cross-links (59 Reported) shown | 0 | 54 (+5 if masked) | **54** with a row-level City citation + **5 masked** with a register-level citation |
+| Lookup entities whose name can show | 1 | 45 (48 with Q5, masking open) | **45 unmasked + 3 masked = 48** |
+| Personal-looking rows (27 rows, 14 names) | withheld | withheld (open, E) | **27 rows shown masked** (14 names); legal form Unknown; register-level citation |
+| Rows shown masked, in total | 0 | 0 | **32 rows, 17 names** (5 held company rows + 27 personal-looking rows; = all 32 POPIA-held rows) |
+| Bare-name rows (192 rows, 157 names) | not addressed | award facts shown, name pending the two-person check | unchanged: award facts shown, legal form Unknown, name pending the check (§13.3) |
+| Name-mismatch rows (6 rows, 6 names) | withheld | withheld | **still withheld**, pending the two-person check |
+| Rows with a Confirmed registration year after all lookups (§5) | 6, internal | 6, published with label | **at most 6**, published with label (§13.6 B); none of them is masked |
+| Rows whose year would be Reported | 54, internal | 54 (59 with held), open | **59, internal** until confirmed (§13.6 B); a year that becomes Confirmed then shows on the 54 unmasked rows; the 5 masked rows never show a year (§13.2) |
+| Age band on Reported rows | internal | internal (Q2) | internal (Q2) |
 
-**What this means for the public site.** The §13.1 conclusion (that the site would add little over eTenders) no longer holds. A later export CHG could show a sourced legal form on 61 of 291 rows (7 with a Confirmed award link), City cross-links with citations, registration years from lookups as they return, and the indicators in §13.4, while 192 rows carry an Unknown legal form and 33 rows (27 personal-looking, 6 mismatched) stay withheld pending the check.
+Every one of the 291 rows is accounted for: 61 unmasked + 32 masked + 192 name-pending + 6 withheld = 291.
 
-### 13.6 New owner questions (revision 7)
+**What this means for the public site.** The §13.1 conclusion (that the site would add little over eTenders) no longer holds. A later export CHG could show a sourced legal form on 66 of 291 rows (61 unmasked, 7 of them with a Confirmed award link; 5 masked), City cross-links with citations, Confirmed registration years from lookups as they return, and the indicators in §13.4. 32 rows show masked, 192 rows carry an Unknown legal form with the name pending the check, and 6 mismatched rows stay withheld.
 
-* **A. Numbering.** Is the relayed Q8 ("keep development structured") the answer to §13 Q9 (periodic part-1 checks in a later records-only change), as the author reads it?
-* **B. Reported years.** Q1 publishes the year with its label; Q2 keeps Reported age bands internal. For the up to 54 rows whose year would be Reported, a shown year lets a reader work out the band. Show Reported years with the label Reported (recommended: no, show `unknown` until Confirmed, which matches Q2), or show them?
-* **C. Mask safeguard (Q5).** Keep the length-preserving mask as decided, or use a fixed-length mask, and should masked rows cite the City document at the register level only? Does the mask also apply to the 5 held rows of confirmed companies?
-* **D. Indicator thresholds (§13.4).** Confirm I1 (3 or more in one financial year), I2 (30 days), I4 (365 days).
-* **E. Personal-looking rows.** Do the 27 personal-looking rows (14 names) stay withheld until the two-person check (recommended), or show under the Q5 mask?
+### 13.6 New owner questions (revision 7) and answers
+
+* **A. Numbering. Closed.** The relayed Q8 ("8 yes, keep development structured") answers §13 Q9 (periodic part-1 checks) with a plain yes; the mapping was confirmed by the project lead.
+* **B. Reported years. Closed** (owner, 22:30 SAST, relayed, after briefly reconsidering it): publish only Confirmed registration years, each with its label. Reported years stay internal until they are confirmed, and then they show. This matches Q2 (Reported age bands internal).
+* **C. Mask safeguard (Q5). Closed** (owner, 22:29 SAST, relayed): a fixed-length mask with no extra identifying detail next to it, and the City citation at register level only. The mask also covers the 5 held rows of confirmed companies. Defined in §13.2.
+* **D. Indicator thresholds (§13.4). Closed** (owner, 22:29 SAST, relayed): I1 to I7 thresholds accepted as proposed (I1: 3 or more in one financial year; I2: 30 days and the metro threshold; I4: 365 days).
+* **E. Personal-looking rows. Closed** (owner, 22:29 SAST, relayed): the 27 personal-looking rows (14 names) show masked. **POPIA note:** these may be sole proprietors who are private individuals. The controls are the fixed-length mask, the register-level citation and no other identifying detail next to the mask (§13.2); the existing rule stays that no ID numbers, addresses or contact details are recorded or shown. The two-person check still runs on these names; its outcome is recorded locally only.
 
 ## 14. CAB review
 

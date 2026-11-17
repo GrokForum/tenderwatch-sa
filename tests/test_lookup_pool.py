@@ -5,6 +5,7 @@ import pytest
 
 from tw.lookup_pool import (
     batch_sort_key,
+    award_id_sort_key,
     earliest_known,
     is_young,
     parse_known_date,
@@ -93,3 +94,48 @@ def test_quartile_bands_use_ascending_lower_nearest_rank() -> None:
             for i, v in enumerate(vals)] + [_ent("Invented Zero (Pty) Ltd", first_seen=None, earliest_award="2024-01-01", value=0.0, tid="z")]
     pts = {e["value"]: e["value_points"] for e in score_entities(ents)}
     assert pts == {10.0: 1, 20.0: 1, 30.0: 2, 40.0: 3, 50.0: 3, 0.0: 0}
+
+
+@pytest.mark.parametrize("raw", ["20240101", "2024-W01-1", "2024-08-30garbage", "2024-02-30",
+                                 "2024-08-30T25:00:00Z", "2024-08-30T10:00:00+24:00", " 2024-08-30",
+                                 "2024-08-30 10:00:00", "2024-08-30T10:00:00+0200"])
+def test_strict_parser_rejects_loose_shapes(raw) -> None:
+    assert parse_known_date(raw) is None
+
+
+def test_plain_date_keeps_its_date() -> None:
+    assert parse_known_date("2024-08-30") == dt.date(2024, 8, 30)
+
+
+def test_z_time_keeps_its_date() -> None:
+    assert parse_known_date("2024-08-30T23:59:59Z") == dt.date(2024, 8, 30)
+    assert parse_known_date("2024-08-30T00:00:00.123Z") == dt.date(2024, 8, 30)
+
+
+def test_plus_two_just_after_midnight_rolls_back_a_day() -> None:
+    assert parse_known_date("2024-08-30T00:30:00+02:00") == dt.date(2024, 8, 29)
+
+
+def test_minus_five_late_evening_rolls_forward_a_day() -> None:
+    assert parse_known_date("2024-08-30T21:00:00-05:00") == dt.date(2024, 8, 31)
+
+
+def test_bare_time_keeps_written_date() -> None:
+    assert parse_known_date("2024-08-30T23:30:00") == dt.date(2024, 8, 30)
+
+
+def test_etenders_release_date_shape_parses() -> None:
+    # The only release-date shape in the pinned eTenders file: YYYY-MM-DDTHH:MM:SSZ
+    assert parse_known_date("2023-11-07T08:15:42Z") == dt.date(2023, 11, 7)
+
+
+def test_numeric_award_ids_compare_numerically() -> None:
+    ids = ["10", "9", "x-2", None, "100", "x-10"]
+    assert sorted(ids, key=award_id_sort_key) == ["9", "10", "100", "x-10", "x-2", None]
+    assert min(["10", "9"], key=award_id_sort_key) == "9"
+
+
+def test_numeric_tiebreak_in_batch_order() -> None:
+    a = _ent("Qwertane Widget Supplies (Pty) Ltd", first_seen=None, earliest_award="2024-01-01", tid="10")
+    b = _ent("Testburg and Sons (Pty) Ltd", first_seen=None, earliest_award="2024-01-01", tid="9")
+    assert [e["name"] for e in score_entities([a, b])] == ["Testburg and Sons (Pty) Ltd", "Qwertane Widget Supplies (Pty) Ltd"]

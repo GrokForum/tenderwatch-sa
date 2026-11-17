@@ -42,7 +42,9 @@ Score per factor (§4.3)
   entity's supplier_name values. Candidate if first_seen and the entity's
   earliest award_date are both known, first_seen >= 2022-06-01, and the
   earliest award_date is 0 to 365 days after first_seen.
-  Unknown dates (None, empty, non-ISO, 9999-12-31, 1900-01-01, 1970-01-01,
+  Dates are parsed strictly (YYYY-MM-DD, optionally with a T time ending in
+  Z, a +/-HH:MM offset converted to UTC, or no zone). Unknown dates (None,
+  empty, any other shape, invalid dates, 9999-12-31, 1900-01-01, 1970-01-01,
   0001-01-01, or a year outside 1990-2099; see tw.lookup_pool) are never
   filled: they score 0 young points and are counted in the output.
 * Buyer concentration: +2 if the entity has 3 or more of the 291 rows (all at
@@ -52,8 +54,10 @@ Score per factor (§4.3)
 Batch order (tie-break)
 -----------------------
 Sort by: score desc; value desc; number of rows desc; earliest award_date asc;
-smallest award_id asc (internal only, never printed). An unknown earliest
-award date or award id sorts last. Batch 1 = first 10.
+smallest award_id (internal only, never printed): all-digit ids compare
+numerically ('9' before '10') and come before non-numeric ids, which compare
+as strings (tw.lookup_pool.award_id_sort_key). An unknown earliest award date
+or award id sorts last. Batch 1 = first 10.
 """
 from __future__ import annotations
 
@@ -71,7 +75,7 @@ if str(ROOT) not in sys.path:
 
 from tw.normalise import norm_name  # noqa: E402
 from tw.supplier_type import is_multi_entity  # noqa: E402
-from tw.lookup_pool import earliest_known, parse_known_date, score_entities  # noqa: E402
+from tw.lookup_pool import award_id_sort_key, earliest_known, parse_known_date, score_entities  # noqa: E402
 
 WAREHOUSE = ROOT / "data/local/warehouse/awards_classified_chg_tw_002.jsonl"
 CONFIG = ROOT / "config/chg-tw-001-dev.json"
@@ -158,7 +162,7 @@ def main() -> int:
             "n": len(rs),
             "first_seen": first_seen,
             "earliest_award": earliest_award,
-            "tiebreak_id": min(ids) if ids else None,
+            "tiebreak_id": min(ids, key=award_id_sort_key) if ids else None,
             "source": {r["legal_name_source"] for r in rs},
         })
 

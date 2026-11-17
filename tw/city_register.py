@@ -136,6 +136,37 @@ def _http_get(url: str, dest: Path | None = None, timeout: int = 60) -> bytes:
     return data
 
 
+
+_MONTHS = {
+    "january": 1, "jan": 1, "february": 2, "feb": 2, "march": 3, "mar": 3,
+    "april": 4, "apr": 4, "may": 5, "june": 6, "jun": 6, "july": 7, "jul": 7,
+    "august": 8, "aug": 8, "september": 9, "sep": 9, "sept": 9, "october": 10,
+    "oct": 10, "november": 11, "nov": 11, "december": 12, "dec": 12,
+}
+
+
+def period_from_filename(name: str) -> str | None:
+    m = re.search(r"(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept|sep|oct|nov|dec)[-_ ]?(20\d{2})", name, re.I)
+    if not m:
+        return None
+    return f"{m.group(2)}-{_MONTHS[m.group(1).lower()]:02d}"
+
+
+def is_plausible_vendor(name: str | None) -> bool:
+    """Drop PDF-wrap fragments so a stray date or punctuation is not stored as a vendor."""
+    if not name:
+        return False
+    s = name.strip()
+    if len(s) < 4:
+        return False
+    letters = sum(ch.isalpha() for ch in s)
+    if letters < 3:
+        return False
+    if re.fullmatch(r"\d{4}/\d{2}/\d{2}", s):
+        return False
+    return True
+
+
 TTS_RE = re.compile(r"(\d{2,4}[A-Z]/\d{4}/\d{2})")
 DATE_RE = re.compile(r"\b(\d{1,2}/\d{1,2}/\d{4})\b")
 MEDIA_2026_RE = re.compile(r"tenders-awarded-[a-z]+-2026\.pdf", re.I)
@@ -183,8 +214,8 @@ def parse_layout_text(
         if tts:
             decision = re.sub(r"\s+", " ", _slice(line, ccol, ecol))
             desc = re.sub(r"\s+", " ", _slice(line, ecol, vcol))
-            vendors = [v for v in pending_vendors if v]
-            if vendor:
+            vendors = [v for v in pending_vendors if is_plausible_vendor(v)]
+            if is_plausible_vendor(vendor):
                 vendors.append(vendor)
             pending_vendors = []
             raw_awards.append({
@@ -194,7 +225,7 @@ def parse_layout_text(
                 "vendors": vendors,
                 "date": dt,
             })
-        elif vendor:
+        elif is_plausible_vendor(vendor):
             pending_vendors.append(vendor)
         elif date_s and raw_awards and not raw_awards[-1]["date"]:
             raw_awards[-1]["date"] = dt
@@ -316,10 +347,7 @@ def light_fetch(raw_dir: Path, cfg: dict) -> dict:
                 result["fetched"].append(url)
                 retrieved_at = _now_sast_label()
             period = None
-            pm = re.search(r"(january|february|march|april|may|june|july|august|september|october|november|december)[-_ ]?(20\d{2})", name, re.I)
-            if pm:
-                months = {m: i for i, m in enumerate(["january","february","march","april","may","june","july","august","september","october","november","december"], 1)}
-                period = f"{pm.group(2)}-{months[pm.group(1).lower()]:02d}"
+            period = period_from_filename(name)
             rows = parse_register_pdf(dest, source_url=url, retrieved_at=retrieved_at, period=period)
             result["rows"].extend(rows)
         except Exception as exc:  # noqa: BLE001

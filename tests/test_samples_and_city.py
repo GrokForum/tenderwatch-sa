@@ -117,3 +117,14 @@ TTS Reference   Decision Reference   Description          Vendor                
     assert all(r["tts_reference"] == "123S/2026/27" for r in rows)
     assert all(r["award_date"] == "2026-10-05" for r in rows)
     assert all(r["supplier_type"] == "juristic" for r in rows)
+
+
+def test_implausible_vendor_fragments_are_dropped() -> None:
+    from tw.city_register import is_plausible_vendor
+
+    assert is_plausible_vendor("Zutari (Pty) Ltd")
+    assert not is_plausible_vendor(";")
+    assert not is_plausible_vendor("2")
+    assert not is_plausible_vendor("CC;")
+    assert not is_plausible_vendor("2026/03/23")
+    assert not is_plausible_vendor("")

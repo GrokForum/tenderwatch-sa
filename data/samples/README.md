@@ -10,3 +10,5 @@ Sanitized extracts from the 17 Nov 2026 source survey. Each file records its sou
 | `city-of-cape-town/PROVENANCE.md` | URL, robots, date-format and POPIA notes for the City extract | — |
 
 No director IDs, addresses or contacts are stored. Contact and address keys from OCDS were dropped. Sole-trader personal names were not copied from City registers.
+
+CHG-TW-002 (reviewer A, PR #3): supplier names that are in the two-person check queue or under a POPIA hold are replaced in these samples by `[withheld: in the CHG-TW-002 two-person check queue]`. The OCID still locates the source record.

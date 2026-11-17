@@ -29,14 +29,16 @@ Before an RFC's owner questions reach the owner, a short board pass runs each qu
 
 - **Fixed budget:** one pass per question set, and at most about 120 words per question block. When a question needs more, that means it should be split, or it is not ready for the owner.
 - **Planner first:** before drafting, the budget keeper asks one question per item: "Is this an owner decision, and what is the smallest decision that settles it?" Items that fail go back to the author.
-- **Git ratchet with real metrics:** after the owner answers, each draft is scored as matched, partly matched or missed, in a committed scorecard row (RFC, question, score, blind yes or no). A change to this board process is kept only if the match rate on the next **blind** set does not fall; otherwise it is reverted with git.
+- **Git ratchet with real metrics:** after the owner answers, each draft is scored as matched, partly matched or missed, in a committed scorecard row (RFC, question, score, blind yes or no). An answer outside the options offered scores Missed; a later extension of an answer is noted next to its score. Each RFC also gets one summary row with two counts: **owner questions sent** and **questions the budget keeper cut**.
+- **Keep rule:** a change to this board process is kept only if, on the next **blind** set, (a) the match rate does not fall, and (b) the owner questions sent do not rise, allowing no worse by more than one question, because the sets are small. Otherwise it is reverted with git. Rule (b) measures the owner's own test: the board must save him input, not add to it.
 
 ## Format (one short block per question)
 
+The owner sees the one-line recommendation first. The viewpoints and the dissent sit underneath, for when he wants the reasons.
+
 ```
 Q<id> — <question in one line>
-Board draft, not an owner answer.
-Recommendation: <one line>   Confidence: <low|medium|high>
+Recommendation: <one line>   Confidence: <low|medium|high>   (Board draft, not an owner answer.)
 Would change it: <one line>
 Lawyer: <one line> | Privacy: <one line> | Editor: <one line> | Data: <one line> | Budget: <one line>
 Dissent (<viewpoint>): <one line, kept>

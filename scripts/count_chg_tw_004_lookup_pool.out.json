@@ -39,6 +39,13 @@
     "3": 9
   },
   "young_candidates": 23,
+  "unknown_dates": {
+    "entities_unknown_first_seen": 0,
+    "rows_unknown_first_seen": 0,
+    "entities_unknown_earliest_award": 0,
+    "rows_unknown_award_date": 0,
+    "entities_first_seen_after_earliest_award": 0
+  },
   "three_plus_rows": 4,
   "score_spread": {
     "7": 4,

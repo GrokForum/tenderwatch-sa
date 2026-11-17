@@ -37,13 +37,11 @@ NATURAL_CASES = [
 
 UNKNOWN_CASES = [
     "ORANGE RIVER LOGISTICS",
-    "[redacted]",
-    "[redacted]",
+    "ZEPHYRA GROUP",
+    "QWERTANE ZEPHYR SYSTEMS",
     "",
     None,
-    "[redacted]",
-    # "Trust" is unknown: a family trust can carry a private person's name.
-    "Mira Testburg Family Trust",
+    "X Y Z ZEPHYR PRODUCT SOLUTIONS",
     # Bare words that are not a trailing legal suffix must not be juristic.
     "Limited Edition Printers",
     "Inc Design Studio",
@@ -106,13 +104,18 @@ def test_public_export_omits_non_juristic_names() -> None:
 
 def test_public_supplier_name_withholds_unknown() -> None:
     assert public_supplier_name("Beta Tools Limited") == "Beta Tools Limited"
-    assert public_supplier_name("[redacted]") is None
+    assert public_supplier_name("ZEPHYRA GROUP") is None
     assert public_supplier_name("A B Fakesurname") is None
 
 
-def test_trust_and_bare_words_are_not_juristic() -> None:
-    """Trust is unknown; limited/inc/rf only count as a trailing suffix."""
+def test_trust_is_juristic_but_held_and_bare_words_are_not_juristic() -> None:
+    """CHG-TW-002 (owner decision): Trust is a legal form, reversing CHG-TW-001.
+    A family-style trust name is queued and withheld (POPIA hold) until checked.
+    limited/inc/rf still only count as a trailing suffix."""
+    # Reviewer A (PR #3): a family-style trust is not auto-confirmed as juristic.
     assert classify_supplier_type("Mira Testburg Family Trust") == "unknown"
+    assert classify_supplier_type("Example Bursary Trust") == "juristic"
+    assert public_supplier_name("Mira Testburg Family Trust") is None
     assert classify_supplier_type("Limited Edition Printers") == "unknown"
     assert classify_supplier_type("Inc Design Studio") == "unknown"
     assert classify_supplier_type("Rf Holdings") == "unknown"

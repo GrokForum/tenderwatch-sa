@@ -6,7 +6,7 @@
   "package_published_date": "2026-08-27T15:25:05Z",
   "package_license": "https://opendatacommons.org/licenses/pddl/1-0/",
   "package_publication_policy": "https://data.etenders.gov.za//Home/LearnMore",
-  "popia_note": "Samples omit parties.address and parties.contactPoint. No director IDs, emails, phones or street addresses are stored.",
+  "popia_note": "Samples omit parties.address and parties.contactPoint. No director IDs, emails, phones or street addresses are stored. Supplier names that would be queued for the CHG-TW-002 two-person check are replaced by a withheld placeholder until checked.",
   "rows": [
     {
       "ocid": "ocds-9t57fa-163705",
@@ -14,18 +14,18 @@
       "buyer_name": "Special Investigation Unit",
       "buyer_id": "629",
       "award_id": "73785",
-      "award_title": "[redacted]",
+      "award_title": "[withheld: would be queued under CHG-TW-002 until checked]",
       "award_status": "active",
       "award_value": {
         "amount": 3854946.0,
         "currency": "ZAR"
       },
       "award_date_field": null,
-      "supplier_name": "[redacted]",
+      "supplier_name": "[withheld: would be queued under CHG-TW-002 until checked]",
       "supplier_id": null,
       "supplier_SupplierID": 0,
       "party_identifier": {
-        "legalName": "[redacted]"
+        "legalName": "[withheld: would be queued under CHG-TW-002 until checked]"
       },
       "cipc_registration_number": null,
       "csd_number": null
@@ -36,18 +36,18 @@
       "buyer_name": "Council for Scientific and Industrial Research (CSIR)",
       "buyer_id": "83",
       "award_id": "74429",
-      "award_title": "[redacted]",
+      "award_title": "[withheld: would be queued under CHG-TW-002 until checked]",
       "award_status": "active",
       "award_value": {
         "amount": 3450000.0,
         "currency": "ZAR"
       },
       "award_date_field": null,
-      "supplier_name": "[redacted]",
+      "supplier_name": "[withheld: would be queued under CHG-TW-002 until checked]",
       "supplier_id": null,
       "supplier_SupplierID": 0,
       "party_identifier": {
-        "legalName": "[redacted]"
+        "legalName": "[withheld: would be queued under CHG-TW-002 until checked]"
       },
       "cipc_registration_number": null,
       "csd_number": null
@@ -58,18 +58,18 @@
       "buyer_name": "Mine Health and Safety Council",
       "buyer_id": "400",
       "award_id": "75056",
-      "award_title": "[redacted]",
+      "award_title": "[withheld: would be queued under CHG-TW-002 until checked]",
       "award_status": "active",
       "award_value": {
         "amount": 2777812.0,
         "currency": "ZAR"
       },
       "award_date_field": null,
-      "supplier_name": "[redacted]",
+      "supplier_name": "[withheld: would be queued under CHG-TW-002 until checked]",
       "supplier_id": null,
       "supplier_SupplierID": 0,
       "party_identifier": {
-        "legalName": "[redacted]"
+        "legalName": "[withheld: would be queued under CHG-TW-002 until checked]"
       },
       "cipc_registration_number": null,
       "csd_number": null

@@ -6,6 +6,9 @@ __pycache__/
 # Local DEV data (samples under data/samples/ are tracked)
 data/raw/
 data/local/
+# CHG-TW-002: per-name two-person check lists stay local (no supplier names in committed files)
+data/local/check_queue.csv
+data/local/confirmed_suppliers.csv
 .venv/
 *.duckdb
 *.egg-info/

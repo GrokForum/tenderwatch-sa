@@ -30,7 +30,7 @@ Out of scope: any build; any use of the owner's CIPC login by the bot; any autom
 
 ## 3. Part 1 — Free public documents: what prints a registration number
 
-All links opened or re-checked on **17 Nov 2026**. Labels: **Confirmed** = seen in the source or measured on the data; **Reported, Unconfirmed** = stated by the publisher or by an earlier survey, not re-measured here; **Unknown** = not established. **Label rule (owner, 17 Nov 2026 22:31 SAST, given in the project lead's chat and relayed by the project lead; the author has not heard it from the owner directly):** anywhere the label Reported is used, it is written **"Reported, Unconfirmed"**, as one label. This file applies it from revision 7; earlier merged RFCs and history rows keep their original wording (§13.7). "Link" means cite the URL and do not copy the file; "scrape" means automated download is acceptable within the stated rules.
+All links opened or re-checked on **17 Nov 2026**. Labels: **Confirmed** = seen in the source or measured on the data; **Reported, Unconfirmed** = stated by the publisher or by an earlier survey, not re-measured here; **Unknown** = not established. **Label rule (owner, 17 Nov 2026 22:31 SAST, given in the project lead's chat and relayed by the project lead; the author and reviewer B have not heard it from the owner directly):** anywhere the label Reported is used, it is written **"Reported, Unconfirmed"**, as one label. This file applies it from revision 7; earlier merged RFCs and history rows keep their original wording (§13.7). "Link" means cite the URL and do not copy the file; "scrape" means automated download is acceptable within the stated rules.
 
 | # | Source | Prints supplier CIPC / CSD on the award? | Label | robots.txt (17 Nov 2026) | Terms | Link or scrape |
 |---|---|---|---|---|---|---|
@@ -275,7 +275,7 @@ Revision 7 (records only) changes `docs/rfc/CHG-TW-004.md` and `STATUS.md` on `d
 
 **Provenance.** Owner's answers, 17 Nov 2026 21:51 SAST, given in the project lead's chat and relayed by the project lead; the author has not heard them from the owner directly. Reviewer B reviewed revision 7 against the owner's answers as relayed by the project lead and did not hear them from the owner directly.
 
-**Provenance (§13.6 answers).** Owner's answers to §13.6 C–E, 17 Nov 2026 22:29 SAST, and to §13.6 B, 17 Nov 2026 22:30 SAST (after briefly reconsidering it), given in the project lead's chat and relayed by the project lead; the author has not heard them from the owner directly.
+**Provenance (§13.6 answers).** Owner's answers to §13.6 C–E, 17 Nov 2026 22:29 SAST, and to §13.6 B, 17 Nov 2026 22:30 SAST (after briefly reconsidering it), given in the project lead's chat and relayed by the project lead; the author and reviewer B have not heard them from the owner directly.
 
 **Numbering.** The answers were relayed as Q1–Q11. The questions in this file are §13 Q1–Q11 (this RFC has no §9.1; that section number belongs to CHG-TW-003). Q1–Q6 match by number and topic. From Q7 on, the relayed numbers are one lower than this file's, because §13 Q7 (CIPC permission) was already answered in §13.1. The author maps them by topic as below. The owner's text for relayed Q8 was literally "8 yes, keep development structured"; the project lead confirmed that it answers §13 Q9 (§13.6 A, closed).
 
@@ -364,7 +364,7 @@ Every one of the 291 rows is accounted for: 61 unmasked + 32 masked + 192 name-p
 
 ### 13.7 Label rule: "Reported, Unconfirmed" (owner, 22:31 SAST, relayed)
 
-The owner's rule (17 Nov 2026 22:31 SAST, given in the project lead's chat and relayed by the project lead; the author has not heard it from the owner directly): anywhere the label Reported is used, write **"Reported, Unconfirmed"**. It is one label (the comma is part of it), with the same meaning as before: stated by a source, or linked by name and buyer only, and not confirmed by a second independent detail. §13.6 B stands: only Confirmed registration years are published; Reported, Unconfirmed years stay internal until confirmed.
+The owner's rule (17 Nov 2026 22:31 SAST, given in the project lead's chat and relayed by the project lead; the author and reviewer B have not heard it from the owner directly): anywhere the label Reported is used, write **"Reported, Unconfirmed"**. It is one label (the comma is part of it), with the same meaning as before: stated by a source, or linked by name and buyer only, and not confirmed by a second independent detail. §13.6 B stands: only Confirmed registration years are published; Reported, Unconfirmed years stay internal until confirmed.
 
 **Applied in this records-only commit:** the fact-label uses in this RFC and in the revision 7 lines of `STATUS.md`. Ordinary English uses of "reported", quotes of earlier merged RFCs and earlier STATUS history rows are unchanged.
 

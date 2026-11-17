@@ -6,9 +6,9 @@ A neutral, sourced public register of South African government tender awards and
 
 ## Current work (DEV only)
 
-The DEV pilot build lives on local branch `dev/CHG-TW-001-build` (not pushed). CAB gave a GO for that build, DEV only. Owner standing GO, given in Cavus's chat on 17 Nov 2026 and relayed by Cavus: "You can push review branches without asking". Merges and publishing still need the owner's GO on the exact head.
+The DEV pilot build is on branch `dev/CHG-TW-001-build`, pushed for review as draft PR #2. CAB gave a GO for that build, DEV only. Review branches are pushed under the owner's standing permission to push review branches; merges and publishing need the owner's GO on the exact head.
 
-It was first raised as draft PR #1 at `c75e5ef` on 17 Nov 2026 11:48 SAST. `009ea171` was pushed to that PR on 17 Nov 2026 11:59 SAST. Both of those review-branch pushes were by Cavus.
+It was first raised as draft PR #1 at `c75e5ef` on 17 Nov 2026 11:48 SAST. `009ea171` was pushed to that PR on 17 Nov 2026 11:59 SAST. Both of those were review-branch pushes by the project lead.
 
 The PR is not docs-only. At `c75e5ef` it added:
 

@@ -94,7 +94,8 @@ Each stored fact should carry `value | label | source_url | source_date | retrie
 | `cipc_reg_no` / `registration_year` | Only if sourced and the supplier is juristic; otherwise Unknown |
 | `csd_no` | Only if sourced |
 | `young_supplier_indicator` | See §6. Values: `yes`, `no`, `unknown`. Computed only when `supplier_type` is `juristic` |
-| `indicator_window` | e.g. `registration_year in {award_year, award_year-1}` |
+| `indicator_window` | `registration_year` is the award year or the year before (0–23 months, stated on the label) |
+| `age_band` | For every juristic supplier with a sourced year: `same` (reg year = award year), `-1`, `-2`, or `older`. `unknown` when there is no sourced year or the supplier is not juristic. Recorded so the bands can be trended. `-2` is shown for trends only and does not set the indicator. See §6 and §16 Q4. |
 | `right_of_reply` | Always `Right of reply: pending` in this RFC (drafts only; nothing is sent) |
 | `evidence` | Pointers to award rows and the year source, each labelled |
 
@@ -145,9 +146,21 @@ For a juristic supplier the **young-supplier indicator** is `yes` when:
 
 `registration_year == award_year` **or** `registration_year == award_year - 1`
 
-Otherwise, if both years are present, the indicator is `no`. If either year is missing, or the supplier is not juristic, the indicator is `unknown`.
+That window is 0–23 months and must be stated on the label. Otherwise, if both years are present, the indicator is `no`. If either year is missing, or the supplier is not juristic, the indicator is `unknown`.
 
-The indicator is a **mechanical comparison of two official public dates**, labelled as an indicator, never as a finding of fraud, fronting, corruption or any other offence. Surrounding wording must stay in that register: "The registration year on the CIPC number is the same as, or the year before, the award year" — not "this company was created to win the tender."
+For every juristic supplier with a sourced year, also record **`age_band`** so the series can be trended (owner decision, §16 Q4):
+
+| `age_band` | When | Indicator |
+|---|---|---|
+| `same` | `registration_year == award_year` | `yes` |
+| `-1` | `registration_year == award_year - 1` | `yes` |
+| `-2` | `registration_year == award_year - 2` | `no` (`-2` is shown for trends only and does not set the indicator) |
+| `older` | `registration_year < award_year - 2` | `no` |
+| `unknown` | No sourced year, years missing, or the supplier is not juristic | `unknown` |
+
+A registration year after the award year is `unknown` (not a trend band) until a later change says otherwise.
+
+The indicator is a **mechanical comparison of two official public dates**, labelled as an indicator, never as a finding of fraud, fronting, corruption or any other offence. Surrounding wording must stay in that register: "The registration year on the CIPC number is the same as, or the year before, the award year (0–23 months)" — not "this company was created to win the tender."
 
 ### 6.3 Honest limits
 
@@ -230,9 +243,10 @@ Promotion, if ever, is same-bytes (same commit or tag) and a separate RFC.
 To be run in DEV after a GO, before any request to merge:
 
 1. Fixture awards for City of Cape Town with a juristic supplier name, value and release date, and **no** CIPC number → `registration_year` and `young_supplier_indicator` are Unknown; award itself is Confirmed as sourced.
-2. Juristic fixture with CIPC `2026/123456/07` and award date in 2026 → indicator `yes`.
-3. Juristic fixture with CIPC `2025/123456/07` and award date in 2026 → indicator `yes`.
-4. Juristic fixture with CIPC `2024/123456/07` and award date in 2026 → indicator `no`.
+2. Juristic fixture with CIPC `2026/123456/07` and award date in 2026 → indicator `yes`, `age_band` `same`.
+3. Juristic fixture with CIPC `2025/123456/07` and award date in 2026 → indicator `yes`, `age_band` `-1`.
+4. Juristic fixture with CIPC `2024/123456/07` and award date in 2026 → indicator `no`, `age_band` `-2` (trend only; does not set the indicator).
+4a. Juristic fixture with CIPC `2023/123456/07` and award date in 2026 → indicator `no`, `age_band` `older`.
 5. Fixture with only a CSD number → year and indicator remain Unknown (CSD is not a year).
 6. Match rule: same normalised name, different buyer → no link. Same name + same buyer → link. Same CIPC + same name → link. Name only → no link. A link on fewer than two agreeing details must fail the test.
 7. Parser drops `contactPoint`, street addresses and `contactPerson`; tests fail if those keys reach the warehouse.
@@ -382,6 +396,7 @@ A DEV implementation succeeds only if all of the following hold:
 5. **The young-supplier indicator is `unknown`** unless a sourced registration year exists **and** the supplier is juristic. It is never computed as yes or no for `natural_person` or `unknown`.
 6. **POPIA tests pass:** contacts and addresses do not reach the warehouse; classifier fixtures remain synthetic; no ID numbers are stored.
 7. **Zero non-juristic names in the public export:** every `natural_person` and `unknown` supplier name is withheld (see `public_export_rows`).
+8. **Age bands** are recorded for every juristic supplier with a sourced year: `same`, `-1`, `-2`, or `older` (and `unknown` when there is no sourced year). The indicator is `yes` only for `same` and `-1` (award year or the year before; 0–23 months, stated on the label). `-2` is stored for trends and does not set the indicator. Consistent with §16 Q4.
 
 ---
 *POPIA check: PASS. See §13.*

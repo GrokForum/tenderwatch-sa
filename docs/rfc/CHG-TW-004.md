@@ -5,19 +5,20 @@
 | Change | CHG-TW-004 |
 | Type | RFC only (survey, measurement, design). No code, no data change, no build under this record. |
 | Environment | DEV (records only) |
-| Branch | `dev/CHG-TW-004-second-detail-rfc`, from `origin/main` at `e87c6cb3418960a576bad94b08ed87ca3c714a8a` (PR #5 merged, head `6d67055c`) |
-| Rollback reference | `e87c6cb3418960a576bad94b08ed87ca3c714a8a`; snapshot tag `snapshot-2026-11-17-pre-tw-pr5` → `258dc778a019ac939067dce0307439228723b7d4` |
+| Branch | `dev/CHG-TW-004-second-detail-rfc`, on `origin/main` at `75acab22d260a896937e8ca78e491b3ac53de298` (PR #5 merge after the project lead's history rewrite of 17 Nov 2026; files byte-identical to the pre-rewrite merge `e87c6cb3`) |
+| Rollback reference | `75acab22d260a896937e8ca78e491b3ac53de298`; snapshot tag `snapshot-2026-11-17-pre-tw-pr5-rw` → `113432644a902aa7f7bd76af3cd299a5ff3a9bf8` |
 | Author | the author (TenderWatch) |
 | Reviewers | reviewer A (project lead), reviewer B |
 | Basis | CHG-TW-003 §9.1 Q5 (decided by the project lead, confirmed by the owner): the next change is an RFC for a second independent detail from CIPC or CSD numbers in free public documents. Owner input on his own manual CIPC lookups, given in the author's chat on 17 Nov 2026 at 18:16 SAST (summarised in §4, not quoted). |
-| Status | Draft for CAB. Owner questions open (§13). |
+| Status | Draft for CAB on [PR #6](https://github.com/GrokForum/tenderwatch-sa/pull/6). City option (i) decided by the owner (§13.1); other owner questions open (§13). |
 
 ## 1. Summary
 
 * **Free public documents almost never print a supplier's registration number on the award.** On the DEV data, **0 of 291** rows and **0 of 59** Reported rows can gain a CIPC or CSD detail from the free public documents already held (eTenders OCDS and nine City of Cape Town monthly award registers, Feb–Oct 2026). 2 of 291 releases (1 of the 59) contain a CSD token, but it belongs to a tenderer list and cannot be tied to the winner.
 * **Owner CIPC lookups** are therefore the only practical source of a registration number and year. This RFC limits them to three fields (registration number, registration date, status), ranks a short list by value, and sets how a lookup becomes Confirmed.
-* **A lookup alone does not upgrade a Reported link.** It confirms the entity behind the City name; the City-to-award link still needs a second independent detail (CHG-TW-001 §5, CHG-TW-003 §6). On today's data, lookups give a Confirmed registration year on at most **7** award rows (7 entities whose links are already Confirmed); the other **39** eligible entities (behind the 59 Reported rows, minus held names) would carry a year labelled Reported.
+* **A lookup alone does not upgrade a Reported link.** It confirms the entity behind the City name; the City-to-award link still needs a second independent detail (CHG-TW-001 §5, CHG-TW-003 §6). On today's data, lookups give a Confirmed registration year on at most **6** award rows (6 eligible entities whose links are already Confirmed; the seventh Confirmed-link entity is a JV and is excluded); the other **39** eligible entities (behind 54 of the 59 Reported rows; the other 5 are held) would carry a year labelled Reported.
 * **CIPC's terms restrict reuse** of what is seen on its site (§4.6). The public output would carry only the derived registration year and our label, and this RFC recommends holding even that until the owner clears the terms.
+* **City data is link-only** (owner decision, City option (i), §13.1): published facts come only from eTenders (CC BY 4.0).
 * **Churn indicators** are defined as private working notes for the owner only (§7).
 
 ## 2. Scope
@@ -38,7 +39,7 @@ All links opened or re-checked on **17 Nov 2026**. Labels: **Confirmed** = seen 
 | S4 | eTenders portal "Awarded" tab — https://www.etenders.gov.za/Home/opportunities?id=2 | Same records as S1 in HTML | Reported | None (404) | Unknown | Link only (S1 is the sanctioned bulk route) |
 | S5 | CSD public pages — https://secure.csd.gov.za/ ; terms https://secure.csd.gov.za/Home/Terms | Supplier search is for organs of state. Terms §2.7.1: institutional users "may not disclose the supplier information to any person" except as an organ of state instructs. No public bulk data. | Confirmed (terms read) | None (404) | Restrictive (above) | Neither; not a source for this change |
 | S6 | OCPO Register of Restricted Suppliers (public PDF/report via https://ocpo.treasury.gov.za/ and CSD) | Carries identifiers, including CIPC numbers, for **barred** suppliers only (`SOURCES.md` §2) | Reported | `ocpo.treasury.gov.za/robots.txt` HTTP 500 | Unknown | Link; usable only as a barred-and-awarded check, not a general detail |
-| S7 | City of Cape Town monthly award registers — https://www.capetown.gov.za/work-and-business/doing-business-with-the-city/tenders-rfqs-and-supply/tenders-awarded/ | **0** CIPC and **0** CSD numbers in all nine 2026 PDFs held (Feb–Oct); no registration column | Confirmed (measured 17 Nov 2026) | `User-agent: * / Allow: /` | Copyright © City of Cape Town: no redistribution or reproduction except personal non-commercial extracts; URL references for non-commercial purposes permitted (https://www.capetown.gov.za/general/terms-of-use/) | Download for analysis with polite fetches; **link, do not republish copies** (see §11 concern) |
+| S7 | City of Cape Town monthly award registers — https://www.capetown.gov.za/work-and-business/doing-business-with-the-city/tenders-rfqs-and-supply/tenders-awarded/ | **0** CIPC and **0** CSD numbers in all nine 2026 PDFs held (Feb–Oct); no registration column | Confirmed (measured 17 Nov 2026) | `User-agent: * / Allow: /` | Copyright © City of Cape Town (https://www.capetown.gov.za/general/terms-of-use/, retrieved 17 Nov 2026): redistribution or reproduction is prohibited except (a) printing or downloading extracts to a local disk for personal, non-commercial use, and (b) copying the content to individual third parties for their personal use, if the City's website is acknowledged as the source. Any other distribution or commercial use needs the City's **express written permission**, with enquiries to the City webmaster; each permitted reference must acknowledge that the information resides at and is the property of the City of Cape Town. Unless otherwise specified, URL references for non-commercial purposes are permitted on the condition that each acknowledges that the information resides at and is the property of the City of Cape Town. Confirmed. | **Link only** (owner decision, City option (i), §13.1): cite the City URL with that acknowledgement, and carry no City-derived facts in the public output. Local downloads for DEV analysis only |
 | S8 | Other metros: Johannesburg (https://joburg.org.za/), eThekwini supplier portal "Awarded Tenders" (https://ethekwinisupplierportal.durban.gov.za/) | Not opened in this pass | Unknown | joburg.org.za: 404; durban.gov.za: fetch failed | Unknown | Link only until surveyed |
 | S9 | Departmental lists — www.gov.za awarded-tenders hub (https://www.gov.za/awarded-tenders); Correctional Services sample (https://www.dcs.gov.za/?page_id=199) | DCS page showed invitations and bid-opening lists, no award register; hub links look historic (`SOURCES.md`) | Unknown | www.gov.za: fetch failed today; dcs.gov.za: 404 | Unknown | Link only |
 | S10 | Government Gazette — https://www.gpwonline.co.za/ ; https://www.gov.za/documents?category=government-gazette ; mirror https://gazettes.africa/ | No gazette PDF opened; whether award notices print registration numbers is not known | Unknown | gpwonline: 404; gazettes.africa: content-signal robots with terms | Unknown (GPW); gazettes.africa terms at /terms-of-use/ | Link only |
@@ -70,7 +71,7 @@ So part 1, on its own, adds nothing today. It stays worth a cheap periodic check
 
 * Only entities with a **registered name from a source** (a statutory suffix printed by the City or OCDS, CHG-TW-002 `confirmed_juristic`). On DEV that is **49** distinct registered names.
 * **Excluded:** POPIA-held names (3 of the 49), queue rows (personal-looking, trust, mismatch, no suffix), trusts (Master's Office, not CIPC), JVs and multi-entity names. A bare name with no suffix (192 queue rows) is not looked up: a name search on a bare name is ambiguous and could surface the wrong entity (§13 Q6).
-* **Eligible on DEV: 46 entities** (7 with an already-Confirmed link, 39 Reported).
+* **Eligible on DEV: 45 entities** (6 with an already-Confirmed link, 39 Reported). Of the 49, 3 are held and 1 is a JV (its link is Confirmed), so 49 − 3 − 1 = 45.
 
 ### 4.3 Ranking (value per minute of the owner's time)
 
@@ -84,7 +85,7 @@ Score each eligible entity, highest first; ties broken by total award value:
 | Link already Confirmed | 2 | The year becomes Confirmed at once (§5) |
 | Link Reported | 1 | The lookup is one detail of two; still useful for checks |
 
-**DEV result (counts only):** 46 eligible; 30 with a usable value; 24 young-company candidates; 4 with 3+ awards. Score spread: 7 pts: 4, 6: 5, 5: 12, 4: 12, 3: 4, 2: 1, 1: 8. **Batch 1 (top 10): 2 Confirmed-link and 8 Reported entities, 8 young-company candidates, 2 repeat winners, all 10 with a usable value.** Five batches of 10 cover all 46.
+**DEV result (counts only):** 45 eligible; 30 with a usable value; 23 young-company candidates; 4 with 3+ awards. Score spread: 7 pts: 4, 6: 5, 5: 11, 4: 12, 3: 4, 2: 1, 1: 8. **Batch 1 (top 10): 2 Confirmed-link and 8 Reported entities, 8 young-company candidates, 2 repeat winners, all 10 with a usable value.** Five batches of 10 cover all 45 (the fifth has 5).
 
 ### 4.4 Batch and template
 
@@ -136,7 +137,7 @@ A lookup is evidence about an **entity**: the registered name with suffix and it
 
 Labels: `registration_year_label` = Confirmed only when steps 1–3 hold. If step 2 is only a name-and-buyer link (the 59), the year is a Confirmed fact about the City entity but its use on the award is **Reported**. `registration_year_source` = `owner CIPC lookup YYYY-MM-DD` (internal), shown publicly (if allowed) as "registration year from a CIPC lookup".
 
-**Effect on DEV if all 46 were looked up:** up to 7 award rows (the 7 Confirmed links) could get a Confirmed year and age band; the 59 Reported rows stay Reported; no row changes its CHG-TW-002 status.
+**Effect on DEV if all 45 were looked up:** up to 6 award rows (the 6 eligible Confirmed links) could get a Confirmed year and age band; the 59 Reported rows stay Reported; no row changes its CHG-TW-002 status.
 
 ## 6. Age indicator: where the year comes from
 
@@ -205,9 +206,9 @@ Each refresh writes a dated snapshot under `data/local/snapshots/YYYY-MM-DD/` (g
 
 ## 11. Risks and concerns
 
-* **City copyright (S7).** The City's terms prohibit redistribution of its content beyond personal non-commercial use and allow URL references for non-commercial purposes. The CHG-TW-001 public site plan republishes City-derived names and fields. This needs the owner's attention before any publication, independent of this change.
+* **City copyright (S7).** The City's terms (https://www.capetown.gov.za/general/terms-of-use/, retrieved 17 Nov 2026) prohibit redistribution or reproduction of its content, except personal non-commercial extracts and copies to individual third parties for their personal use with the City's website acknowledged as the source. Anything else needs the City's express written permission (enquiries to the City webmaster). Non-commercial URL references are permitted only if each acknowledges that the information resides at and is the property of the City of Cape Town. The CHG-TW-001 public-site plan republished City-derived names and fields; the owner has since chosen City option (i) (§13.1): City data is link-only, and published facts come only from eTenders. A letter asking the City for permission is drafted for the owner to send himself; its outcome is pending.
 * **CIPC derived-works clause (§4.6).** Even a derived year may fall under §4(7). Recommendation: keep it internal until the owner decides.
-* **Owner time.** 46 eligible entities ≈ 5 batches; returns may be slow. The ranking puts value first.
+* **Owner time.** 45 eligible entities ≈ 5 batches; returns may be slow. The ranking puts value first.
 * **Weak young-company proxy.** "First seen on eTenders" reflects publication coverage, not company age. It is used only for ranking and never shown.
 * **Name reuse and conversions.** A name can pass to a new entity (CHG-TW-003 L10); a converted close corporation may show a number year that differs from its company registration. Mitigation: §4.5 checks; conflicts stay Reported.
 * **Status has no date.** A current status says little about the status at the award date; C3 fires only with a dated public notice.
@@ -215,19 +216,25 @@ Each refresh writes a dated snapshot under `data/local/snapshots/YYYY-MM-DD/` (g
 
 ## 12. Rollback
 
-RFC only: this commit changes `docs/rfc/CHG-TW-004.md` and `STATUS.md`. Before merge, delete the branch. After a merge, `git revert` the merge commit on a review branch, or reset a branch to `e87c6cb3418960a576bad94b08ed87ca3c714a8a`. Tag `snapshot-2026-11-17-pre-tw-pr5` (`258dc778`) is unchanged. For a future build: the lookup files, snapshots and churn notes are local and git-ignored; deleting them returns every year to `unknown`.
+RFC only: this commit changes `docs/rfc/CHG-TW-004.md` and `STATUS.md`. Before merge, delete the branch. After a merge, `git revert` the merge commit on a review branch, or reset a branch to `75acab22d260a896937e8ca78e491b3ac53de298`. Tag `snapshot-2026-11-17-pre-tw-pr5-rw` (`11343264`) is unchanged. For a future build: the lookup files, snapshots and churn notes are local and git-ignored; deleting them returns every year to `unknown`.
 
 ## 13. Owner questions
 
 1. **Publication of derived years:** keep the derived registration year and age band internal until CIPC's terms are cleared (recommended), or publish year + label now?
 2. **Reported age bands:** keep them internal (recommended), or show them labelled Reported?
-3. **Ranking weights (§4.3):** accept them, or put the 7 Confirmed-link entities first so the first batch yields Confirmed years at once?
+3. **Ranking weights (§4.3):** accept them, or put the 6 eligible Confirmed-link entities first so the first batch yields Confirmed years at once?
 4. **Batch size:** 10, or another number?
 5. **One-person businesses:** keep personal-looking names off the lookup list until the two-person check (recommended)?
 6. **Bare names (192 no-suffix queue rows):** out of the lookup list (recommended), or allow the owner to search some by name?
-7. **CIPC permission:** does the owner want to ask CIPC Legal Services in writing about reuse? That would be the owner's own message; the author drafts only.
+7. **CIPC permission:** answered in §13.1 (a letter to CIPC Legal Services is drafted for the owner to send himself).
 8. **C4 threshold:** 3 young winners at one buyer within 365 days, or another value?
 9. **Periodic part-1 checks:** survey other metros (S8) and gazettes (S10) in a later records-only change?
+10. **Local DEV reading of City registers under option (i):** may the City PDFs still be downloaded and read locally in DEV (never published) to find links and conflicts?
+
+### 13.1 Decisions
+
+* **City option (i), decided by the owner on 17 Nov 2026 at 20:07 SAST, relayed by the project lead.** City of Cape Town data is **link-only**: the public output cites City URLs with the acknowledgement the City's terms require and carries no City-derived facts. Published facts come only from eTenders (CC BY 4.0). The author reads this as still allowing City registers to be read locally in DEV to find links and conflicts (owner to confirm, §13 Q10).
+* **Two letters**, one to the City of Cape Town (permission to reuse its award registers) and one to CIPC Legal Services (reuse of information seen on its site), are drafted for the owner to send himself. They are not part of this repository. **Outcome: pending.**
 
 ## 14. CAB review
 

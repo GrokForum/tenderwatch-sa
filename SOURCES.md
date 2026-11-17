@@ -1,8 +1,8 @@
 # SOURCES — TenderWatch SA feasibility survey
 
-**Status:** draft evidence for CHG-TW-001. Raised as draft [PR #1](https://github.com/GrokForum/tenderwatch-sa/pull/1) at `c75e5ef` on 17 Nov 2026 11:48 SAST. `009ea171` was pushed to that PR on 17 Nov 2026 11:59 SAST. Both pushes were by Cavus. Owner standing GO, given in Cavus's chat on 17 Nov 2026 and relayed by Cavus: "You can push review branches without asking". Merges and publishing still need the owner's GO on the exact head. The PR is not docs-only: it adds this survey, the RFC, STATUS, the parked idea note, a `.gitignore` update, and sanitized award excerpts under `data/samples/` (eTenders OCDS JSON samples and a City of Cape Town register excerpt with provenance). Nothing has been published or sent.
+**Status:** draft evidence for CHG-TW-001. Raised as draft [PR #1](https://github.com/GrokForum/tenderwatch-sa/pull/1) at `c75e5ef` on 17 Nov 2026 11:48 SAST. `009ea171` was pushed to that PR on 17 Nov 2026 11:59 SAST. Both pushes were by the project lead. Review branches are pushed under the owner's standing permission to push review branches; merges and publishing need the owner's GO on the exact head. The PR is not docs-only: it adds this survey, the RFC, STATUS, the parked idea note, a `.gitignore` update, and sanitized award excerpts under `data/samples/` (eTenders OCDS JSON samples and a City of Cape Town register excerpt with provenance). Nothing has been published or sent.
 **Survey date:** Tue 17 Nov 2026, Africa/Johannesburg (SAST).
-**Prepared for:** CAB review by Cavus and Cassian, then the owner's GO.
+**Prepared for:** CAB review by reviewer A (project lead) and reviewer B, then the owner's GO.
 **Question:** do free, public, no-login award sources already carry a supplier CIPC registration number (`YYYY/NNNNNN/NN`, which encodes the registration year only) or a CSD number (`MAAA…`), so that a "young supplier" indicator can be built without a CIPC login?
 
 Times below are in SAST unless a source timestamp carries its own zone, in which case it is converted.

@@ -27,6 +27,6 @@
     "request_pause_s": 1.5
   },
   "right_of_reply": "Right of reply: pending",
-  "indicator_window_label": "The registration year on the CIPC number is the same as, or the year before, the award year (0\u201323 months)",
+  "indicator_window_label": "The registration year on the CIPC number is the same as, or the year before, the award year (0–23 months)",
   "data_dir": "data/local"
 }

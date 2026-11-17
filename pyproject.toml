@@ -3,6 +3,12 @@ name = "tenderwatch-sa"
 version = "0.0.0"
 description = "TenderWatch SA DEV helpers"
 requires-python = ">=3.11"
+# Runtime imports are the Python standard library only.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest"]
+test = ["pytest"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

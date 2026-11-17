@@ -1,4 +1,4 @@
-"""Orchestrate the CHG-TW-001 DEV pilot (local box, no push, no PublicFunds writes)."""
+"""Orchestrate the CHG-TW-001 DEV pilot (local box, no PublicFunds writes; review-branch push only)."""
 from __future__ import annotations
 
 import json
@@ -141,7 +141,7 @@ def _write_report(path: Path, report: dict) -> None:
     fetch = report["city_fetch"]
     body = f"""# CHG-TW-001 DEV run report
 
-Environment: **DEV** (local box only). No push, no Pages, no TEST/PROD, no PublicFunds edits.
+Environment: **DEV** (local box only). No Pages, no TEST/PROD, no PublicFunds edits; review-branch push only.
 
 - Run: {report['run_at']} to {report['finished_at']}
 - PublicFunds pin: `{report['publicfunds_pin']}` (read-only)

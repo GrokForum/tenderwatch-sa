@@ -5,8 +5,10 @@ import csv
 import json
 import re
 import subprocess
+import time
 import urllib.request
 from datetime import datetime, timezone, timedelta
+from collections.abc import Callable
 from pathlib import Path
 from urllib.parse import quote, urljoin, urlparse, urlunparse
 from urllib.robotparser import RobotFileParser
@@ -17,6 +19,7 @@ from tw.supplier_type import classify_supplier_type
 
 SAST = timezone(timedelta(hours=2), name="SAST")
 USER_AGENT = "TenderWatchSA-DEV/0.1 (research; local box; read-only award register)"
+DEFAULT_REQUEST_PAUSE_S = 1.5
 SAMPLE_CSV = ROOT / "data/samples/city-of-cape-town/tenders-awarded-october-2026-samples.csv"
 
 # Conservative robots: we only request paths under the official City site.
@@ -282,12 +285,37 @@ def _absolute_pdf_url(base: str, href: str) -> str | None:
     return urlunparse((parts.scheme, parts.netloc, path, parts.params, parts.query, parts.fragment))
 
 
-def light_fetch(raw_dir: Path, cfg: dict) -> dict:
-    """Fetch robots.txt, the official index, and allowed monthly PDFs. No login."""
+def light_fetch(
+    raw_dir: Path,
+    cfg: dict,
+    *,
+    sleep: Callable[[float], None] = time.sleep,
+    request_pause_s: float | None = None,
+    http_get: Callable[..., bytes] = _http_get,
+) -> dict:
+    """Fetch robots.txt, the official index, and allowed monthly PDFs. No login.
+
+    If robots.txt cannot be read, the fetch fails closed: no further City
+    requests are made. A pause (default 1.5 s, configurable) is injected
+    between successive HTTP requests. ``sleep`` and ``http_get`` are
+    injectable so tests can run offline.
+    """
     city = cfg["city_register"]
     robots_url = city["robots_url"]
     index_url = city["index_url"]
     known_pdf = city.get("known_pdf")
+    pause = DEFAULT_REQUEST_PAUSE_S if request_pause_s is None else request_pause_s
+    if request_pause_s is None and city.get("request_pause_s") is not None:
+        pause = float(city["request_pause_s"])
+    requests_made = 0
+
+    def polite_get(url: str, dest: Path | None = None) -> bytes:
+        nonlocal requests_made
+        if requests_made:
+            sleep(pause)
+        requests_made += 1
+        return http_get(url, dest=dest)
+
     result = {
         "robots_allowed": {},
         "fetched": [],
@@ -297,12 +325,11 @@ def light_fetch(raw_dir: Path, cfg: dict) -> dict:
         "provenance_written": [],
     }
     try:
-        robots_txt = _http_get(robots_url, dest=raw_dir / "robots.txt").decode("utf-8", errors="replace")
+        robots_txt = polite_get(robots_url, dest=raw_dir / "robots.txt").decode("utf-8", errors="replace")
         result["fetched"].append(robots_url)
-    except Exception as exc:  # noqa: BLE001 — record and fall back
+    except Exception as exc:  # noqa: BLE001 — fail closed, do not fetch further
         result["errors"].append(f"robots.txt: {type(exc).__name__}: {exc}")
-        robots_txt = "User-agent: *\nAllow: /\n"
-        result["skipped"].append("robots fetch failed; will not guess Allow")
+        result["skipped"].append("robots.txt unavailable; fail closed, no fetch")
         return result
 
     targets = [index_url]
@@ -315,7 +342,7 @@ def light_fetch(raw_dir: Path, cfg: dict) -> dict:
             continue
         if url == index_url:
             try:
-                body = _http_get(url, dest=raw_dir / "tenders-awarded.html")
+                body = polite_get(url, dest=raw_dir / "tenders-awarded.html")
                 result["fetched"].append(url)
                 html = body.decode("utf-8", errors="replace")
                 hrefs = sorted(set(re.findall(r'href="([^"]+\.pdf)"', html, flags=re.I)))
@@ -343,7 +370,7 @@ def light_fetch(raw_dir: Path, cfg: dict) -> dict:
                     import json as _json
                     retrieved_at = _json.loads(prov.read_text()).get("fetched_at") or retrieved_at
             else:
-                _http_get(url, dest=dest)
+                polite_get(url, dest=dest)
                 result["fetched"].append(url)
                 retrieved_at = _now_sast_label()
             period = None

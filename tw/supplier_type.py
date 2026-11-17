@@ -89,15 +89,12 @@ def young_supplier_indicator(
     """Return yes, no, or unknown.
 
     Computed only for juristic suppliers. Missing years, or any non-juristic
-    type, yield unknown — even if years happen to be present.
+    type, yield unknown — even if years happen to be present. `yes` only
+    when the age band is `same` or `-1`; `-2` is a trend band and yields `no`.
     """
-    if supplier_type != "juristic":
-        return "unknown"
-    if registration_year is None or award_year is None:
-        return "unknown"
-    if registration_year == award_year or registration_year == award_year - 1:
-        return "yes"
-    return "no"
+    from tw.age import young_supplier_indicator as _impl
+
+    return _impl(supplier_type, registration_year, award_year)
 
 
 def public_supplier_name(name: str | None, supplier_type: SupplierType | None = None) -> str | None:

@@ -1,0 +1,31 @@
+{
+  "rfc": "CHG-TW-001",
+  "env": "DEV",
+  "publicfunds_pin": "de37f666c12d1d6b7a815860894af0372514ba7f",
+  "etenders_ocds": {
+    "source_id": "etenders_ocds",
+    "source_url": "https://data.open-contracting.org/en/publication/143/download?name=full.jsonl.gz",
+    "publication_page": "https://data.open-contracting.org/en/publication/143",
+    "learn_more": "https://data.etenders.gov.za/Home/LearnMore",
+    "paths": [
+      "/workspace/publicfunds/data/raw/etenders_ocds/2026-10-19/full.jsonl.gz",
+      "/workspace/publicfunds/src/full.jsonl.gz"
+    ],
+    "sha256": "a2849a632148ca1eb59c0ceabeb45de16be0698a1804a485cf93417542435225",
+    "size_bytes": 11676874,
+    "publicfunds_fetched_at_sast": "2026-10-19 09:38 SAST (Africa/Johannesburg)",
+    "ocp_last_retrieved": "2026-09-20"
+  },
+  "buyer": {
+    "name": "City of Cape Town",
+    "jurisdiction": "City of Cape Town"
+  },
+  "city_register": {
+    "index_url": "https://www.capetown.gov.za/work-and-business/doing-business-with-the-city/tenders-rfqs-and-supply/tenders-awarded/",
+    "robots_url": "https://www.capetown.gov.za/robots.txt",
+    "known_pdf": "https://www.capetown.gov.za/media/nb1fgwta/tenders-awarded-october-2026.pdf"
+  },
+  "right_of_reply": "Right of reply: pending",
+  "indicator_window_label": "The registration year on the CIPC number is the same as, or the year before, the award year (0–23 months)",
+  "data_dir": "data/local"
+}

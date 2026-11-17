@@ -3,11 +3,11 @@
 **Status:** DRAFT for CAB review. Not implemented. No SUCCEEDED / FAILED yet.
 **Environment:** DEV only. DEV must not point at a production host, database, mailbox or DNS.
 **Date:** 17 Nov 2026, Africa/Johannesburg (SAST).
-**Author:** TenderWatch (Grok Bot), from the parked idea note and the 17 Nov 2026 source survey.
-**CAB reviewers:** Cavus (expert / charter) and Cassian (shadow / drift). Sign-off must be by someone other than the author. The owner's GO is required before any implementation is merged to `main`, before any push, and before anything is published or sent.
+**Author:** the author (TenderWatch), from the parked idea note and the 17 Nov 2026 source survey.
+**CAB reviewers:** reviewer A, the project lead (expert / charter), and reviewer B (shadow / drift). Sign-off must be by someone other than the author. The owner's GO is required before any implementation is merged to `main`, before any push, and before anything is published or sent.
 **Pre-change SHA:** `b812102eb8d5eea0c6a486e8a332a1bf62e08d76` (`main`, initial commit). Work lives on branch `rfc/CHG-TW-001`.
 **Related:** `SOURCES.md` (evidence), `IDEA-tenderwatch.md` (parked idea, 16 Nov 2026), PublicFunds `/workspace/publicfunds`.
-**Owner decision 17 Nov 2026 (relayed by Cavus):** TenderWatch goes ahead as a PublicFunds extension, kept on its own separate track. That decision is recorded in §16. It is not a GO to implement, merge, push or publish.
+**Owner decision 17 Nov 2026 (relayed by the project lead):** TenderWatch goes ahead as a PublicFunds extension, kept on its own separate track. That decision is recorded in §16. It is not a GO to implement, merge, push or publish.
 **Model:** PoliticianWatch SA planning packet and PublicFunds SA change discipline.
 
 This change record describes proposed DEV work. The branch holds the survey, the RFC, sanitized samples, a supplier-type classifier with tests, and the identifier-count script. It does not yet ingest a warehouse or publish a site.
@@ -27,7 +27,7 @@ The 17 Nov 2026 survey does **not** support that hypothesis for structured award
 
 What *is* feasible, without any login, is a **neutral, sourced awards register** for one buyer, reused from PublicFunds' existing eTenders ingest as a read-only upstream. The registration-year signal should still be specified, tested with fixtures, and shown as **Unknown** by default until a free public document supplies a CIPC year, or publishers start emitting CIPC numbers.
 
-**Owner decision 17 Nov 2026 (relayed by Cavus):** TenderWatch goes ahead as a PublicFunds extension, kept on its own **separate track**. In practice that means:
+**Owner decision 17 Nov 2026 (relayed by the project lead):** TenderWatch goes ahead as a PublicFunds extension, kept on its own **separate track**. In practice that means:
 
 - a **separate repo** (`GrokForum/tenderwatch-sa`) and a **separate change track** (`CHG-TW-*`, not PublicFunds' `CHG-2026-*` numbers);
 - **reuse** of PublicFunds' `etenders_ocds` ingest as a **read-only upstream or pinned dependency** (a pinned PublicFunds commit or tag, or its warehouse / raw OCDS outputs / connector, consumed without editing that repo);
@@ -42,7 +42,7 @@ That decision resolves the proceed-or-park question and the extension-versus-new
 
 The idea note (`IDEA-tenderwatch.md`) describes a public-interest pattern: a company that wins a government award very soon after it is registered. That is an *indicator*, not proof of wrongdoing. To compute it we need (a) an official award with a supplier and a date, and (b) the supplier's registration year. (a) is publicly available and already ingested by PublicFunds. (b) is not, on the sources that can be used without a login.
 
-The honest options were: park the product again; build the awards register now and leave age as Unknown; or wait for a free registration-year source. **Owner decision 17 Nov 2026 (relayed by Cavus):** the first option is declined. TenderWatch goes ahead as a PublicFunds extension on a separate track, which is the middle path: a DEV awards register that reuses PublicFunds' ingest, with the age indicator specified and shown as Unknown until a free year source appears. That decision does not by itself authorise implementation.
+The honest options were: park the product again; build the awards register now and leave age as Unknown; or wait for a free registration-year source. **Owner decision 17 Nov 2026 (relayed by the project lead):** the first option is declined. TenderWatch goes ahead as a PublicFunds extension on a separate track, which is the middle path: a DEV awards register that reuses PublicFunds' ingest, with the age indicator specified and shown as Unknown until a free year source appears. That decision does not by itself authorise implementation.
 
 ## 3. Scope (DEV only)
 
@@ -235,7 +235,7 @@ Promotion, if ever, is same-bytes (same commit or tag) and a separate RFC.
 | **Year-only indicator is coarse** | Document the 0–23 month window in the UI/copy; never say "registered one month before". |
 | **Name collision with tenderwatch.org** | This project is TenderWatch SA. Keep the distinction in copy. |
 | **Scope creep into a login** | No login without a new RFC and a quoted GO. |
-| **Duplicating or editing PublicFunds** | Resolved as a separate track (owner decision 17 Nov 2026, relayed by Cavus): reuse `etenders_ocds` as a read-only upstream or pinned dependency; make no PublicFunds changes under CHG-TW-*. |
+| **Duplicating or editing PublicFunds** | Resolved as a separate track (owner decision 17 Nov 2026, relayed by the project lead): reuse `etenders_ocds` as a read-only upstream or pinned dependency; make no PublicFunds changes under CHG-TW-*. |
 | **Upstream drift** | Pin a PublicFunds commit or tag and record it. If the pin breaks the pilot, raise a PublicFunds RFC rather than patching that repo from this one. |
 
 ## 12. Test plan (DEV)
@@ -350,7 +350,7 @@ This default is put to the owner as question 7 in §16.
 
 ### Decisions already taken
 
-**Owner decision 17 Nov 2026 (relayed by Cavus):** TenderWatch goes ahead as a PublicFunds extension, kept on its own separate track.
+**Owner decision 17 Nov 2026 (relayed by the project lead):** TenderWatch goes ahead as a PublicFunds extension, kept on its own separate track.
 
 1. **Proceed or park? — Resolved.** The project proceeds. It is not parked pending a registration-year source. Supplier age will be Unknown by default, as the survey measured.
 2. **New bot vs PublicFunds extension? — Resolved.** TenderWatch is a PublicFunds extension on a **separate track**: its own repo (`GrokForum/tenderwatch-sa`), its own change series (`CHG-TW-*`), reuse of PublicFunds' `etenders_ocds` ingest as a **read-only upstream or pinned dependency**, **no changes to PublicFunds** without a PublicFunds RFC, and a **separate public site** (`GrokForum/tenderwatch-site`).
@@ -375,11 +375,11 @@ The following remain open. They are not a GO. A GO must name this RFC (CHG-TW-00
 
 ## 17. CAB review
 
-Reviewers: **Cavus** and **Cassian**, as four checks (expert, shadow, charter, drift). They review this draft; they do not implement it under this record, and they cannot authorise TEST, PROD, or a send. Review-branch pushes are done by Cavus under the owner's standing GO, given in Cavus's chat on 17 Nov 2026 and relayed by Cavus: "You can push review branches without asking". Merges and publishing still need the owner's GO on the exact head.
+Reviewers: **reviewer A** (project lead) and **reviewer B**, as four checks (expert, shadow, charter, drift). They review this draft; they do not implement it under this record, and they cannot authorise TEST, PROD, or a send. Review-branch pushes are done by the project lead under the owner's standing permission to push review branches; merges and publishing need the owner's GO on the exact head.
 
 Implementation starts only after: (a) both reviewers have signed the draft or a revised draft, and (b) the owner gives a quoted GO for CHG-TW-001 in DEV.
 
-**Result:** Cavus, on `c75e5ef`: **PASS_WITH_CONCERNS** (addressed in `009ea171`). Cavus, on `009ea171` (draft PR #1, pushed 17 Nov 2026 11:59 SAST): **PASS_WITH_CONCERNS**. The remaining concerns (standing-GO citation, trailing-suffix / Trust classification, and the STATUS push record) are addressed in the revision after that SHA. Cassian: not yet recorded. Still DRAFT; not a GO to implement, merge, or publish.
+**Result:** Two reviewer PASSes are required on the exact head; each review round and its outcome is recorded in the pull request. PR #1 (RFC) was reviewed by both reviewers and merged on the owner's GO as `fb5a4bcc`. A reviewer PASS is not a GO to merge, publish, or open TEST/PROD; only the owner gives that, on the exact head.
 
 ## 18. DEV acceptance criteria
 

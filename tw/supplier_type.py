@@ -152,9 +152,37 @@ def normalise_tokens(name: str | None) -> list[str]:
     return s.split()
 
 
-def split_trading_as(name: str | None) -> tuple[str, str | None]:
-    """Return (legal-name part, trading-name part or None)."""
+_PAIRS = {"(": ")", "[": "]", "{": "}"}
+
+
+def strip_outer_brackets(name: str | None) -> str:
+    """Remove brackets or parentheses that wrap the *whole* name, and whitespace.
+
+    "(X Y Testname and Associates)" and "[A B Fakename & Sons]" are matched
+    the same as without the wrapper (reviewer A, PR #4). Brackets that do not
+    enclose the whole string, as in "(Pty) Ltd", are kept.
+    """
     s = (name or "").strip()
+    while len(s) >= 2 and s[0] in _PAIRS and s[-1] == _PAIRS[s[0]]:
+        depth = 0
+        wraps = True
+        for i, ch in enumerate(s):
+            if ch == s[0]:
+                depth += 1
+            elif ch == _PAIRS[s[0]]:
+                depth -= 1
+                if depth == 0 and i != len(s) - 1:
+                    wraps = False
+                    break
+        if not wraps:
+            break
+        s = s[1:-1].strip()
+    return s
+
+
+def split_trading_as(name: str | None) -> tuple[str, str | None]:
+    """Return (legal-name part, trading-name part or None), outer brackets removed."""
+    s = strip_outer_brackets(name)
     m = _TRADING_AS_RE.search(s)
     if not m:
         return s, None

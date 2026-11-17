@@ -1,0 +1,50 @@
+{
+  "input": {
+    "path": "/workspace/publicfunds/src/full.jsonl.gz",
+    "size_bytes": 11676874,
+    "sha256": "a2849a632148ca1eb59c0ceabeb45de16be0698a1804a485cf93417542435225",
+    "publicfunds_fetched_at_sast": "2026-10-19 09:38 SAST (Africa/Johannesburg)",
+    "ocp_last_retrieved": "2026-09-20",
+    "source_url": "https://data.open-contracting.org/en/publication/143/download?name=full.jsonl.gz"
+  },
+  "method": {
+    "cipc_regex": "(?:19|20)\\d{2}/\\d{6}/\\d{2}",
+    "csd_regex": "(?i)\\bMAAA\\d{6,}\\b",
+    "min_join_name_chars": 5,
+    "name_fold": "casefold; strip CSD tokens; non-alphanumerics to space; collapse whitespace",
+    "join": "award-supplier row joins a CSD-bearing tenderer.name when the folded winner name has length >= min_join_name_chars and equals or is a substring of the folded tenderer name (or vice versa). One join per row.",
+    "duplicates": "Release counts are one per JSON line. Award-supplier rows are not deduplicated by name: two awards to the same supplier count twice."
+  },
+  "corpus": {
+    "releases": 35309,
+    "awards": 9551,
+    "award_supplier_rows": 9551,
+    "buyers_with_awards": 488,
+    "city_of_cape_town_award_supplier_rows": 291,
+    "portal_supplier_id_zero": 3575,
+    "awards_with_value": 9551,
+    "awards_with_award_date_field": 0,
+    "contracts": 1691,
+    "contracts_with_date": 1691
+  },
+  "cipc": {
+    "releases_with_cipc_anywhere": 59,
+    "unique_numbers": {
+      "1990/000900/30": 59
+    },
+    "in_supplier_name_or_id": 0
+  },
+  "csd": {
+    "structured_identifier_id": 0,
+    "in_supplier_name_or_id": 11,
+    "in_supplier_name_or_id_pct_of_rows": 0.12,
+    "releases_with_csd_anywhere": 295,
+    "award_releases_with_csd_anywhere": 208,
+    "releases_with_csd_in_tenderers": 279,
+    "award_releases_with_csd_in_tenderers": 194,
+    "winner_joined_to_csd_tenderer": 68,
+    "winner_joined_to_csd_tenderer_additional": 68,
+    "winner_joined_to_csd_tenderer_pct_of_rows": 0.71,
+    "winner_joined_additional_pct_of_rows": 0.71
+  }
+}

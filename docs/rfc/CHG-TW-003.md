@@ -9,7 +9,7 @@
 | Rollback reference | `258dc778a019ac939067dce0307439228723b7d4`; snapshot tag `snapshot-2026-11-17-pre-tw-pr4` → `f63f5d2ef02621f9a991c4c353788f7377ab2aa7` |
 | Author | the author (TenderWatch) |
 | Reviewers | reviewer A (project lead), reviewer B |
-| Status | Draft for CAB. Owner questions decided by the project lead under delegated authority (relayed) and confirmed by the owner in the author's chat on 17 Nov 2026 at 18:15 SAST and relayed to reviewer B, who has not heard it from the owner directly (§9.1). Rule A is adopted in principle only; no build under this record. |
+| Status | Draft for CAB. Owner questions decided by the project lead under delegated authority (relayed) and confirmed by the owner in the author's chat on 17 Nov 2026 at 18:15 SAST, in reply to the author's question, relayed to the project lead and reviewer B; reviewer B has not heard it from the owner directly (§9.1). Rule A is adopted in principle only; no build under this record. |
 
 ## 1. Question (owner input, relayed by the project lead, 17 Nov 2026)
 
@@ -137,7 +137,7 @@ Unit tests for a future build CHG under its own GO:
 
 ### 9.1 Decisions on the questions
 
-**Decided by the project lead under delegated authority (relayed); confirmed by the owner in the author's chat on 17 Nov 2026 at 18:15 SAST and relayed to reviewer B, who has not heard it from the owner directly.**
+**Decided by the project lead under delegated authority (relayed); confirmed by the owner in the author's chat on 17 Nov 2026 at 18:15 SAST, in reply to the author's question, relayed to the project lead and reviewer B; reviewer B has not heard it from the owner directly.**
 
 | Q | Decision |
 |---|---|

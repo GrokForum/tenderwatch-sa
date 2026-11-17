@@ -5,12 +5,12 @@
 | Change | CHG-TW-004 |
 | Type | RFC only (survey, measurement, design). No code, no data change, no build under this record. |
 | Environment | DEV (records only) |
-| Branch | Revision 7: `dev/CHG-TW-004-owner-answers`, from `origin/main` at `a644332620176db675e8fd9ff04c3bc9395c9f89` (PR #6 merge). Revisions 1–6: `dev/CHG-TW-004-second-detail-rfc`, on `origin/main` at `75acab22d260a896937e8ca78e491b3ac53de298` (PR #5 merge after the project lead's history rewrite of 17 Nov 2026; files byte-identical to the pre-rewrite merge `e87c6cb3`) |
-| Rollback reference | Revision 7: `a644332620176db675e8fd9ff04c3bc9395c9f89`. Revisions 1–6: `75acab22d260a896937e8ca78e491b3ac53de298`; snapshot tag `snapshot-2026-11-17-pre-tw-pr5-rw` → `113432644a902aa7f7bd76af3cd299a5ff3a9bf8` |
+| Branch | Revision 8: `dev/CHG-TW-004-masked-year`, from `origin/main` at `905562ad649dc07427d77c515f687e84825d09a4` (PR #7 squash merge). Revision 7: `dev/CHG-TW-004-owner-answers`, from `origin/main` at `a644332620176db675e8fd9ff04c3bc9395c9f89` (PR #6 merge). Revisions 1–6: `dev/CHG-TW-004-second-detail-rfc`, on `origin/main` at `75acab22d260a896937e8ca78e491b3ac53de298` (PR #5 merge after the project lead's history rewrite of 17 Nov 2026; files byte-identical to the pre-rewrite merge `e87c6cb3`) |
+| Rollback reference | Revision 8: `905562ad649dc07427d77c515f687e84825d09a4`; snapshot tag `snapshot-2026-11-17-pre-tw-pr7` → `a6443326`. Revision 7: `a644332620176db675e8fd9ff04c3bc9395c9f89`. Revisions 1–6: `75acab22d260a896937e8ca78e491b3ac53de298`; snapshot tag `snapshot-2026-11-17-pre-tw-pr5-rw` → `113432644a902aa7f7bd76af3cd299a5ff3a9bf8` |
 | Author | the author (TenderWatch) |
 | Reviewers | reviewer A (project lead), reviewer B |
 | Basis | CHG-TW-003 §9.1 Q5 (decided by the project lead, confirmed by the owner): the next change is an RFC for a second independent detail from CIPC or CSD numbers in free public documents. Owner input on his own manual CIPC lookups, given in the author's chat on 17 Nov 2026 at 18:16 SAST (summarised in §4, not quoted). Revision 7: owner's answers, 17 Nov 2026 21:51 SAST, relayed by the project lead (§13.2). |
-| Status | Revisions 1–6 merged via [PR #6](https://github.com/GrokForum/tenderwatch-sa/pull/6) (`a6443326`). Revision 7 records the owner's answers to §13 Q1–Q11 (relayed, §13.2) and the legal basis (§15); draft for CAB on its own pull request. Records only. Owner questions §13.6 A–E: all closed (answers relayed by the project lead, 22:29–22:30 SAST). |
+| Status | Revisions 1–6 merged via [PR #6](https://github.com/GrokForum/tenderwatch-sa/pull/6) (`a6443326`). Revision 7 records the owner's answers to §13 Q1–Q11 (relayed, §13.2) and the legal basis (§15); draft for CAB on its own pull request. Records only. Owner questions §13.6 A–E: all closed (answers relayed by the project lead, 22:29–22:30 SAST). Revision 7 merged via [PR #7](https://github.com/GrokForum/tenderwatch-sa/pull/7) (`905562ad`). Revision 8 (masked year placeholder, §13.8): draft for CAB on its own pull request; records only. |
 
 ## 1. Summary
 
@@ -352,6 +352,8 @@ Counts from the same DEV outputs as §13.1 (`data/local/warehouse/awards_classif
 
 Every one of the 291 rows is accounted for: 61 unmasked + 32 masked + 192 name-pending + 6 withheld = 291.
 
+Revision 8: the year cell for each of these rows (Confirmed year, `Year: ****, Reported, Unconfirmed` placeholder, `Year: Unknown`, or the fixed masked-row text) is counted in §13.8. Today the placeholder shows on 0 rows; after all lookups, on at most 54.
+
 **What this means for the public site.** The §13.1 conclusion (that the site would add little over eTenders) no longer holds. A later export CHG could show a sourced legal form on 66 of 291 rows (61 unmasked, 7 of them with a Confirmed award link; 5 masked), City cross-links with citations, Confirmed registration years from lookups as they return, and the indicators in §13.4. 32 rows show masked, 192 rows carry an Unknown legal form with the name pending the check, and 6 mismatched rows stay withheld.
 
 ### 13.6 New owner questions (revision 7) and answers
@@ -361,6 +363,7 @@ Every one of the 291 rows is accounted for: 61 unmasked + 32 masked + 192 name-p
 * **C. Mask safeguard (Q5). Closed** (owner, 22:29 SAST, relayed): a fixed-length mask with no extra identifying detail next to it, and the City citation at register level only. The mask also covers the 5 held rows of confirmed companies. Defined in §13.2.
 * **D. Indicator thresholds (§13.4). Closed** (owner, 22:29 SAST, relayed): I1 to I7 thresholds accepted as proposed (I1: 3 or more in one financial year; I2: 30 days and the metro threshold; I4: 365 days).
 * **E. Personal-looking rows. Closed** (owner, 22:29 SAST, relayed): the 27 personal-looking rows (14 names) show masked. **POPIA note:** these may be sole proprietors who are private individuals. The controls are the fixed-length mask, the register-level citation and no other identifying detail next to the mask (§13.2); the existing rule stays that no ID numbers, addresses or contact details are recorded or shown. The two-person check still runs on these names; its outcome is recorded locally only.
+* **F. Year cell on masked rows (revision 8). Open.** §13.8 shows the fixed text `Year: not shown (masked row)` on all 32 masked rows, keeping §13.6 C as the stricter rule, because a placeholder on masked rows would reveal lookup outcomes. Keep that (recommended), or show `Year: ****, Reported, Unconfirmed` on masked rows where a Reported, Unconfirmed year exists (at most 5 rows)?
 
 ### 13.7 Label rule: "Reported, Unconfirmed" (owner, 22:31 SAST, relayed)
 
@@ -384,6 +387,37 @@ The owner's rule (17 Nov 2026 22:31 SAST, given in the project lead's chat and r
 | UI | public site repo (`GrokForum/tenderwatch-site`) | any label text, once built |
 
 `SOURCES.md` does not use the label today (grep: 0 hits); it is checked again in the build change.
+
+### 13.8 Masked year placeholder (revision 8, records only)
+
+**Provenance.** The owner's preference, 17 Nov 2026 22:41 SAST, given in the author's chat, in his own words: "show fully masked placeholders with Reported, Unconfirmed. That way it can be seen as being tracked while full privacy upheld. If that works, maybe do it. If it ends up being a screen full of junk, don't. Up to you." The author judged it workable in a single cell (below), and the project lead said to go ahead (relayed). Reviewer B has not heard the preference from the owner directly.
+
+**Rule (refines §13.6 B; the published-year rule is unchanged).** The year sits in one column, one cell per award row, with no extra rows or blocks:
+
+| Internal year label | Year cell shows exactly |
+|---|---|
+| Confirmed | `Year: YYYY, Confirmed` (the year with its label) |
+| Reported, Unconfirmed | `Year: ****, Reported, Unconfirmed` |
+| Unknown (no year) | `Year: Unknown` |
+
+The placeholder never carries any digit of the year: the four asterisks are fixed. A Reported, Unconfirmed year still stays internal (§13.6 B); the placeholder shows only that a year is being tracked. When the year becomes Confirmed, the cell switches to the Confirmed form.
+
+**Masked-name rows (decision and reason).** The 32 masked rows (§13.2, §13.6 C and E) show the same fixed text, **`Year: not shown (masked row)`**, whatever the internal state. (`Year: Unknown` is not used for them, because on a looked-up masked row it would misstate the internal record.) Reason: §13.6 C says masked rows show no registration year, and it stays the stricter rule. The placeholder would not leak the year, but it would leak **state**: on the 5 held company rows (3 names), it appears only where an owner lookup returned `found` with a Reported, Unconfirmed year, so its presence or absence would tell a reader the lookup outcome for that masked name, and over time which masked rows were looked up. The 27 personal-looking rows are never looked up (no suffix, §4.2), so a placeholder there would be false. A single fixed text on all 32 masked rows carries no internal state. Because the owner's preference and §13.6 C could be read either way for masked rows, this is recorded as owner question F (§13.6).
+
+**Screen check ("a screen full of junk").** The placeholder adds no rows or blocks. On today's data it shows on 0 rows (no lookups returned); after all 45 lookups it shows on at most 54 of 291 rows, in the one year column.
+
+**Counts (DEV data, 291 rows; nothing published).**
+
+| Year cell | Today (no lookups returned) | After all 45 eligible lookups return `found` (upper bound) |
+|---|---|---|
+| `Year: YYYY, Confirmed` | 0 | at most 6 (the 6 eligible Confirmed-link rows) |
+| `Year: ****, Reported, Unconfirmed` | 0 | at most 54 (the unmasked Reported, Unconfirmed link rows behind 39 entities) |
+| `Year: Unknown` | 253 (61 unmasked + 192 name-pending) | at least 193 (1 JV row + 192 name-pending; plus any lookup returning `not_found` or `several_matches`) |
+| `Year: not shown (masked row)` | 32 | 32 |
+| Row withheld (name-mismatch rows, no cell) | 6 | 6 |
+| **Total** | **291** | **291** |
+
+**Follow-up build fields (own CHG and GO; nothing built here).** `registration_year_display` (new public text field holding the exact cell text above); `registration_year` and `registration_year_label` stay internal except on Confirmed rows; the mask flag (`popia_hold` / masked display) drives the fixed masked-row text; `tw/export.py` (public row builder and `LABEL_BY_LINK`), `tw/lookups.py` (proposed, §10), the public export `data/local/export/…/public_awards.csv` and `.jsonl` schema, tests (`tests/test_classification_chg_tw_002.py` and a new test: no digit ever appears in a placeholder cell; masked rows always show the fixed text), and the year column on the public site.
 
 ## 14. CAB review
 

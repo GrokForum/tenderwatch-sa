@@ -8,7 +8,7 @@ import subprocess
 import urllib.request
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import quote, urljoin, urlparse, urlunparse
 from urllib.robotparser import RobotFileParser
 
 from tw.config import DEFAULT_BUYER, RIGHT_OF_REPLY, ROOT
@@ -136,6 +136,89 @@ def _http_get(url: str, dest: Path | None = None, timeout: int = 60) -> bytes:
     return data
 
 
+TTS_RE = re.compile(r"(\d{2,4}[A-Z]/\d{4}/\d{2})")
+DATE_RE = re.compile(r"\b(\d{1,2}/\d{1,2}/\d{4})\b")
+MEDIA_2026_RE = re.compile(r"tenders-awarded-[a-z]+-2026\.pdf", re.I)
+
+
+def parse_layout_text(
+    text: str,
+    *,
+    source_url: str,
+    source_file: str,
+    retrieved_at: str,
+    period: str | None = None,
+) -> list[dict]:
+    """Column-aware parse of pdftotext -layout output.
+
+    Vendor-only lines (no TTS reference) are held and attached to the *next*
+    TTS row, which is how the City layout lists multiple vendors on one award.
+    """
+    lines = text.splitlines()
+    header = next((ln for ln in lines if "TTS Reference" in ln and "Vendor" in ln), None)
+    vcol = header.find("Vendor") if header else 198
+    dcol = header.find("Date of decision") if header and "Date of decision" in header else 273
+    ccol = header.find("Decision Reference") if header else 16
+    ecol = header.find("Description") if header else 37
+
+    def _slice(line: str, start: int, end: int | None) -> str:
+        if end is None:
+            return line[start:].strip() if len(line) > start else ""
+        return line[start:end].strip() if len(line) > start else ""
+
+    pending_vendors: list[str] = []
+    raw_awards: list[dict] = []
+    for line in lines:
+        if not line.strip() or "TTS Reference" in line:
+            continue
+        tts_m = TTS_RE.search(line[: max(ccol, 16) + 8] if len(line) > 8 else line)
+        # A TTS at the start of the line opens an award; a TTS later is ignored (descriptions).
+        tts = None
+        if tts_m and tts_m.start() <= 4:
+            tts = tts_m.group(1)
+        vendor = re.sub(r"\s+", " ", _slice(line, vcol, dcol)).strip(" .")
+        date_s = _slice(line, dcol, None)
+        date_m = DATE_RE.search(date_s) or (DATE_RE.search(line) if tts else None)
+        dt = date_m.group(1) if date_m else None
+        if tts:
+            decision = re.sub(r"\s+", " ", _slice(line, ccol, ecol))
+            desc = re.sub(r"\s+", " ", _slice(line, ecol, vcol))
+            vendors = [v for v in pending_vendors if v]
+            if vendor:
+                vendors.append(vendor)
+            pending_vendors = []
+            raw_awards.append({
+                "tts": tts,
+                "decision": decision,
+                "desc": desc,
+                "vendors": vendors,
+                "date": dt,
+            })
+        elif vendor:
+            pending_vendors.append(vendor)
+        elif date_s and raw_awards and not raw_awards[-1]["date"]:
+            raw_awards[-1]["date"] = dt
+
+    rows: list[dict] = []
+    for award in raw_awards:
+        vendors = award["vendors"] or [None]
+        for vendor in vendors:
+            rows.append(
+                row_from_register(
+                    tts_reference=award["tts"],
+                    decision_reference=award["decision"] or None,
+                    description=award["desc"] or None,
+                    vendor=vendor,
+                    date_published=award["date"],
+                    source_url=source_url,
+                    source_file=source_file,
+                    retrieved_at=retrieved_at,
+                    period=period,
+                )
+            )
+    return rows
+
+
 def parse_register_pdf(pdf_path: Path, *, source_url: str, retrieved_at: str, period: str | None = None) -> list[dict]:
     """Parse a City monthly award PDF via pdftotext -layout."""
     proc = subprocess.run(
@@ -144,38 +227,28 @@ def parse_register_pdf(pdf_path: Path, *, source_url: str, retrieved_at: str, pe
         capture_output=True,
         text=True,
     )
-    text = proc.stdout
-    rows: list[dict] = []
-    # Rows typically start with a TTS reference like 016S/2026/27 or 293C/2024/25.
-    tts_re = re.compile(r"^\s*(\d{2,4}[A-Z]/\d{4}/\d{2})\s+(\S+(?:\s+\S+)*?)\s{2,}(.+?)\s{2,}(.+?)\s+(\d{1,2}/\d{1,2}/\d{4})\s*$")
-    # Fallback: looser split when layout is ragged
-    loose_re = re.compile(
-        r"(\d{2,4}[A-Z]/\d{4}/\d{2})\s+(SCMB\s+\S+|C\d+\s+\S+|\S+)\s+(.+?)\s{2,}(.+?)\s+(\d{1,2}/\d{1,2}/\d{4})"
+    return parse_layout_text(
+        proc.stdout,
+        source_url=source_url,
+        source_file=str(pdf_path),
+        retrieved_at=retrieved_at,
+        period=period,
     )
-    for raw_line in text.splitlines():
-        line = raw_line.rstrip()
-        if not line.strip():
-            continue
-        m = tts_re.match(line) or loose_re.search(line)
-        if not m:
-            continue
-        tts, decision, desc, vendor, dt = m.groups()
-        vendor = re.sub(r"\s+", " ", vendor).strip(" .")
-        desc = re.sub(r"\s+", " ", desc).strip()
-        rows.append(
-            row_from_register(
-                tts_reference=tts,
-                decision_reference=re.sub(r"\s+", " ", decision).strip(),
-                description=desc,
-                vendor=vendor,
-                date_published=dt,
-                source_url=source_url,
-                source_file=str(pdf_path),
-                retrieved_at=retrieved_at,
-                period=period,
-            )
-        )
-    return rows
+
+
+def _absolute_pdf_url(base: str, href: str) -> str | None:
+    """Resolve an href to an absolute PDF URL. Light fetch keeps to 2026 media-path monthlies."""
+    if not MEDIA_2026_RE.search(href):
+        return None
+    if href.startswith("//"):
+        abs_url = "https:" + href
+    elif href.startswith("http://") or href.startswith("https://"):
+        abs_url = href
+    else:
+        abs_url = urljoin(base, href)
+    parts = urlparse(abs_url)
+    path = quote(parts.path, safe="/%")
+    return urlunparse((parts.scheme, parts.netloc, path, parts.params, parts.query, parts.fragment))
 
 
 def light_fetch(raw_dir: Path, cfg: dict) -> dict:
@@ -214,13 +287,11 @@ def light_fetch(raw_dir: Path, cfg: dict) -> dict:
                 body = _http_get(url, dest=raw_dir / "tenders-awarded.html")
                 result["fetched"].append(url)
                 html = body.decode("utf-8", errors="replace")
-                pdfs = sorted(set(re.findall(r'href="([^"]*tenders-awarded-[^"]+\.pdf)"', html, flags=re.I)))
-                # also SharePoint-style media paths without the phrase
-                if not pdfs:
-                    pdfs = sorted(set(re.findall(r'href="([^"]+\.pdf)"', html, flags=re.I)))
-                    pdfs = [u for u in pdfs if re.search(r"tenders-awarded|award", u, re.I)]
-                for href in pdfs:
-                    abs_url = urljoin(url, href)
+                hrefs = sorted(set(re.findall(r'href="([^"]+\.pdf)"', html, flags=re.I)))
+                for href in hrefs:
+                    abs_url = _absolute_pdf_url(url, href)
+                    if not abs_url:
+                        continue
                     if not robots_allows(robots_txt, abs_url):
                         result["skipped"].append(f"robots disallows {abs_url}")
                         continue
@@ -233,9 +304,17 @@ def light_fetch(raw_dir: Path, cfg: dict) -> dict:
         name = Path(urlparse(url).path).name or "register.pdf"
         dest = raw_dir / name
         try:
-            _http_get(url, dest=dest)
-            result["fetched"].append(url)
-            retrieved_at = _now_sast_label()
+            if dest.is_file() and dest.stat().st_size > 0:
+                result["fetched"].append(url + " (cached)")
+                prov = dest.with_suffix(dest.suffix + ".provenance.json")
+                retrieved_at = _now_sast_label()
+                if prov.is_file():
+                    import json as _json
+                    retrieved_at = _json.loads(prov.read_text()).get("fetched_at") or retrieved_at
+            else:
+                _http_get(url, dest=dest)
+                result["fetched"].append(url)
+                retrieved_at = _now_sast_label()
             period = None
             pm = re.search(r"(january|february|march|april|may|june|july|august|september|october|november|december)[-_ ]?(20\d{2})", name, re.I)
             if pm:

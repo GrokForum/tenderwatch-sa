@@ -36,7 +36,7 @@ What *is* feasible, without any login, is a **neutral, sourced awards register**
 
 That decision resolves the proceed-or-park question and the extension-versus-new-bot question. It is **not** a GO to implement this RFC, merge to `main`, push, or publish.
 
-**Proposed DEV pilot (still requires a quoted owner GO that names CHG-TW-001 and DEV):** one source (eTenders OCDS, read-only reuse of PublicFunds) and one buyer set (City of Cape Town). No TEST, no PROD, no site publish, no right-of-reply messages sent (drafts only, labelled `Right of reply: pending`). Identifier strategy is proposed in §15 and put to the owner in §16.
+**DEV pilot (DEV GO given 17 Nov 2026; PR #1 merged as `fb5a4bcc`):** one source (eTenders OCDS, read-only reuse of PublicFunds) and one buyer set (City of Cape Town). No TEST, no PROD, no site publish, no right-of-reply messages sent (drafts only, labelled `Right of reply: pending`). Identifier strategy is proposed in §15 and put to the owner in §16.
 
 ## 2. Motivation
 

@@ -139,3 +139,29 @@ def test_numeric_tiebreak_in_batch_order() -> None:
     a = _ent("Qwertane Widget Supplies (Pty) Ltd", first_seen=None, earliest_award="2024-01-01", tid="10")
     b = _ent("Testburg and Sons (Pty) Ltd", first_seen=None, earliest_award="2024-01-01", tid="9")
     assert [e["name"] for e in score_entities([a, b])] == ["Testburg and Sons (Pty) Ltd", "Qwertane Widget Supplies (Pty) Ltd"]
+
+
+@pytest.mark.parametrize("raw", ["2024-01-01T24:00", "2024-01-01T24:00:00", "2024-01-01T24:00:00Z",
+                                 "2023-02-29", "2024-01-01\n", "2024-01-01T10:00:00Z\n",
+                                 "\u0662024-01-01", "\u0662\u0660\u0662\u0664-\u0660\u0661-\u0660\u0661"])
+def test_polish_unknowns(raw) -> None:
+    # 24:00 end-of-day is not accepted; 2023 is not a leap year; trailing newline and
+    # non-ASCII (Arabic-Indic) digits are rejected.
+    assert parse_known_date(raw) is None
+
+
+def test_leap_day_2024_is_kept() -> None:
+    assert parse_known_date("2024-02-29") == dt.date(2024, 2, 29)
+
+
+def test_minus_zero_offset_is_utc() -> None:
+    assert parse_known_date("2024-08-30T23:30:00-00:00") == dt.date(2024, 8, 30)
+    assert parse_known_date("2024-08-30T00:30:00-00:00") == dt.date(2024, 8, 30)
+
+
+def test_utc_day_puts_sast_midnight_before_young_cutoff() -> None:
+    # 00:30 SAST on 1 June 2022 is 22:30 UTC on 31 May 2022: before the 2022-06-01 cut-off.
+    first_seen = parse_known_date("2022-06-01T00:30:00+02:00")
+    assert first_seen == dt.date(2022, 5, 31)
+    assert is_young(first_seen, dt.date(2022, 7, 1)) is False
+    assert is_young(parse_known_date("2022-06-01T00:30:00Z"), dt.date(2022, 7, 1)) is True

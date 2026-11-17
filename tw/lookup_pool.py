@@ -12,8 +12,12 @@ Unknown dates
     YYYY-MM-DDTHH:MM[:SS[.fraction]]Z           (UTC)
     YYYY-MM-DDTHH:MM[:SS[.fraction]]+HH:MM / -HH:MM
 
-with nothing before or after. A time with Z or an offset is converted to UTC
-before the date is taken. Everything else is unknown (None): None, empty or
+with nothing before or after: the whole string must match (re.fullmatch, so a
+trailing newline is rejected), and digits must be ASCII 0-9 (re.ASCII). A time
+with Z or an offset (-00:00 is treated as UTC) is converted to UTC before the
+date is taken, so the result is the UTC calendar day. Hour 24 (the ISO 8601
+end-of-day form '24:00', with or without a zone) is not accepted and is
+unknown. Everything else is unknown (None): None, empty or
 blank strings, compact or week dates ('20240101', '2024-W01-1'), trailing text
 ('2024-08-30garbage'), invalid calendar dates or times, the placeholders
 9999-12-31, 1900-01-01, 1970-01-01 and 0001-01-01 (checked on the written date),
@@ -35,8 +39,9 @@ YOUNG_WINDOW_DAYS = 365
 PLACEHOLDER_DATES = frozenset({"9999-12-31", "1900-01-01", "1970-01-01", "0001-01-01"})
 MIN_YEAR, MAX_YEAR = 1990, 2099
 _DATE_RE = re.compile(
-    r"^(\d{4})-(\d{2})-(\d{2})"
-    r"(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,9}))?)?(Z|[+-]\d{2}:\d{2})?)?$"
+    r"(\d{4})-(\d{2})-(\d{2})"
+    r"(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,9}))?)?(Z|[+-]\d{2}:\d{2})?)?",
+    re.ASCII,
 )
 
 
@@ -45,7 +50,7 @@ def parse_known_date(value: object) -> dt.date | None:
     malformed or a placeholder (strict; see the module docstring)."""
     if not isinstance(value, str):
         return None
-    m = _DATE_RE.match(value)
+    m = _DATE_RE.fullmatch(value)
     if m is None:
         return None
     y, mo, d, hh, mi, ss, frac, zone = m.groups()

@@ -88,21 +88,21 @@ LearnMore still says bulk data start in May 2021 / 1 April 2022, but `/Home/GetF
 
 ### 1.3 Sample award rows (evidence)
 
-Full files with source URL and fetch date: `data/samples/etenders-ocds/`. Three rows from the OCP mirror (City of Cape Town; PublicFunds copy fetched 19 Oct 2026 09:38 SAST):
+Full files with source URL and fetch date: `data/samples/etenders-ocds/`. Three rows from the OCP mirror (City of Cape Town; PublicFunds copy fetched 19 Oct 2026 09:38 SAST). Supplier names that are in the CHG-TW-002 two-person check queue are withheld here until checked; the OCID locates the source record:
 
 | ocid | Release date | Buyer | Supplier | Value.amount (as published, ZAR) | CIPC | CSD |
 |---|---|---|---|---:|---|---|
-| ocds-9t57fa-100167 | 2024-08-30 | City of Cape Town | CAPE AUTOMATION SYSTEMS | 1,981,222,875 | none | none |
+| ocds-9t57fa-100167 | 2024-08-30 | City of Cape Town | [withheld: in the CHG-TW-002 two-person check queue] | 1,981,222,875 | none | none |
 | ocds-9t57fa-100171 | 2024-08-30 | City of Cape Town | BLOEMHOF ELECTRICAL | 5,356,639,625 | none | none |
-| ocds-9t57fa-100172 | 2024-08-30 | City of Cape Town | F L O SPECIALIZED PRODUCT SOLUTIONS | 138,000,000 | none | none |
+| ocds-9t57fa-100172 | 2024-08-30 | City of Cape Town | [withheld: in the CHG-TW-002 two-person check queue] | 138,000,000 | none | none |
 
 Three rows from the official July 2026 monthly JSON (fetched 17 Nov 2026 10:58 SAST; package published 27 Aug 2026 17:25 SAST):
 
 | ocid | Release date | Buyer | Supplier | Value.amount (as published, ZAR) | CIPC | CSD |
 |---|---|---|---|---:|---|---|
-| ocds-9t57fa-163705 | 2026-07-28 | Special Investigation Unit | CHARTERED GOVERNANCE INSTITUTE OF SOUTHERN AFRICA | 3,854,946 | none | none |
-| ocds-9t57fa-165162 | 2026-07-28 | Council for Scientific and Industrial Research (CSIR) | A AND SONS PROPERTY GROUP | 3,450,000 | none | none |
-| ocds-9t57fa-165884 | 2026-07-28 | Mine Health and Safety Council | MAHUMA GROUP | 2,777,812 | none | none |
+| ocds-9t57fa-163705 | 2026-07-28 | Special Investigation Unit | [withheld: would be queued under CHG-TW-002 until checked] | 3,854,946 | none | none |
+| ocds-9t57fa-165162 | 2026-07-28 | Council for Scientific and Industrial Research (CSIR) | [withheld: would be queued under CHG-TW-002 until checked] | 3,450,000 | none | none |
+| ocds-9t57fa-165884 | 2026-07-28 | Mine Health and Safety Council | [withheld: would be queued under CHG-TW-002 until checked] | 2,777,812 | none | none |
 
 ### 1.4 Identifier count method
 

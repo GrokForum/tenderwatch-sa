@@ -42,8 +42,6 @@ UNKNOWN_CASES = [
     "",
     None,
     "F L O SPECIALIZED PRODUCT SOLUTIONS",
-    # "Trust" is unknown: a family trust can carry a private person's name.
-    "Mira Testburg Family Trust",
     # Bare words that are not a trailing legal suffix must not be juristic.
     "Limited Edition Printers",
     "Inc Design Studio",
@@ -110,9 +108,12 @@ def test_public_supplier_name_withholds_unknown() -> None:
     assert public_supplier_name("A B Fakesurname") is None
 
 
-def test_trust_and_bare_words_are_not_juristic() -> None:
-    """Trust is unknown; limited/inc/rf only count as a trailing suffix."""
-    assert classify_supplier_type("Mira Testburg Family Trust") == "unknown"
+def test_trust_is_juristic_but_held_and_bare_words_are_not_juristic() -> None:
+    """CHG-TW-002 (owner decision): Trust is a legal form, reversing CHG-TW-001.
+    A family-style trust name stays withheld (POPIA hold) until checked.
+    limited/inc/rf still only count as a trailing suffix."""
+    assert classify_supplier_type("Mira Testburg Family Trust") == "juristic"
+    assert public_supplier_name("Mira Testburg Family Trust") is None
     assert classify_supplier_type("Limited Edition Printers") == "unknown"
     assert classify_supplier_type("Inc Design Studio") == "unknown"
     assert classify_supplier_type("Rf Holdings") == "unknown"

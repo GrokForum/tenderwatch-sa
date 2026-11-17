@@ -41,6 +41,18 @@ PUBLIC_FIELDS = [
     "retrieved_at",
     "matched_city_tts",
     "match_details",
+    # CHG-TW-002: every row carries exactly one classification status.
+    "classification_status",
+    "classification_method",
+    "legal_sub_type",
+    "legal_suffix",
+    "legal_name_source",
+    "legal_name",
+    "queue_reason",
+    "popia_hold",
+    "registry",
+    "legal_form_link",
+    "legal_form_fact_label",
 ]
 
 
@@ -48,7 +60,14 @@ def to_public_row(row: Mapping) -> dict:
     typ = row.get("supplier_type")
     public = {k: row.get(k) for k in PUBLIC_FIELDS}
     # public_export_rows already blanks the name; do it explicitly too.
-    public["supplier_name"] = public_supplier_name(row.get("supplier_name"), typ)
+    public["supplier_name"] = public_supplier_name(
+        row.get("supplier_name"),
+        typ,
+        status=row.get("classification_status"),
+        popia_hold=row.get("popia_hold"),
+    )
+    if public["supplier_name"] is None:
+        public["legal_name"] = None
     if typ != "juristic":
         public["supplier_name"] = None
         # identifiers stay only if they are organisation numbers (they should be absent)
@@ -59,14 +78,20 @@ def to_public_row(row: Mapping) -> dict:
 
 
 def build_public_export(rows: Iterable[Mapping]) -> list[dict]:
+    rows = list(rows)
     prepared = []
     for raw in public_export_rows(rows):
         prepared.append(to_public_row(raw))
+    if len(prepared) != len(rows):
+        raise AssertionError("public export dropped rows (no silent hide)")
     assert_clean(prepared, context="public_export")
     for rec in prepared:
         typ = rec.get("supplier_type")
         if typ != "juristic" and rec.get("supplier_name"):
             raise AssertionError("non-juristic name leaked into public export")
+        if rec.get("supplier_name") or rec.get("legal_name"):
+            if rec.get("popia_hold") or rec.get("classification_status") not in (None, "confirmed_juristic"):
+                raise AssertionError("queued or POPIA-held name leaked into public export")
     return prepared
 
 

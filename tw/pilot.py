@@ -12,6 +12,8 @@ from tw.export import write_public_export
 from tw.match import agreeing_details, can_link
 from tw.ocds import iter_cape_town_awards, sha256_file
 from tw.popia import assert_clean
+from tw.supplier_type import classify_awards
+from tw.age import classify_age
 from tw.warehouse import write_checked_jsonl
 
 SAST = timezone(timedelta(hours=2), name="SAST")
@@ -47,6 +49,19 @@ def attach_matches(awards: list[dict], city_rows: list[dict]) -> list[dict]:
     return awards
 
 
+def apply_classification(awards: list[dict], city_rows: list[dict]) -> list[dict]:
+    """CHG-TW-002: one status per supplier, then recompute the age fields.
+
+    A trust is registered with the Master of the High Court, not CIPC, so a
+    CIPC-derived year is not used for it (indicator stays unknown).
+    """
+    classify_awards(awards, city_rows)
+    for a in awards:
+        year = a.get("registration_year") if a.get("registry") == "cipc" else None
+        a["young_supplier_indicator"], a["age_band"] = classify_age(a["supplier_type"], year, a.get("award_year"))
+    return awards
+
+
 def run(report_path: Path | None = None) -> dict:
     cfg = load_config()
     if cfg.get("env") != "DEV":
@@ -74,6 +89,7 @@ def run(report_path: Path | None = None) -> dict:
     assert_clean(city_rows, context="warehouse.city_register")
 
     awards = attach_matches(awards, city_rows)
+    awards = apply_classification(awards, city_rows)
     n_awards = write_checked_jsonl(warehouse / "awards.jsonl", awards, context="warehouse.awards")
     n_city = write_checked_jsonl(warehouse / "city_register.jsonl", city_rows, context="warehouse.city_register")
     public = write_public_export(export_dir, awards)

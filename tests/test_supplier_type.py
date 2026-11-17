@@ -17,7 +17,6 @@ JURISTIC_CASES = [
     "Harbour Lights CC",
     "Example Relief NPC",
     "National Grid SOC Ltd",
-    "Alpha Beta Trust",
     "River Road Construction JV",
     "Beta Tools Limited",
     "Gamma Widget Inc",
@@ -43,6 +42,12 @@ UNKNOWN_CASES = [
     "",
     None,
     "[redacted]",
+    # "Trust" is unknown: a family trust can carry a private person's name.
+    "Mira Testburg Family Trust",
+    # Bare words that are not a trailing legal suffix must not be juristic.
+    "Limited Edition Printers",
+    "Inc Design Studio",
+    "Rf Holdings",
 ]
 
 
@@ -103,3 +108,14 @@ def test_public_supplier_name_withholds_unknown() -> None:
     assert public_supplier_name("Beta Tools Limited") == "Beta Tools Limited"
     assert public_supplier_name("[redacted]") is None
     assert public_supplier_name("A B Fakesurname") is None
+
+
+def test_trust_and_bare_words_are_not_juristic() -> None:
+    """Trust is unknown; limited/inc/rf only count as a trailing suffix."""
+    assert classify_supplier_type("Mira Testburg Family Trust") == "unknown"
+    assert classify_supplier_type("Limited Edition Printers") == "unknown"
+    assert classify_supplier_type("Inc Design Studio") == "unknown"
+    assert classify_supplier_type("Rf Holdings") == "unknown"
+    # Trailing suffix still counts.
+    assert classify_supplier_type("Beta Tools Limited") == "juristic"
+    assert classify_supplier_type("Gamma Widget Inc") == "juristic"

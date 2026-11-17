@@ -4,6 +4,12 @@ Rules are conservative and use only the supplier name string. They exist so
 the young-supplier indicator is computed only for juristic suppliers, and so
 non-juristic names never appear in a public export.
 
+Juristic suffixes are matched only as the *trailing* legal suffix of the
+normalised name, never as a bare word in the middle (so "Limited Edition
+Printers" is not juristic). "Trust" is classified unknown, not juristic,
+because a family trust can carry a private person's name, unless a later
+check (out of scope here) says otherwise.
+
 Fixture tests must use synthetic names only — never real private people.
 """
 from __future__ import annotations
@@ -14,7 +20,8 @@ from typing import Iterable, Literal, Mapping
 SupplierType = Literal["juristic", "natural_person", "unknown"]
 
 # Longer phrases first so "Pty Ltd" wins over "Ltd".
-_JURISTIC_PATTERNS = (
+# These are matched only at the end of the normalised name.
+_TRAILING_JURISTIC = (
     r"proprietary\s+limited",
     r"\(pty\)\s*ltd\.?",
     r"pty\.?\s*ltd\.?",
@@ -28,14 +35,15 @@ _JURISTIC_PATTERNS = (
     r"ltd\.?",
     r"inc\.?",
     r"npc",
-    r"\bcc\b",
-    r"trust",
-    r"\bjv\b",
+    r"cc",
+    r"jv",
     r"\(rf\)",
-    r"\brf\b",
+    r"rf",
 )
-_JURISTIC_RE = re.compile(
-    r"(?i)(?:^|[\s,./])(?:{})(?:$|[\s,./])".format("|".join(f"(?:{p})" for p in _JURISTIC_PATTERNS))
+_TRAILING_JURISTIC_RE = re.compile(
+    r"(?i)(?:^|[\s,./])(?:{})\s*$".format(
+        "|".join(f"(?:{p})" for p in _TRAILING_JURISTIC)
+    )
 )
 
 _TRADING_AS_RE = re.compile(r"(?i)\b(?:t\s*/\s*a|trading\s+as)\b")
@@ -52,6 +60,11 @@ _INITIALS_SURNAME_RE = re.compile(
 )
 
 
+def _normalise_for_suffix(name: str) -> str:
+    s = re.sub(r"\s+", " ", name.strip())
+    return s.strip(".,;: ")
+
+
 def classify_supplier_type(name: str | None) -> SupplierType:
     """Return juristic, natural_person, or unknown from a supplier name."""
     s = (name or "").strip()
@@ -63,7 +76,7 @@ def classify_supplier_type(name: str | None) -> SupplierType:
         return "natural_person"
     if _INITIALS_SURNAME_RE.match(s):
         return "natural_person"
-    if _JURISTIC_RE.search(s):
+    if _TRAILING_JURISTIC_RE.search(_normalise_for_suffix(s)):
         return "juristic"
     return "unknown"
 

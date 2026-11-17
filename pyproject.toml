@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "tenderwatch-sa"
 version = "0.0.0"
@@ -9,6 +13,9 @@ dependencies = []
 [project.optional-dependencies]
 dev = ["pytest"]
 test = ["pytest"]
+
+[tool.setuptools]
+packages = ["tw"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,0 +1,78 @@
+{
+  "source_name": "eTenders Transparency Portal monthly OCDS bulk (July 2026 JSON)",
+  "source_url": "https://data.etenders.gov.za/Home/DownloadFile/?fileName=01072026.json",
+  "listing_page": "https://data.etenders.gov.za/Home/ReleasesFiles",
+  "fetched_at_sast": "2026-11-17 10:58 SAST (Africa/Johannesburg)",
+  "package_published_date": "2026-08-27T15:25:05Z",
+  "package_license": "https://opendatacommons.org/licenses/pddl/1-0/",
+  "package_publication_policy": "https://data.etenders.gov.za//Home/LearnMore",
+  "popia_note": "Samples omit parties.address and parties.contactPoint. No director IDs, emails, phones or street addresses are stored.",
+  "rows": [
+    {
+      "ocid": "ocds-9t57fa-163705",
+      "release_date": "2026-07-28T00:00:00Z",
+      "buyer_name": "Special Investigation Unit",
+      "buyer_id": "629",
+      "award_id": "73785",
+      "award_title": "[redacted]",
+      "award_status": "active",
+      "award_value": {
+        "amount": 3854946.0,
+        "currency": "ZAR"
+      },
+      "award_date_field": null,
+      "supplier_name": "[redacted]",
+      "supplier_id": null,
+      "supplier_SupplierID": 0,
+      "party_identifier": {
+        "legalName": "[redacted]"
+      },
+      "cipc_registration_number": null,
+      "csd_number": null
+    },
+    {
+      "ocid": "ocds-9t57fa-165162",
+      "release_date": "2026-07-28T00:00:00Z",
+      "buyer_name": "Council for Scientific and Industrial Research (CSIR)",
+      "buyer_id": "83",
+      "award_id": "74429",
+      "award_title": "[redacted]",
+      "award_status": "active",
+      "award_value": {
+        "amount": 3450000.0,
+        "currency": "ZAR"
+      },
+      "award_date_field": null,
+      "supplier_name": "[redacted]",
+      "supplier_id": null,
+      "supplier_SupplierID": 0,
+      "party_identifier": {
+        "legalName": "[redacted]"
+      },
+      "cipc_registration_number": null,
+      "csd_number": null
+    },
+    {
+      "ocid": "ocds-9t57fa-165884",
+      "release_date": "2026-07-28T00:00:00Z",
+      "buyer_name": "Mine Health and Safety Council",
+      "buyer_id": "400",
+      "award_id": "75056",
+      "award_title": "[redacted]",
+      "award_status": "active",
+      "award_value": {
+        "amount": 2777812.0,
+        "currency": "ZAR"
+      },
+      "award_date_field": null,
+      "supplier_name": "[redacted]",
+      "supplier_id": null,
+      "supplier_SupplierID": 0,
+      "party_identifier": {
+        "legalName": "[redacted]"
+      },
+      "cipc_registration_number": null,
+      "csd_number": null
+    }
+  ]
+}

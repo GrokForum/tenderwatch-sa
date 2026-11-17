@@ -10,7 +10,7 @@
 **Owner decision 17 Nov 2026 (relayed by Cavus):** TenderWatch goes ahead as a PublicFunds extension, kept on its own separate track. That decision is recorded in §16. It is not a GO to implement, merge, push or publish.
 **Model:** PoliticianWatch SA planning packet and PublicFunds SA change discipline.
 
-This change record describes proposed DEV work. This commit itself delivers only the survey, the RFC, and sanitized samples. It does not scaffold code, ingest a warehouse, or publish a site.
+This change record describes proposed DEV work. The branch holds the survey, the RFC, sanitized samples, a supplier-type classifier with tests, and the identifier-count script. It does not yet ingest a warehouse or publish a site.
 
 ---
 
@@ -76,6 +76,7 @@ Each stored fact should carry `value | label | source_url | source_date | retrie
 | `tender_title` / `tender_id` / `procurement_method` | OCDS | |
 | `supplier_name` | OCDS | Normalised key also stored (PublicFunds `norm_name`) |
 | `supplier_id_portal` | OCDS | Internal id only; often `0`; not a registration number |
+| `supplier_type` | Classifier on the supplier name (see §4.4) | `juristic` / `natural_person` / `unknown` |
 | `cipc_reg_no` | Award payload or later source | Almost always empty today |
 | `csd_no` | Award payload or later source | Almost always empty today; stored if a structured or clearly tokenised `MAAA…` appears, never invented |
 | `registration_year` | Derived from a CIPC number `YYYY/…`, or from a future year source | Empty if unknown. Never inferred from a CSD number |
@@ -88,10 +89,11 @@ Each stored fact should carry `value | label | source_url | source_date | retrie
 
 | Field | Notes |
 |---|---|
-| `display_name` / `name_key` | From the award; juristic name |
-| `cipc_reg_no` / `registration_year` | Only if sourced; otherwise Unknown |
+| `display_name` / `name_key` | From the award. `display_name` may appear in a public export only when `supplier_type` is `juristic` |
+| `supplier_type` | `juristic` / `natural_person` / `unknown`. See §4.4 |
+| `cipc_reg_no` / `registration_year` | Only if sourced and the supplier is juristic; otherwise Unknown |
 | `csd_no` | Only if sourced |
-| `young_supplier_indicator` | See §6. Values: `yes`, `no`, `unknown` |
+| `young_supplier_indicator` | See §6. Values: `yes`, `no`, `unknown`. Computed only when `supplier_type` is `juristic` |
 | `indicator_window` | e.g. `registration_year in {award_year, award_year-1}` |
 | `right_of_reply` | Always `Right of reply: pending` in this RFC (drafts only; nothing is sent) |
 | `evidence` | Pointers to award rows and the year source, each labelled |
@@ -101,6 +103,16 @@ No person profile is in the pilot model. No director records.
 ### 4.3 What we will not store
 
 Director ID numbers, SA ID numbers, home or business street addresses, personal emails, personal phone or fax numbers, tender contact persons, or CSD/CIPC login credentials. If a source payload includes `parties.contactPoint`, `parties.address` (beyond a country name if needed for debugging) or `tender.contactPerson`, those keys are dropped at parse time and must not be written to the warehouse or to git.
+
+### 4.4 `supplier_type` classifier
+
+`supplier_type` is derived only from the official supplier name, in this order:
+
+1. **`natural_person`** if the name contains `t/a` or `trading as` (even when the trading style has a juristic suffix), or if the whole name matches an initials-plus-surname pattern (one to three initials, optional particles such as van/de/du, then a surname, and nothing else).
+2. **`juristic`** if the name carries a legal suffix such as Pty Ltd, (Pty) Ltd, Ltd, Limited, Inc, Incorporated, NPC, SOC, SOC Ltd, CC, Close Corporation, Trust, JV, Joint Venture, (RF) or Proprietary Limited.
+3. **`unknown`** for everything else, including empty names and organisation-like strings with no recognised suffix (common in the eTenders dump).
+
+The young-supplier indicator is computed **only** for `juristic` suppliers. Names classified `natural_person` or `unknown` must **never** appear in any public output (they may be stored internally for matching, then withheld or replaced with a placeholder in any export or page). The classifier lives in `tw/supplier_type.py` and is covered by synthetic fixture tests in `tests/test_supplier_type.py` (no real private people's names).
 
 ## 5. Match rule (at least two agreeing details)
 
@@ -125,13 +137,15 @@ A CSD number (`MAAA…`) does not encode a registration year and must not be use
 
 ### 6.2 Definition (when a year is present)
 
+The indicator is computed **only** when `supplier_type` is `juristic`. For `natural_person` and `unknown` it is always `unknown`, even if a year string happens to be present, and those names are withheld from public output.
+
 Let `registration_year` be the `YYYY` taken from a sourced CIPC number, and `award_year` the calendar year of `award_date` (using `award_date_basis`).
 
-The **young-supplier indicator** is `yes` when:
+For a juristic supplier the **young-supplier indicator** is `yes` when:
 
 `registration_year == award_year` **or** `registration_year == award_year - 1`
 
-Otherwise, if both years are present, the indicator is `no`. If either year is missing, the indicator is `unknown`.
+Otherwise, if both years are present, the indicator is `no`. If either year is missing, or the supplier is not juristic, the indicator is `unknown`.
 
 The indicator is a **mechanical comparison of two official public dates**, labelled as an indicator, never as a finding of fraud, fronting, corruption or any other offence. Surrounding wording must stay in that register: "The registration year on the CIPC number is the same as, or the year before, the award year" — not "this company was created to win the tender."
 
@@ -141,7 +155,7 @@ The indicator is a **mechanical comparison of two official public dates**, label
 - **Coverage today is effectively zero** on the pilot source. In DEV, almost every Cape Town award will show `young_supplier_indicator = unknown` and `registration_year = Unknown`. That is the correct output, not a defect.
 - **False comfort the other way:** a company can be old on paper and still be a shell; a young company can be a legitimate start-up. The indicator does not distinguish these.
 - **Enterprise type and re-registrations** are not interpreted in this RFC.
-- **Natural persons and sole traders** are not given a registration year and must not be forced into this indicator.
+- **Natural persons, sole traders, and `unknown` names** are not given a registration year and must not be forced into this indicator. They must never appear in any public output.
 
 Until a registration-year source exists, the fixture suite should include synthetic CIPC numbers to prove the rule, and real OCDS rows to prove the Unknown path.
 
@@ -215,15 +229,18 @@ Promotion, if ever, is same-bytes (same commit or tag) and a separate RFC.
 
 To be run in DEV after a GO, before any request to merge:
 
-1. Fixture awards for City of Cape Town with supplier name, value and release date, and **no** CIPC number → `registration_year` and `young_supplier_indicator` are Unknown; award itself is Confirmed as sourced.
-2. Fixture with CIPC `2026/123456/07` and award date in 2026 → indicator `yes`.
-3. Fixture with CIPC `2025/123456/07` and award date in 2026 → indicator `yes`.
-4. Fixture with CIPC `2024/123456/07` and award date in 2026 → indicator `no`.
+1. Fixture awards for City of Cape Town with a juristic supplier name, value and release date, and **no** CIPC number → `registration_year` and `young_supplier_indicator` are Unknown; award itself is Confirmed as sourced.
+2. Juristic fixture with CIPC `2026/123456/07` and award date in 2026 → indicator `yes`.
+3. Juristic fixture with CIPC `2025/123456/07` and award date in 2026 → indicator `yes`.
+4. Juristic fixture with CIPC `2024/123456/07` and award date in 2026 → indicator `no`.
 5. Fixture with only a CSD number → year and indicator remain Unknown (CSD is not a year).
-6. Match rule: same normalised name, different buyer → no link. Same name + same buyer → link. Same CIPC + same name → link. Name only → no link.
+6. Match rule: same normalised name, different buyer → no link. Same name + same buyer → link. Same CIPC + same name → link. Name only → no link. A link on fewer than two agreeing details must fail the test.
 7. Parser drops `contactPoint`, street addresses and `contactPerson`; tests fail if those keys reach the warehouse.
-8. A small real-file smoke test on the sanitized samples and, in DEV only, on a *read-only* pinned PublicFunds OCDS copy or one official monthly JSON, filtered to City of Cape Town, counting Unknown rates.
+8. A small real-file smoke test on the sanitized samples and, in DEV only, on a *read-only* pinned PublicFunds OCDS copy (`main` `de37f666`, see §18) or one official monthly JSON, filtered to City of Cape Town, counting Unknown rates.
 9. No network login and no write to `tenderwatch-site` or to `origin`.
+10. `supplier_type` classifier fixtures in `tests/test_supplier_type.py` (synthetic names only): legal suffixes → `juristic`; `t/a` and initials-plus-surname → `natural_person`; otherwise `unknown`.
+11. The indicator stays `unknown` for `natural_person` and `unknown` types even when a registration year is present.
+12. A public-export helper emits **zero** non-juristic names (`natural_person` and `unknown` are withheld).
 
 This RFC's own deliverable (docs + samples) is checked by review, not by a unit test: links dated, Unknown placeholders present, samples include source URL and fetch date, POPIA scan clean.
 
@@ -233,11 +250,13 @@ Companies and official procurement records are the subject of this pilot, not pr
 
 Never store: director ID numbers, SA ID numbers, passport numbers, home or street addresses, personal emails, personal phones, or family details.
 
-Present suppliers as named on the official source, with fact labels. The young-supplier flag is an indicator from dates, not a finding against a person.
+Present **juristic** suppliers as named on the official source, with fact labels. The young-supplier flag is an indicator from dates, computed only for juristic suppliers, not a finding against a person.
+
+`supplier_type` is classified from the name as in §4.4. Names classified `natural_person` or `unknown` must **never** appear in any public output. Classifier tests use synthetic names only; they must not use the names of real private people.
 
 Identity linking follows the two-detail match rule. Temporary fetch files that might contain contacts are kept out of git and should be deleted when the task ends.
 
-**POPIA check of this RFC (including §15–§16), `SOURCES.md` and `data/samples/`:** PASS. No ID numbers, addresses, phones, emails or private contacts are included. Sole-trader personal names were not copied from City registers. Option (c) records that the raw Restricted Suppliers Register contains SA ID numbers and must not be stored here. Fixture CIPC numbers in §12 are synthetic.
+**POPIA check of this RFC (including §4.4, §15–§16 and §18), `SOURCES.md`, `data/samples/`, `tw/` and `tests/`:** PASS. No ID numbers, addresses, phones, emails or private contacts are included. Sole-trader personal names were not copied from City registers. Classifier fixtures are invented strings (e.g. "Alex Q. Testperson t/a Testperson Crafts"). Option (c) records that the raw Restricted Suppliers Register contains SA ID numbers and must not be stored here. Fixture CIPC numbers in §12 are synthetic.
 
 ## 14. Rollback
 
@@ -267,7 +286,7 @@ When a winner row or a clearly joinable tenderer row carries a tokenised CSD num
 
 - **Pros.** When present, it is a stable official supplier number and a strong first detail for the match rule. It is an organisation identifier, not an SA ID number. No login is required to *keep* a number that already appears in the public award payload.
 - **Cons.** It is almost never present as a structured field (the OCDS `Identifier` schema exposes `legalName` only). Where it appears, it is often messy (the name or title *is* the `MAAA…` string; values are sometimes a zero placeholder). A CSD number does **not** encode a year, so it does not feed the young-supplier indicator.
-- **Expected coverage (measured).** Structured field: **0 / 9,551**. `MAAA…` in the winning supplier name or id: **11 / 9,551 (0.12%)**. Additional winners whose name could be joined to a `tender.tenderers` entry that includes a `MAAA…` prefix: about **69 / 9,551 (~0.7%)**. Official July 2026 monthly JSON: **0 / 42**. City of Cape Town October 2026 register: **0 / 24**. The tenderers join is fuzzier than a structured field and should be accepted only when the winner name clearly agrees with that tenderer row.
+- **Expected coverage (measured).** Structured field: **0 / 9,551**. `MAAA…` in the winning supplier name or id: **11 / 9,551 (0.12%)**. Additional winners whose name could be joined to a `tender.tenderers` entry that includes a `MAAA…` prefix, under the rule in `SOURCES.md` §1.4 and `scripts/count_identifiers.py`: **68 / 9,551 (0.71%)**. Official July 2026 monthly JSON: **0 / 42**. City of Cape Town October 2026 register: **0 / 24**. The tenderers join is fuzzier than a structured field and should be accepted only when the winner name clearly agrees with that tenderer row.
 - **Two-detail rule.** **Yes**, when an exact canonical `MAAA…` **and** a normalised name agree. A CSD number alone is one detail, not two. A loose join from a tenderers list without a name agreement is **not** a match.
 - **POPIA.** Store the organisation CSD number and the official name. Do not use a CSD login or organ-of-state search to look numbers up. Do not keep any personal contact data that might sit near the token in free text.
 
@@ -306,7 +325,7 @@ A CIPC login, a paid company-search product, or a licensed bulk register would b
 The recommended default is **(a) + (b)**, with **(d) as an opportunistic add-on**, and with the **young-supplier indicator shown as Unknown by default**:
 
 - every Cape Town award gets a `name_key` (name + buyer);
-- a `csd_no` is stored only when a measured, clearly tokenised `MAAA…` is present and the name agrees (expected on the order of **0.12%** of winners, or about **0.7%** if a careful tenderers join is also accepted);
+- a `csd_no` is stored only when a measured, clearly tokenised `MAAA…` is present and the name agrees (expected on the order of **0.12%** of winners, or **68 / 9,551 (0.71%)** if a careful tenderers join is also accepted);
 - a `cipc_reg_no` / `registration_year` is stored only when a free public document supplies it under the two-detail rule, labelled Confirmed and linked;
 - option (c) is left for a later change, and only as a read-only reuse of PublicFunds' redacted RSR, not as a general identifier;
 - option (e) stays out of scope unless the owner later gives a named GO, which this RFC does not ask for.
@@ -321,27 +340,45 @@ This default is put to the owner as question 7 in §16.
 
 1. **Proceed or park? — Resolved.** The project proceeds. It is not parked pending a registration-year source. Supplier age will be Unknown by default, as the survey measured.
 2. **New bot vs PublicFunds extension? — Resolved.** TenderWatch is a PublicFunds extension on a **separate track**: its own repo (`GrokForum/tenderwatch-sa`), its own change series (`CHG-TW-*`), reuse of PublicFunds' `etenders_ocds` ingest as a **read-only upstream or pinned dependency**, **no changes to PublicFunds** without a PublicFunds RFC, and a **separate public site** (`GrokForum/tenderwatch-site`).
+3. **Pilot buyer? — Resolved**, implied by the owner's 17 Nov 2026 acceptance of Q7, which named the Cape Town buyer set. The pilot buyer is the City of Cape Town. The owner can reopen this.
 
-That decision is not a GO to implement, merge, push or publish. A GO must still name this RFC (CHG-TW-001), the environment (DEV), and the exact change.
+Those decisions are not a GO to implement, merge, or publish. A GO must still name this RFC (CHG-TW-001), the environment (DEV), and the exact change.
 
-### Open questions
+### Resolved after the 17 Nov decisions
 
-3. **Pilot buyer.** Confirm City of Cape Town. The alternative with more OCDS awards is Public Works (417), which is a national department, not a single metro.
+7. **Supplier-identifier default. — Resolved 17 Nov 2026 (owner, directly in TenderWatch chat).** The recommended default in §15 was accepted: (a) + (b) + opportunistic (d); young-supplier indicator Unknown by default; (c) deferred to a later change; (e) out of scope. Coverage figures used in that recommendation, as reproduced by `scripts/count_identifiers.py`, are **11 / 9,551 (0.12%)** of winner names or ids with a CSD token, and **68 / 9,551 (0.71%)** via the documented tenderers join. This is not a GO to implement, merge, or publish; CAB review (§17) still applies.
+
+### Remaining owner questions
+
+The following remain open. They are not a GO. A GO must name this RFC (CHG-TW-001), the environment (DEV), and the exact change.
+
 4. **Indicator window.** Confirm the year rule (`registration_year` equal to the award year or the year before), with the 0–23 month limitation written on the label — or specify a different rule, knowing that month-level "about one month before" is not possible from the number.
 5. **Right of reply and naming.** For a later change, not this one: may we draft (not send) right-of-reply notes to official City / supplier channels if an indicator is ever `yes`? Flags that would name a supplier in public would follow PublicFunds four-eyes plus your GO.
 6. **Licence and attribution.** Are you content to attribute National Treasury / OCPO and link to the source while the PDDL / CC BY 4.0 / LearnMore wording remains inconsistent, or should we first draft (not send) an enquiry to the contact address published on the eTenders LearnMore page?
-7. **Supplier-identifier default.** Given that awards carry no CIPC numbers, do you accept the recommended default in §15: **(a) normalised name keys** within the Cape Town buyer set, **plus (b) CSD `MAAA…` numbers where clearly present** (about **0.12%** of winner names, or about **0.7%** if a careful tenderers join is included), **plus (d) opportunistic CIPC years** from free public documents with a Confirmed label and a source link, and the **young-supplier indicator shown as Unknown by default**? Option (c) (Restricted Suppliers Register, read-only from PublicFunds, juristic rows only) would wait for a later change. Option (e) (CIPC login or paid bulk data) stays out of scope and is not recommended.
-   - **Resolved 17 Nov 2026 (owner, directly in TenderWatch chat): recommendation accepted.** Default is (a) + (b) + opportunistic (d); young-supplier indicator Unknown by default; (c) deferred to a later change; (e) out of scope. This is not a GO to implement, merge, push or publish; CAB review (§17) still applies.
-
-Questions 3–7 are not a GO. A GO must name this RFC (CHG-TW-001), the environment (DEV), and the exact change.
 
 ## 17. CAB review
 
-Reviewers: **Cavus** and **Cassian**, as four checks (expert, shadow, charter, drift). They review this draft; they do not implement it under this record, and they cannot authorise TEST, PROD, a push, or a send.
+Reviewers: **Cavus** and **Cassian**, as four checks (expert, shadow, charter, drift). They review this draft; they do not implement it under this record, and they cannot authorise TEST, PROD, or a send. Review-branch pushes are done by Cavus under the owner's standing GO to push review branches.
 
 Implementation starts only after: (a) both reviewers have signed the draft or a revised draft, and (b) the owner gives a quoted GO for CHG-TW-001 in DEV.
 
-**Result:** (blank — DRAFT, awaiting review)
+**Result:** Cavus, on `c75e5ef` (draft PR #1): **PASS_WITH_CONCERNS**. The concerns (records that denied the push, sole-proprietor handling, reproducible identifier counts, DEV acceptance criteria, and Q3) are addressed in the revision after that SHA. Cassian: not yet recorded. Still DRAFT; not a GO to implement.
+
+## 18. DEV acceptance criteria
+
+These are the measurable conditions for a later DEV implementation of CHG-TW-001, once the owner has given a quoted GO. They are not satisfied by this docs-and-classifier revision alone, except where a test already exists.
+
+The PublicFunds pin is **`main` `de37f666`** (full SHA `de37f666c12d1d6b7a815860894af0372514ba7f`). It was verified on 17 Nov 2026 in `/workspace/publicfunds`: the object exists, the commit date is 17 Nov 2026 11:29:14 SAST, and the subject is `Merge pull request #12 from GrokForum/chg-2026-063-robots-noindex`. It is the tip of that clone's `origin/main`. At verification the local checkout (`HEAD` / `main`) was `7cb9faf`, an earlier public-data refresh at 03:20 SAST the same day, so the working tree was behind the pin. The survey counts in `SOURCES.md` were taken from the local PublicFunds copy of `src/full.jsonl.gz` (SHA-256 `a2849a632148ca1eb59c0ceabeb45de16be0698a1804a485cf93417542435225`, fetched 19 Oct 2026 09:38 SAST), which is a raw file and is not itself stored in that git commit.
+
+A DEV implementation succeeds only if all of the following hold:
+
+1. **Ingest runs end to end** from the pinned PublicFunds `etenders_ocds` data (read-only; pin `de37f666` recorded in config), without editing the PublicFunds repo.
+2. **City of Cape Town awards are loaded** into the local DEV warehouse, each with a source URL (or an equivalent source locator plus the retrieval record).
+3. **The two-detail match rule is enforced:** tests fail if a link is made on fewer than two agreeing details (see §5 and §12 item 6).
+4. **`supplier_type` is classified** as in §4.4, and the fixture tests in `tests/test_supplier_type.py` pass.
+5. **The young-supplier indicator is `unknown`** unless a sourced registration year exists **and** the supplier is juristic. It is never computed as yes or no for `natural_person` or `unknown`.
+6. **POPIA tests pass:** contacts and addresses do not reach the warehouse; classifier fixtures remain synthetic; no ID numbers are stored.
+7. **Zero non-juristic names in the public export:** every `natural_person` and `unknown` supplier name is withheld (see `public_export_rows`).
 
 ---
 *POPIA check: PASS. See §13.*

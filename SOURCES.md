@@ -1,6 +1,6 @@
 # SOURCES — TenderWatch SA feasibility survey
 
-**Status:** draft evidence for CHG-TW-001. Local research only. Nothing has been pushed, published or sent.
+**Status:** draft evidence for CHG-TW-001. Raised as draft [PR #1](https://github.com/GrokForum/tenderwatch-sa/pull/1) at `c75e5ef` on 17 Nov 2026 11:48 SAST, pushed by Cavus under the owner's standing GO to push review branches. The PR is not docs-only: it adds this survey, the RFC, STATUS, the parked idea note, a `.gitignore` update, and sanitized award excerpts under `data/samples/` (eTenders OCDS JSON samples and a City of Cape Town register excerpt with provenance). Nothing has been published or sent.
 **Survey date:** Tue 17 Nov 2026, Africa/Johannesburg (SAST).
 **Prepared for:** CAB review by Cavus and Cassian, then the owner's GO.
 **Question:** do free, public, no-login award sources already carry a supplier CIPC registration number (`YYYY/NNNNNN/NN`, which encodes the registration year only) or a CSD number (`MAAA…`), so that a "young supplier" indicator can be built without a CIPC login?
@@ -12,6 +12,7 @@ Times below are in SAST unless a source timestamp carries its own zone, in which
 - Light, polite fetches only. No logins, no paywalls, no bulk crawling, no CIPC or CSD account.
 - `robots.txt` was checked first where it exists. Paths that robots disallow (search, login, admin, and similar) were not fetched.
 - The large eTenders OCDS corpus was not re-downloaded: the Open Contracting Partnership (OCP) `full.jsonl.gz` already held by PublicFunds (`/workspace/publicfunds/src/full.jsonl.gz`, PublicFunds fetch 19 Oct 2026 09:38 SAST; OCP last retrieved 20 Sep 2026) was analysed locally. One official monthly file (July 2026 JSON, 1.1 MB) and one City of Cape Town monthly PDF were fetched on 17 Nov 2026.
+- Identifier counts in this file were reproduced on 17 Nov 2026 by `scripts/count_identifiers.py` against that same PublicFunds copy (SHA-256 `a2849a632148ca1eb59c0ceabeb45de16be0698a1804a485cf93417542435225`, 11,676,874 bytes). The method is recorded in [§1.4](#14-identifier-count-method) and in the script's docstring. A frozen run log is `scripts/count_identifiers.out.json`.
 - Personal information was stripped from saved samples. Director ID numbers, addresses and contacts are not stored. See [POPIA](#popia-handling-of-samples).
 - Where a fact was not opened or not present, the cell is **Unknown**.
 
@@ -25,7 +26,7 @@ A public **awards register** is feasible. A **young-supplier indicator that does
 | Official monthly OCDS JSON for July 2026 (fetched 17 Nov 2026) | 42 awards | **0 (0%)** | **0 (0%)** |
 | City of Cape Town October 2026 award register PDF | 24 unique tender references | **0 (0%)** | **0 (0%)** |
 
-The only CIPC number in the entire OCDS mirror is Transnet SOC Ltd's own number `1990/000900/30`, appearing 59 times in *tender descriptions* (the buyer, not the supplier). CSD (`MAAA…`) strings appear more often in *tenderer* lists (194 releases; about 69 winning names could be joined to such a list) but a CSD number does not encode a registration year. The official OCDS API schema publishes `Identifier.legalName` only — no `scheme` or `id`.
+The only CIPC number in the entire OCDS mirror is Transnet SOC Ltd's own number `1990/000900/30`, appearing 59 times in *tender descriptions* (the buyer, not the supplier). CSD (`MAAA…`) strings appear more often in *tenderer* lists (**194** award-releases have a CSD token in `tender.tenderers`; **208** award-releases have one anywhere in the release). Under the documented name-fold join, **68 / 9,551 (0.71%)** winning names can be joined to a CSD-bearing tenderer (these 68 do not overlap the 11 winners who already have a CSD token in the name or id). A CSD number does not encode a registration year. The official OCDS API schema publishes `Identifier.legalName` only — no `scheme` or `id`.
 
 **Implication:** public award data already give supplier name, a value (quality varies), a buyer, and a usable date (usually the release date or, where present, `contract.dateSigned`). They do not give the registration year. Reviving TenderWatch as a young-company flagger still depends on a free registration-year source, or on buyers starting to publish CIPC numbers. PublicFunds already ingests the best award source. TenderWatch should reuse or extend that ingest, not rebuild it. Details: [PublicFunds overlap](#overlap-with-publicfunds).
 
@@ -73,8 +74,8 @@ From the OCP compiled mirror (35,309 releases, 9,551 awards, 488 buyers with awa
 | Supplier name | Yes | `awards.suppliers.name` / monthly `Name`. Award `title` is often a copy of the name. |
 | Supplier id | Internal only | Numeric portal ids, frequently `0` (3,575 of 9,551 in the mirror; July 2026 uses `SupplierID: 0`). Not a CIPC or CSD number. |
 | Party `identifier` | `legalName` only | Official API schema (`Identifier`) exposes only `legalName`. No `scheme`, no `id`. |
-| CIPC registration number | No, for suppliers | 0/9,551 winners. 56 releases match `YYYY/NNNNNN/NN`; every unique number is Transnet's `1990/000900/30` in `tender.description`. |
-| CSD number | Almost never | 0 structured field. 11/9,551 winner names contain `MAAA…` (0.12%), often with value 0 and a polluted name/title. 208 award releases contain a `MAAA…` somewhere, mostly in `tender.tenderers.name`. About 69 winners can be name-matched to such a tenderer (~0.7%). A CSD number does **not** encode registration year. |
+| CIPC registration number | No, for suppliers | 0/9,551 winners. **59** releases match `YYYY/NNNNNN/NN`; the only unique number is Transnet's `1990/000900/30` in `tender.description` (59 occurrences). |
+| CSD number | Almost never | 0 structured field. 11/9,551 winner names or ids contain `MAAA…` (0.12%), often with value 0 and a polluted name/title. **208** award-releases contain a `MAAA…` somewhere in the release JSON; **194** of those have one in `tender.tenderers`. **68 / 9,551 (0.71%)** winners can be name-joined to a CSD-bearing tenderer under the rule in §1.4 (no overlap with the 11). A CSD number does **not** encode registration year. |
 | Award date | Proxy | `awards.date` is typically empty (0/9,551 in the mirror; 0/42 in July 2026). Use `contracts.dateSigned` when present (1,691 contracts in the mirror) else `release.date`. PublicFunds already records this as `award_date_basis`. |
 | Award value | Usually | All 9,551 mirror awards and all 42 July awards have a `value.amount` + `ZAR`. PublicFunds treats 0 as a placeholder and flags implausible lows/highs. Some published amounts are very large; do not treat them as audited rands. |
 | Buyer name / id | Yes | 488 distinct buyers with awards in the mirror. City of Cape Town: 291 awards (a clean pilot set). |
@@ -102,6 +103,31 @@ Three rows from the official July 2026 monthly JSON (fetched 17 Nov 2026 10:58 S
 | ocds-9t57fa-163705 | 2026-07-28 | Special Investigation Unit | [redacted] | 3,854,946 | none | none |
 | ocds-9t57fa-165162 | 2026-07-28 | Council for Scientific and Industrial Research (CSIR) | [redacted] | 3,450,000 | none | none |
 | ocds-9t57fa-165884 | 2026-07-28 | Mine Health and Safety Council | [redacted] | 2,777,812 | none | none |
+
+### 1.4 Identifier count method
+
+All OCDS identifier figures in this survey come from one script, so they can be re-run:
+
+```bash
+python3 scripts/count_identifiers.py
+```
+
+| Item | Value |
+|---|---|
+| Input file | `/workspace/publicfunds/src/full.jsonl.gz` (not stored in this repo) |
+| Size / SHA-256 | 11,676,874 bytes / `a2849a632148ca1eb59c0ceabeb45de16be0698a1804a485cf93417542435225` |
+| PublicFunds fetch | 19 Oct 2026 09:38 SAST |
+| OCP last retrieved | 20 Sep 2026 |
+| Source URL | https://data.open-contracting.org/en/publication/143/download?name=full.jsonl.gz |
+| Frozen output | `scripts/count_identifiers.out.json` (run 17 Nov 2026) |
+| CIPC regex | `(?:19|20)\d{2}/\d{6}/\d{2}` |
+| CSD regex | `(?i)\bMAAA\d{6,}\b` (case-insensitive, word-bounded, at least six digits after `MAAA`) |
+
+**Units.** One *release* is one JSON line. One *award-supplier row* is one `awards[].suppliers[]` element (9,551 rows; equal to the award count in this dump). Rows are **not** deduplicated by supplier name: two awards to the same name count twice.
+
+**Tenderers join (the former “~69 / ~0.7%” figure).** A tenderer is CSD-bearing if its `name` matches the CSD regex. The winner name and the tenderer name are folded by case-folding, stripping CSD tokens, turning punctuation into spaces, and collapsing whitespace. A join counts when the folded winner name has at least five characters and is equal to, or a substring of, the folded tenderer name (or vice versa). At most one join is counted per award-supplier row. The reproduced total is **68 / 9,551 (0.71%)**, all of them additional to the 11 winners who already have a CSD token in the name or id. The earlier “about 69” figure is withdrawn; use 68.
+
+**Two CSD release counts that were easy to confuse.** **194** is the number of *award-releases* whose `tender.tenderers` names contain a CSD token. **208** is the number of *award-releases* that contain a CSD token *anywhere* in the release JSON (tenderers, award text, documents, and so on). The script also prints 279 and 295 for the same measures over all releases, including those with no awards. A later reviewer who could not reproduce 194 and 208, or the ~69 join, should run this script against the file and SHA-256 above.
 
 ## 2. OCPO / CSD public pages
 

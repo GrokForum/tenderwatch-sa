@@ -1,0 +1,9 @@
+[project]
+name = "tenderwatch-sa"
+version = "0.0.0"
+description = "TenderWatch SA DEV helpers"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

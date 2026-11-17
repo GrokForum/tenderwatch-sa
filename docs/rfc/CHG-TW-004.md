@@ -295,7 +295,7 @@ Revision 7 (records only) changes `docs/rfc/CHG-TW-004.md` and `STATUS.md` on `d
 **Q5 POPIA note and the fixed-length mask (owner's answer to §13.6 C).** The first draft of the mask kept the name's length, which leaked a great deal about the name. The owner has chosen a **fixed-length mask**, which resolves that point:
 
 * **Mask definition.** Take the name stem: the name as printed with any legal-form suffix (CHG-TW-002 suffix list) and any outer brackets removed. Take its first and last letter or digit (ASCII-folded; the first shown in upper case, the last in lower case). The mask is that first character, then **exactly five asterisks**, then that last character: always **7 characters**, whatever the name's length (invented example: "Qwertane Widget Supplies" → `Q*****s`). A stem with fewer than two letters or digits shows `*******`. The length, word count, spacing and suffix of the name are never shown.
-* **No other identifying detail next to a mask.** A masked row shows only the award facts the register exists for: buyer, award date, usable value and tender title. It shows no tender reference, OCDS id or release link, no registration number or year, no CIPC status and no indicator; the legal form shows only as a category (for example "private company") on the 5 held company rows, and as Unknown on the 27 personal-looking rows. (This list is the author's reading of "no extra identifying detail", for review in the build CHG.)
+* **No other identifying detail next to a mask.** A masked row shows only the award facts the register exists for: buyer, award date, usable value and tender title. It shows no tender reference, OCDS id or release link, no registration number or year, no CIPC status and no indicator (the year cell shows only the fixed texts in §13.8, never a year digit); the legal form shows only as a category (for example "private company") on the 5 held company rows, and as Unknown on the 27 personal-looking rows. (This list is the author's reading of "no extra identifying detail", for review in the build CHG.)
 * **Citation at register level only.** A masked row cites the City register document (or the eTenders dataset page) as a whole, never the row or release.
 * **Residual risk, stated plainly.** A reader who searches the public source by buyer, date, value and title may still find the row. The mask is pseudonymisation against casual matching, not anonymity; the controls above keep it from being trivial.
 * The POPIA rules in §8 stay: only number, date and status are recorded from a lookup, and no ID numbers, addresses or contact details are recorded or shown.
@@ -347,12 +347,12 @@ Counts from the same DEV outputs as §13.1 (`data/local/warehouse/awards_classif
 | Bare-name rows (192 rows, 157 names) | not addressed | award facts shown, name pending the two-person check | unchanged: award facts shown, legal form Unknown, name pending the check (§13.3) |
 | Name-mismatch rows (6 rows, 6 names) | withheld | withheld | **still withheld**, pending the two-person check |
 | Rows with a Confirmed registration year after all lookups (§5) | 6, internal | 6, published with label | **at most 6**, published with label (§13.6 B); none of them is masked |
-| Rows whose year would be Reported, Unconfirmed | 54, internal | 54 (59 with held), open | **59, internal** until confirmed (§13.6 B); a year that becomes Confirmed then shows on the 54 unmasked rows; the 5 masked rows never show a year (§13.2) |
+| Rows whose year would be Reported, Unconfirmed | 54, internal | 54 (59 with held), open | **59, internal** until confirmed (§13.6 B); a year that becomes Confirmed then shows on the 54 unmasked rows; the 5 masked rows never show a year digit; they show `Year: Unknown` or the `Year: ****, Reported, Unconfirmed` placeholder (§13.8, F) |
 | Age band on Reported, Unconfirmed rows | internal | internal (Q2) | internal (Q2) |
 
 Every one of the 291 rows is accounted for: 61 unmasked + 32 masked + 192 name-pending + 6 withheld = 291.
 
-Revision 8: the year cell for each of these rows (Confirmed year, `Year: ****, Reported, Unconfirmed` placeholder, `Year: Unknown`, or the fixed masked-row text) is counted in §13.8. Today the placeholder shows on 0 rows; after all lookups, on at most 54.
+Revision 8: the year cell for each of these rows (Confirmed year, `Year: ****, Reported, Unconfirmed` placeholder, `Year: Unknown`, or the fixed masked-row text) is counted in §13.8. Today the placeholder shows on 0 rows; after all lookups, on at most 59 (54 unmasked + 5 held masked rows; §13.6 F).
 
 **What this means for the public site.** The §13.1 conclusion (that the site would add little over eTenders) no longer holds. A later export CHG could show a sourced legal form on 66 of 291 rows (61 unmasked, 7 of them with a Confirmed award link; 5 masked), City cross-links with citations, Confirmed registration years from lookups as they return, and the indicators in §13.4. 32 rows show masked, 192 rows carry an Unknown legal form with the name pending the check, and 6 mismatched rows stay withheld.
 
@@ -363,7 +363,7 @@ Revision 8: the year cell for each of these rows (Confirmed year, `Year: ****, R
 * **C. Mask safeguard (Q5). Closed** (owner, 22:29 SAST, relayed): a fixed-length mask with no extra identifying detail next to it, and the City citation at register level only. The mask also covers the 5 held rows of confirmed companies. Defined in §13.2.
 * **D. Indicator thresholds (§13.4). Closed** (owner, 22:29 SAST, relayed): I1 to I7 thresholds accepted as proposed (I1: 3 or more in one financial year; I2: 30 days and the metro threshold; I4: 365 days).
 * **E. Personal-looking rows. Closed** (owner, 22:29 SAST, relayed): the 27 personal-looking rows (14 names) show masked. **POPIA note:** these may be sole proprietors who are private individuals. The controls are the fixed-length mask, the register-level citation and no other identifying detail next to the mask (§13.2); the existing rule stays that no ID numbers, addresses or contact details are recorded or shown. The two-person check still runs on these names; its outcome is recorded locally only.
-* **F. Year cell on masked rows (revision 8). Open.** §13.8 shows the fixed text `Year: not shown (masked row)` on all 32 masked rows, keeping §13.6 C as the stricter rule, because a placeholder on masked rows would reveal lookup outcomes. Keep that (recommended), or show `Year: ****, Reported, Unconfirmed` on masked rows where a Reported, Unconfirmed year exists (at most 5 rows)?
+* **F. Year cell on masked rows (revision 8). Closed** (owner, 17 Nov 2026 23:09 SAST, given in the project lead's chat and relayed by the project lead; the author and reviewer B have not heard it from the owner directly): the 5 held masked company rows show `Year: ****, Reported, Unconfirmed` wherever their year is Reported, Unconfirmed; the 27 personal-looking rows keep `Year: not shown (masked row)`. The author's recommendation (the fixed text on all 32) was not adopted. Details in §13.8.
 
 ### 13.7 Label rule: "Reported, Unconfirmed" (owner, 22:31 SAST, relayed)
 
@@ -402,22 +402,46 @@ The owner's rule (17 Nov 2026 22:31 SAST, given in the project lead's chat and r
 
 The placeholder never carries any digit of the year: the four asterisks are fixed. A Reported, Unconfirmed year still stays internal (§13.6 B); the placeholder shows only that a year is being tracked. When the year becomes Confirmed, the cell switches to the Confirmed form.
 
-**Masked-name rows (decision and reason).** The 32 masked rows (§13.2, §13.6 C and E) show the same fixed text, **`Year: not shown (masked row)`**, whatever the internal state. (`Year: Unknown` is not used for them, because on a looked-up masked row it would misstate the internal record.) Reason: §13.6 C says masked rows show no registration year, and it stays the stricter rule. The placeholder would not leak the year, but it would leak **state**: on the 5 held company rows (3 names), it appears only where an owner lookup returned `found` with a Reported, Unconfirmed year, so its presence or absence would tell a reader the lookup outcome for that masked name, and over time which masked rows were looked up. The 27 personal-looking rows are never looked up (no suffix, §4.2), so a placeholder there would be false. A single fixed text on all 32 masked rows carries no internal state. Because the owner's preference and §13.6 C could be read either way for masked rows, this is recorded as owner question F (§13.6).
+**Masked-name rows (owner's answer to F, 17 Nov 2026 23:09 SAST, given in the project lead's chat and relayed by the project lead; the author and reviewer B have not heard it from the owner directly).**
 
-**Screen check ("a screen full of junk").** The placeholder adds no rows or blocks. On today's data it shows on 0 rows (no lookups returned); after all 45 lookups it shows on at most 54 of 291 rows, in the one year column.
+* **5 held masked company rows (3 names):** the same year-cell rules as unmasked Reported, Unconfirmed rows, and never a year digit. Before a lookup, and when a lookup returns `not_found` or `several_matches`, the cell shows `Year: Unknown`, as on unmasked rows. When a lookup returns `found` with a Reported, Unconfirmed year, it shows `Year: ****, Reported, Unconfirmed`. These rows have Reported, Unconfirmed links (name and buyer only), so they never show a Confirmed year (§5). `Year: Unknown` before a lookup is accurate (no year is held) and contradicts nothing: §13.2 bars a year digit on masked rows, not the Unknown label.
+* **Recorded once:** on these rows, the placeholder shows that an owner lookup returned a result for that masked name; the owner accepted this.
+* **27 personal-looking rows (14 names):** always `Year: not shown (masked row)`. They are never looked up (no suffix, §4.2), so no other text would be accurate.
+* The author's earlier recommendation (the fixed text on all 32 masked rows) was not adopted.
+
+**Screen check ("a screen full of junk").** The placeholder adds no rows or blocks. On today's data it shows on 0 rows (no lookups returned); after all lookups (the 45 eligible entities plus the 3 held names under Q5) it shows on at most 59 of 291 rows, in the one year column.
 
 **Counts (DEV data, 291 rows; nothing published).**
 
-| Year cell | Today (no lookups returned) | After all 45 eligible lookups return `found` (upper bound) |
-|---|---|---|
-| `Year: YYYY, Confirmed` | 0 | at most 6 (the 6 eligible Confirmed-link rows) |
-| `Year: ****, Reported, Unconfirmed` | 0 | at most 54 (the unmasked Reported, Unconfirmed link rows behind 39 entities) |
-| `Year: Unknown` | 253 (61 unmasked + 192 name-pending) | at least 193 (1 JV row + 192 name-pending; plus any lookup returning `not_found` or `several_matches`) |
-| `Year: not shown (masked row)` | 32 | 32 |
-| Row withheld (name-mismatch rows, no cell) | 6 | 6 |
-| **Total** | **291** | **291** |
+Each column is one group of rows; every column and the total add up as shown (Unm. = unmasked with a sourced legal form; Pend. = name pending the two-person check; Held = held masked company rows; Pers. = personal-looking masked rows; Wh. = name-mismatch rows withheld, no cell).
 
-**Follow-up build fields (own CHG and GO; nothing built here).** `registration_year_display` (new public text field holding the exact cell text above); `registration_year` and `registration_year_label` stay internal except on Confirmed rows; the mask flag (`popia_hold` / masked display) drives the fixed masked-row text; `tw/export.py` (public row builder and `LABEL_BY_LINK`), `tw/lookups.py` (proposed, §10), the public export `data/local/export/…/public_awards.csv` and `.jsonl` schema, tests (`tests/test_classification_chg_tw_002.py` and a new test: no digit ever appears in a placeholder cell; masked rows always show the fixed text), and the year column on the public site.
+*Today (no lookups returned):*
+
+| Year cell | Unm. | Pend. | Held | Pers. | Wh. | Total |
+|---|---|---|---|---|---|---|
+| `Year: YYYY, Confirmed` | 0 | 0 | 0 | 0 | 0 | 0 |
+| `Year: ****, Reported, Unconfirmed` | 0 | 0 | 0 | 0 | 0 | 0 |
+| `Year: Unknown` | 61 | 192 | 5 | 0 | 0 | 258 |
+| `Year: not shown (masked row)` | 0 | 0 | 0 | 27 | 0 | 27 |
+| Row withheld (no cell) | 0 | 0 | 0 | 0 | 6 | 6 |
+| **Total** | **61** | **192** | **5** | **27** | **6** | **291** |
+
+*After all lookups return `found` (upper bound for the placeholder):*
+
+| Year cell | Unm. | Pend. | Held | Pers. | Wh. | Total |
+|---|---|---|---|---|---|---|
+| `Year: YYYY, Confirmed` | at most 6 | 0 | 0 | 0 | 0 | at most 6 |
+| `Year: ****, Reported, Unconfirmed` | at most 54 | 0 | at most 5 | 0 | 0 | at most 59 |
+| `Year: Unknown` | at least 1 (the JV row) | 192 | 0 | 0 | 0 | at least 193 |
+| `Year: not shown (masked row)` | 0 | 0 | 0 | 27 | 0 | 27 |
+| Row withheld (no cell) | 0 | 0 | 0 | 0 | 6 | 6 |
+| **Total** | **61** | **192** | **5** | **27** | **6** | **291** |
+
+A lookup that returns `not_found` or `several_matches` moves a row from the first two lines to `Year: Unknown`; the totals stay 291.
+
+*Change from revision 8 as first pushed (`f3259ee2`):* the placeholder's upper bound is now 59 (was 54); `Year: not shown (masked row)` is now 27 (was 32); `Year: Unknown` today is now 258 (was 253).
+
+**Follow-up build fields (own CHG and GO; nothing built here).** `registration_year_display` (new public text field holding the exact cell text above); `registration_year` and `registration_year_label` stay internal except on Confirmed rows; the mask flag (`popia_hold` / masked display) together with the CHG-TW-002 classification (held company row vs `looks_like_personal_name`) chooses the year cell: held company rows follow the unmasked rules (never a digit), personal-looking rows always get the fixed text; a lookup `result` (`found`, `not_found`, `several_matches`) drives placeholder versus `Year: Unknown`; `tw/export.py` (public row builder and `LABEL_BY_LINK`), `tw/lookups.py` (proposed, §10), the public export `data/local/export/…/public_awards.csv` and `.jsonl` schema, tests (`tests/test_classification_chg_tw_002.py` and new tests: no digit ever appears in a placeholder cell or on any masked row; a held masked row shows `Year: Unknown` before a lookup and on `not_found` or `several_matches`, and the placeholder on `found` with a Reported, Unconfirmed year; a held masked row never shows a Confirmed year; a personal-looking row always shows `Year: not shown (masked row)`; the year-cell counts add up to the row count), and the year column on the public site.
 
 ## 14. CAB review
 

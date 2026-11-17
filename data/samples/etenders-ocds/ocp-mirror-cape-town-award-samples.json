@@ -7,7 +7,7 @@
   "publicfunds_copy_fetched_at_sast": "2026-10-19T09:38:06+02:00",
   "sample_extracted_at_sast": "2026-11-17 11:00 SAST (Africa/Johannesburg)",
   "licence_notes": "OCP registry lists PDDL; eTenders Transparency Portal homepage also states CC BY 4.0; publication policy at https://data.etenders.gov.za/Home/LearnMore permits use, publication and republication with a link to the source. Licences are inconsistent; attribute the National Treasury / OCPO and link to the source.",
-  "popia_note": "Samples omit parties.address, parties.contactPoint, and tender.contactPerson. No director IDs, emails, phones or street addresses are stored.",
+  "popia_note": "Samples omit parties.address, parties.contactPoint, and tender.contactPerson. No director IDs, emails, phones or street addresses are stored. Supplier names queued for the CHG-TW-002 two-person check are replaced by a withheld placeholder until checked.",
   "rows": [
     {
       "ocid": "ocds-9t57fa-100167",
@@ -18,17 +18,17 @@
       "tender_title": "057Q/2024/25",
       "procurement_method": "open",
       "award_id": "47680",
-      "award_title": "[redacted]",
+      "award_title": "[withheld: in the CHG-TW-002 two-person check queue]",
       "award_status": "active",
       "award_value": {
         "amount": 1981222875.0,
         "currency": "ZAR"
       },
       "award_date_field": null,
-      "supplier_name": "[redacted]",
+      "supplier_name": "[withheld: in the CHG-TW-002 two-person check queue]",
       "supplier_id": "140763",
       "party_identifier": {
-        "legalName": "[redacted]"
+        "legalName": "[withheld: in the CHG-TW-002 two-person check queue]"
       },
       "contract_dateSigned": null,
       "cipc_registration_number": null,
@@ -68,17 +68,17 @@
       "tender_title": "59G/2024/25",
       "procurement_method": "open",
       "award_id": "72120",
-      "award_title": "[redacted]",
+      "award_title": "[withheld: in the CHG-TW-002 two-person check queue]",
       "award_status": "active",
       "award_value": {
         "amount": 138000000.0,
         "currency": "ZAR"
       },
       "award_date_field": null,
-      "supplier_name": "[redacted]",
+      "supplier_name": "[withheld: in the CHG-TW-002 two-person check queue]",
       "supplier_id": "22983",
       "party_identifier": {
-        "legalName": "[redacted]"
+        "legalName": "[withheld: in the CHG-TW-002 two-person check queue]"
       },
       "contract_dateSigned": null,
       "cipc_registration_number": null,

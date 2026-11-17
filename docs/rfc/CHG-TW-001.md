@@ -3,11 +3,11 @@
 **Status:** DRAFT for CAB review. Not implemented. No SUCCEEDED / FAILED yet.
 **Environment:** DEV only. DEV must not point at a production host, database, mailbox or DNS.
 **Date:** 17 Nov 2026, Africa/Johannesburg (SAST).
-**Author:** TenderWatch (Grok Bot), from the parked idea note and the 17 Nov 2026 source survey.
-**CAB reviewers:** Cavus (expert / charter) and Cassian (shadow / drift). Sign-off must be by someone other than the author. The owner's GO is required before any implementation is merged to `main`, before any push, and before anything is published or sent.
+**Author:** the author (TenderWatch), from the parked idea note and the 17 Nov 2026 source survey.
+**CAB reviewers:** reviewer A, the project lead (expert / charter), and reviewer B (shadow / drift). Sign-off must be by someone other than the author. The owner's GO is required before any implementation is merged to `main`, before any push, and before anything is published or sent.
 **Pre-change SHA:** `b812102eb8d5eea0c6a486e8a332a1bf62e08d76` (`main`, initial commit). Work lives on branch `rfc/CHG-TW-001`.
 **Related:** `SOURCES.md` (evidence), `IDEA-tenderwatch.md` (parked idea, 16 Nov 2026), PublicFunds `/workspace/publicfunds`.
-**Owner decision 17 Nov 2026 (relayed by Cavus):** TenderWatch goes ahead as a PublicFunds extension, kept on its own separate track. That decision is recorded in §16. It is not a GO to implement, merge, push or publish.
+**Owner decision 17 Nov 2026 (relayed by the project lead):** TenderWatch goes ahead as a PublicFunds extension, kept on its own separate track. That decision is recorded in §16. It is not a GO to implement, merge, push or publish.
 **Model:** PoliticianWatch SA planning packet and PublicFunds SA change discipline.
 
 This change record describes proposed DEV work. The branch holds the survey, the RFC, sanitized samples, a supplier-type classifier with tests, and the identifier-count script. It does not yet ingest a warehouse or publish a site.
@@ -27,7 +27,7 @@ The 17 Nov 2026 survey does **not** support that hypothesis for structured award
 
 What *is* feasible, without any login, is a **neutral, sourced awards register** for one buyer, reused from PublicFunds' existing eTenders ingest as a read-only upstream. The registration-year signal should still be specified, tested with fixtures, and shown as **Unknown** by default until a free public document supplies a CIPC year, or publishers start emitting CIPC numbers.
 
-**Owner decision 17 Nov 2026 (relayed by Cavus):** TenderWatch goes ahead as a PublicFunds extension, kept on its own **separate track**. In practice that means:
+**Owner decision 17 Nov 2026 (relayed by the project lead):** TenderWatch goes ahead as a PublicFunds extension, kept on its own **separate track**. In practice that means:
 
 - a **separate repo** (`GrokForum/tenderwatch-sa`) and a **separate change track** (`CHG-TW-*`, not PublicFunds' `CHG-2026-*` numbers);
 - **reuse** of PublicFunds' `etenders_ocds` ingest as a **read-only upstream or pinned dependency** (a pinned PublicFunds commit or tag, or its warehouse / raw OCDS outputs / connector, consumed without editing that repo);
@@ -36,13 +36,13 @@ What *is* feasible, without any login, is a **neutral, sourced awards register**
 
 That decision resolves the proceed-or-park question and the extension-versus-new-bot question. It is **not** a GO to implement this RFC, merge to `main`, push, or publish.
 
-**Proposed DEV pilot (still requires a quoted owner GO that names CHG-TW-001 and DEV):** one source (eTenders OCDS, read-only reuse of PublicFunds) and one buyer set (City of Cape Town). No TEST, no PROD, no site publish, no right-of-reply messages sent (drafts only, labelled `Right of reply: pending`). Identifier strategy is proposed in §15 and put to the owner in §16.
+**DEV pilot (DEV GO given 17 Nov 2026; PR #1 merged as `fb5a4bcc`):** one source (eTenders OCDS, read-only reuse of PublicFunds) and one buyer set (City of Cape Town). No TEST, no PROD, no site publish, no right-of-reply messages sent (drafts only, labelled `Right of reply: pending`). Identifier strategy is proposed in §15 and put to the owner in §16.
 
 ## 2. Motivation
 
 The idea note (`IDEA-tenderwatch.md`) describes a public-interest pattern: a company that wins a government award very soon after it is registered. That is an *indicator*, not proof of wrongdoing. To compute it we need (a) an official award with a supplier and a date, and (b) the supplier's registration year. (a) is publicly available and already ingested by PublicFunds. (b) is not, on the sources that can be used without a login.
 
-The honest options were: park the product again; build the awards register now and leave age as Unknown; or wait for a free registration-year source. **Owner decision 17 Nov 2026 (relayed by Cavus):** the first option is declined. TenderWatch goes ahead as a PublicFunds extension on a separate track, which is the middle path: a DEV awards register that reuses PublicFunds' ingest, with the age indicator specified and shown as Unknown until a free year source appears. That decision does not by itself authorise implementation.
+The honest options were: park the product again; build the awards register now and leave age as Unknown; or wait for a free registration-year source. **Owner decision 17 Nov 2026 (relayed by the project lead):** the first option is declined. TenderWatch goes ahead as a PublicFunds extension on a separate track, which is the middle path: a DEV awards register that reuses PublicFunds' ingest, with the age indicator specified and shown as Unknown until a free year source appears. That decision does not by itself authorise implementation.
 
 ## 3. Scope (DEV only)
 
@@ -94,7 +94,8 @@ Each stored fact should carry `value | label | source_url | source_date | retrie
 | `cipc_reg_no` / `registration_year` | Only if sourced and the supplier is juristic; otherwise Unknown |
 | `csd_no` | Only if sourced |
 | `young_supplier_indicator` | See §6. Values: `yes`, `no`, `unknown`. Computed only when `supplier_type` is `juristic` |
-| `indicator_window` | e.g. `registration_year in {award_year, award_year-1}` |
+| `indicator_window` | `registration_year` is the award year or the year before (0–23 months, stated on the label) |
+| `age_band` | For every juristic supplier with a sourced year: `same` (reg year = award year), `-1`, `-2`, or `older`. `unknown` when there is no sourced year or the supplier is not juristic. Recorded so the bands can be trended. `-2` is shown for trends only and does not set the indicator. See §6 and §16 Q4. |
 | `right_of_reply` | Always `Right of reply: pending` in this RFC (drafts only; nothing is sent) |
 | `evidence` | Pointers to award rows and the year source, each labelled |
 
@@ -145,9 +146,21 @@ For a juristic supplier the **young-supplier indicator** is `yes` when:
 
 `registration_year == award_year` **or** `registration_year == award_year - 1`
 
-Otherwise, if both years are present, the indicator is `no`. If either year is missing, or the supplier is not juristic, the indicator is `unknown`.
+That window is 0–23 months and must be stated on the label. Otherwise, if both years are present, the indicator is `no`. If either year is missing, or the supplier is not juristic, the indicator is `unknown`.
 
-The indicator is a **mechanical comparison of two official public dates**, labelled as an indicator, never as a finding of fraud, fronting, corruption or any other offence. Surrounding wording must stay in that register: "The registration year on the CIPC number is the same as, or the year before, the award year" — not "this company was created to win the tender."
+For every juristic supplier with a sourced year, also record **`age_band`** so the series can be trended (owner decision, §16 Q4):
+
+| `age_band` | When | Indicator |
+|---|---|---|
+| `same` | `registration_year == award_year` | `yes` |
+| `-1` | `registration_year == award_year - 1` | `yes` |
+| `-2` | `registration_year == award_year - 2` | `no` (`-2` is shown for trends only and does not set the indicator) |
+| `older` | `registration_year < award_year - 2` | `no` |
+| `unknown` | No sourced year, years missing, or the supplier is not juristic | `unknown` |
+
+A registration year after the award year is `unknown` (not a trend band) until a later change says otherwise.
+
+The indicator is a **mechanical comparison of two official public dates**, labelled as an indicator, never as a finding of fraud, fronting, corruption or any other offence. Surrounding wording must stay in that register: "The registration year on the CIPC number is the same as, or the year before, the award year (0–23 months)" — not "this company was created to win the tender."
 
 ### 6.3 Honest limits
 
@@ -222,7 +235,7 @@ Promotion, if ever, is same-bytes (same commit or tag) and a separate RFC.
 | **Year-only indicator is coarse** | Document the 0–23 month window in the UI/copy; never say "registered one month before". |
 | **Name collision with tenderwatch.org** | This project is TenderWatch SA. Keep the distinction in copy. |
 | **Scope creep into a login** | No login without a new RFC and a quoted GO. |
-| **Duplicating or editing PublicFunds** | Resolved as a separate track (owner decision 17 Nov 2026, relayed by Cavus): reuse `etenders_ocds` as a read-only upstream or pinned dependency; make no PublicFunds changes under CHG-TW-*. |
+| **Duplicating or editing PublicFunds** | Resolved as a separate track (owner decision 17 Nov 2026, relayed by the project lead): reuse `etenders_ocds` as a read-only upstream or pinned dependency; make no PublicFunds changes under CHG-TW-*. |
 | **Upstream drift** | Pin a PublicFunds commit or tag and record it. If the pin breaks the pilot, raise a PublicFunds RFC rather than patching that repo from this one. |
 
 ## 12. Test plan (DEV)
@@ -230,9 +243,10 @@ Promotion, if ever, is same-bytes (same commit or tag) and a separate RFC.
 To be run in DEV after a GO, before any request to merge:
 
 1. Fixture awards for City of Cape Town with a juristic supplier name, value and release date, and **no** CIPC number → `registration_year` and `young_supplier_indicator` are Unknown; award itself is Confirmed as sourced.
-2. Juristic fixture with CIPC `2026/123456/07` and award date in 2026 → indicator `yes`.
-3. Juristic fixture with CIPC `2025/123456/07` and award date in 2026 → indicator `yes`.
-4. Juristic fixture with CIPC `2024/123456/07` and award date in 2026 → indicator `no`.
+2. Juristic fixture with CIPC `2026/123456/07` and award date in 2026 → indicator `yes`, `age_band` `same`.
+3. Juristic fixture with CIPC `2025/123456/07` and award date in 2026 → indicator `yes`, `age_band` `-1`.
+4. Juristic fixture with CIPC `2024/123456/07` and award date in 2026 → indicator `no`, `age_band` `-2` (trend only; does not set the indicator).
+4a. Juristic fixture with CIPC `2023/123456/07` and award date in 2026 → indicator `no`, `age_band` `older`.
 5. Fixture with only a CSD number → year and indicator remain Unknown (CSD is not a year).
 6. Match rule: same normalised name, different buyer → no link. Same name + same buyer → link. Same CIPC + same name → link. Name only → no link. A link on fewer than two agreeing details must fail the test.
 7. Parser drops `contactPoint`, street addresses and `contactPerson`; tests fail if those keys reach the warehouse.
@@ -336,7 +350,7 @@ This default is put to the owner as question 7 in §16.
 
 ### Decisions already taken
 
-**Owner decision 17 Nov 2026 (relayed by Cavus):** TenderWatch goes ahead as a PublicFunds extension, kept on its own separate track.
+**Owner decision 17 Nov 2026 (relayed by the project lead):** TenderWatch goes ahead as a PublicFunds extension, kept on its own separate track.
 
 1. **Proceed or park? — Resolved.** The project proceeds. It is not parked pending a registration-year source. Supplier age will be Unknown by default, as the survey measured.
 2. **New bot vs PublicFunds extension? — Resolved.** TenderWatch is a PublicFunds extension on a **separate track**: its own repo (`GrokForum/tenderwatch-sa`), its own change series (`CHG-TW-*`), reuse of PublicFunds' `etenders_ocds` ingest as a **read-only upstream or pinned dependency**, **no changes to PublicFunds** without a PublicFunds RFC, and a **separate public site** (`GrokForum/tenderwatch-site`).
@@ -361,11 +375,11 @@ The following remain open. They are not a GO. A GO must name this RFC (CHG-TW-00
 
 ## 17. CAB review
 
-Reviewers: **Cavus** and **Cassian**, as four checks (expert, shadow, charter, drift). They review this draft; they do not implement it under this record, and they cannot authorise TEST, PROD, or a send. Review-branch pushes are done by Cavus under the owner's standing GO, given in Cavus's chat on 17 Nov 2026 and relayed by Cavus: "You can push review branches without asking". Merges and publishing still need the owner's GO on the exact head.
+Reviewers: **reviewer A** (project lead) and **reviewer B**, as four checks (expert, shadow, charter, drift). They review this draft; they do not implement it under this record, and they cannot authorise TEST, PROD, or a send. Review-branch pushes are done by the project lead under the owner's standing permission to push review branches; merges and publishing need the owner's GO on the exact head.
 
 Implementation starts only after: (a) both reviewers have signed the draft or a revised draft, and (b) the owner gives a quoted GO for CHG-TW-001 in DEV.
 
-**Result:** Cavus, on `c75e5ef`: **PASS_WITH_CONCERNS** (addressed in `009ea171`). Cavus, on `009ea171` (draft PR #1, pushed 17 Nov 2026 11:59 SAST): **PASS_WITH_CONCERNS**. The remaining concerns (standing-GO citation, trailing-suffix / Trust classification, and the STATUS push record) are addressed in the revision after that SHA. Cassian: not yet recorded. Still DRAFT; not a GO to implement, merge, or publish.
+**Result:** Two reviewer PASSes are required on the exact head; each review round and its outcome is recorded in the pull request. PR #1 (RFC) was reviewed by both reviewers and merged on the owner's GO as `fb5a4bcc`. A reviewer PASS is not a GO to merge, publish, or open TEST/PROD; only the owner gives that, on the exact head.
 
 ## 18. DEV acceptance criteria
 
@@ -382,6 +396,15 @@ A DEV implementation succeeds only if all of the following hold:
 5. **The young-supplier indicator is `unknown`** unless a sourced registration year exists **and** the supplier is juristic. It is never computed as yes or no for `natural_person` or `unknown`.
 6. **POPIA tests pass:** contacts and addresses do not reach the warehouse; classifier fixtures remain synthetic; no ID numbers are stored.
 7. **Zero non-juristic names in the public export:** every `natural_person` and `unknown` supplier name is withheld (see `public_export_rows`).
+8. **Age bands** are recorded for every juristic supplier with a sourced year: `same`, `-1`, `-2`, or `older` (and `unknown` when there is no sourced year). The indicator is `yes` only for `same` and `-1` (award year or the year before; 0–23 months, stated on the label). `-2` is stored for trends and does not set the indicator. Consistent with §16 Q4.
+
+## 19. Publish preconditions
+
+These rules apply before any later publish (this RFC does not authorise a publish). They do not change the DEV warehouse, which may still store name-plus-buyer links for exploration.
+
+1. **Tight matches only.** A link may be presented as a confirmed or tight match only when the records **share a tender reference** (TTS / tender id / OCID, §5 item 4). A link that agrees only on a normalised name plus the same buyer or jurisdiction is a **name-only match within one buyer**. It must not be presented as a confirmed match.
+
+2. **POPIA check on every juristic name.** A juristic name can contain a person's name (for example a firm named after its founder). At publish time, every juristic name in the public output gets a POPIA check before it is released.
 
 ---
 *POPIA check: PASS. See §13.*

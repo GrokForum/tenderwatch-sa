@@ -75,17 +75,27 @@ So part 1, on its own, adds nothing today. It stays worth a cheap periodic check
 
 ### 4.3 Ranking (value per minute of the owner's time)
 
-Score each eligible entity, highest first; ties broken by total award value:
+Score each eligible entity and take the highest first. The counts below are reproduced by `scripts/count_chg_tw_004_lookup_pool.py` (counts only; its output is committed as `scripts/count_chg_tw_004_lookup_pool.out.json`).
 
 | Factor | Points | Why |
 |---|---|---|
-| Award value at the buyer (sum of usable values; quartile of the eligible set) | top 3, second 2, third 1, none or unusable 0 | Larger public spend first |
-| Young-company **candidate** (internal proxy: first seen as an eTenders winner no earlier than 1 June 2022 and within 365 days before this award) | 3 | The age indicator matters most here; the proxy is weak and never published |
-| Buyer concentration (3 or more awards at the buyer) | 2 | Repeat winners at one buyer |
+| Award value at the buyer (see method below) | at or above Q75: 3; at or above Q50 and below Q75: 2; above 0 and below Q50: 1; missing: 0 | Larger public spend first |
+| Young-company **candidate** (internal proxy; rule below) | 3 | The age indicator matters most here; the proxy is weak and never published |
+| Buyer concentration (3 or more of the 291 award rows at the buyer) | 2 | Repeat winners at one buyer |
 | Link already Confirmed | 2 | The year becomes Confirmed at once (§5) |
 | Link Reported | 1 | The lookup is one detail of two; still useful for checks |
 
-**DEV result (counts only):** 45 eligible; 30 with a usable value; 23 young-company candidates; 4 with 3+ awards. Score spread: 7 pts: 4, 6: 5, 5: 11, 4: 12, 3: 4, 2: 1, 1: 8. **Batch 1 (top 10): 2 Confirmed-link and 8 Reported entities, 8 young-company candidates, 2 repeat winners, all 10 with a usable value.** Five batches of 10 cover all 45 (the fifth has 5).
+**Method (exact).**
+
+* *Entity:* one distinct registered `legal_name` among CHG-TW-002 `confirmed_juristic` rows. It is excluded if any of its rows is held, has sub-type JV or trust, or is a multi-entity name. Its link is Confirmed if any of its rows has a Confirmed link.
+* *Value:* the sum of `value_amount` over the entity's rows whose `value_note` is empty. Rows marked `zero_placeholder`, `implausible_high` or `implausible_low`, and rows with no amount, count as missing. An entity whose rows are all missing scores 0 and is left out of the quartile set.
+* *Quartiles:* the quartile set is the sorted list V of the positive entity values of the 45 eligible entities, with duplicates kept. Cut points use the lower nearest-rank rule with no interpolation: Q(p) = V[floor(p × (n − 1))], used for p = 0.50 and 0.75. A value equal to a cut point takes the higher band. There is no separate bottom-quartile band: every positive value below Q50 scores 1.
+* *Young-company rule:* first_seen is the earliest OCDS release `date` in the pinned eTenders file (SHA-256 `a2849a63…5225`) of any release whose award supplier name has the same `norm_name` as one of the entity's supplier names. The entity is a candidate if first_seen is on or after 2022-06-01 **and** its earliest award date is at most 365 days after first_seen.
+* *Batch order (tie-break):* score descending, then value descending, then number of rows descending, then earliest award date ascending, then smallest internal award id ascending. Batch 1 is the first 10.
+
+**DEV result (counts only; script output, identical on two runs):** 45 eligible (6 Confirmed-link, 39 Reported); 30 with a usable value (value points: 3: 9, 2: 7, 1: 14, 0: 15); 23 young-company candidates; 4 with 3+ rows. Score spread: 7 pts: 4, 6: 5, 5: 11, 4: 12, 3: 4, 2: 1, 1: 8. **Batch 1 (top 10): 2 Confirmed-link and 8 Reported entities, 8 young-company candidates, 2 repeat winners, all 10 with a usable value; scores 7, 7, 7, 7, 6, 6, 6, 6, 6, 5.** Five batches of 10 cover all 45 (the fifth has 5).
+
+*Note on the first draft:* its table said "top 3, second 2, third 1, none or unusable 0", which reads as giving the bottom quartile 0 points. The counts were in fact computed with the method above, where every positive value below Q50 scores 1, and the counts are unchanged. Only the wording was ambiguous.
 
 ### 4.4 Batch and template
 
@@ -230,11 +240,24 @@ RFC only: this commit changes `docs/rfc/CHG-TW-004.md` and `STATUS.md`. Before m
 8. **C4 threshold:** 3 young winners at one buyer within 365 days, or another value?
 9. **Periodic part-1 checks:** survey other metros (S8) and gazettes (S10) in a later records-only change?
 10. **Local DEV reading of City registers under option (i):** may the City PDFs still be downloaded and read locally in DEV (never published) to find links and conflicts?
+11. **Public legal form under link-only (knock-on of City option (i), §13.1).** What may the public export say about legal form while the City's permission is pending?
+    *Recommendation:*
+    * Internally, keep using City data for classification, the POPIA gate and lookup ranking.
+    * In the public export, show only eTenders facts. For City-derived rows, show the eTenders supplier name with legal form "Unknown (pending source permission)" and a link to the City source document, carrying the acknowledgement the City's terms require.
+    * Publish a confirmed legal form only for the 2 rows whose suffix eTenders itself prints, until the City replies.
+    * Make no code change under this RFC; the export change needs its own CHG and GO.
+    * One open point for the owner: whether to show an eTenders name at all when the only basis for treating it as a company (and so publishable under the POPIA gate) is a City fact the public cannot see. The safer reading is to show it, because the name is an eTenders fact, while the public row states plainly that the legal form is unconfirmed.
 
 ### 13.1 Decisions
 
 * **City option (i), decided by the owner on 17 Nov 2026 at 20:07 SAST, relayed by the project lead.** City of Cape Town data is **link-only**: the public output cites City URLs with the acknowledgement the City's terms require and carries no City-derived facts. Published facts come only from eTenders (CC BY 4.0). The author reads this as still allowing City registers to be read locally in DEV to find links and conflicts (owner to confirm, §13 Q10).
 * **Two letters**, one to the City of Cape Town (permission to reuse its award registers) and one to CIPC Legal Services (reuse of information seen on its site), are drafted for the owner to send himself. They are not part of this repository. **Outcome: pending.**
+* **Knock-on of option (i)** (verified by `scripts/count_chg_tw_004_lookup_pool.py`):
+  * 64 of the 66 CHG-TW-002 confirmed legal-form rows take their suffix and legal name from the City register; only 2 take them from eTenders (OCDS).
+  * All 59 Reported links are City-derived.
+  * Of the 45 eligible lookup entities, 44 have a City-derived registered name and 1 an eTenders-derived one.
+  * Under link-only, the public export could name only the **2 OCDS-suffix rows** as confirmed legal entities until the City grants permission (§13 Q11).
+* **What this means for the public site.** Until the City replies, the public site would be little more than a re-presentation of eTenders award data for one buyer. It would show award, buyer, date and usable value from eTenders, with links to City documents, but a confirmed legal form on only 2 of 291 rows and no age indicator on any row. The work that makes TenderWatch useful (legal-form confirmation, City cross-links, lookups, ages and churn notes) stays internal. A public launch under these limits would add little over eTenders itself, so the owner may prefer to wait for the City's answer before publishing.
 
 ## 14. CAB review
 

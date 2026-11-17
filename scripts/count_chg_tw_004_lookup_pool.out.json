@@ -1,0 +1,75 @@
+{
+  "inputs": {
+    "warehouse_rows": 291,
+    "ocds_sha256": "a2849a632148ca1eb59c0ceabeb45de16be0698a1804a485cf93417542435225"
+  },
+  "chg_tw_002_confirmed_rows": 66,
+  "confirmed_rows_by_legal_name_source": {
+    "city_register": 64,
+    "ocds": 2
+  },
+  "reported_rows": 59,
+  "reported_rows_by_legal_name_source": {
+    "city_register": 59
+  },
+  "reported_rows_held": 5,
+  "pool_distinct_legal_names": 49,
+  "excluded": {
+    "jv_or_trust": 1,
+    "popia_hold": 3
+  },
+  "eligible": 45,
+  "eligible_by_link": {
+    "Confirmed": 6,
+    "Reported": 39
+  },
+  "eligible_by_legal_name_source": {
+    "city_register": 44,
+    "ocds": 1
+  },
+  "award_rows_behind_eligible_by_link": {
+    "Confirmed": 6,
+    "Reported": 54
+  },
+  "value_known": 30,
+  "value_points": {
+    "0": 15,
+    "1": 14,
+    "2": 7,
+    "3": 9
+  },
+  "young_candidates": 23,
+  "three_plus_rows": 4,
+  "score_spread": {
+    "7": 4,
+    "6": 5,
+    "5": 11,
+    "4": 12,
+    "3": 4,
+    "2": 1,
+    "1": 8
+  },
+  "batch1": {
+    "size": 10,
+    "by_link": {
+      "Confirmed": 2,
+      "Reported": 8
+    },
+    "young": 8,
+    "three_plus_rows": 2,
+    "value_known": 10,
+    "scores": [
+      7,
+      7,
+      7,
+      7,
+      6,
+      6,
+      6,
+      6,
+      6,
+      5
+    ]
+  },
+  "batches_needed": 5
+}

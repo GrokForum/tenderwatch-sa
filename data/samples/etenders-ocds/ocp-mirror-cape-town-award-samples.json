@@ -1,0 +1,88 @@
+{
+  "source_name": "eTenders OCDS compiled releases (OCP Data Registry publication 143, full.jsonl.gz)",
+  "source_url": "https://data.open-contracting.org/en/publication/143/download?name=full.jsonl.gz",
+  "publication_page": "https://data.open-contracting.org/en/publication/143",
+  "retrieved_by": "PublicFunds connector (copy at /workspace/publicfunds/src/full.jsonl.gz)",
+  "source_last_retrieved_by_ocp": "2026-09-20",
+  "publicfunds_copy_fetched_at_sast": "2026-10-19T09:38:06+02:00",
+  "sample_extracted_at_sast": "2026-11-17 11:00 SAST (Africa/Johannesburg)",
+  "licence_notes": "OCP registry lists PDDL; eTenders Transparency Portal homepage also states CC BY 4.0; publication policy at https://data.etenders.gov.za/Home/LearnMore permits use, publication and republication with a link to the source. Licences are inconsistent; attribute the National Treasury / OCPO and link to the source.",
+  "popia_note": "Samples omit parties.address, parties.contactPoint, and tender.contactPerson. No director IDs, emails, phones or street addresses are stored.",
+  "rows": [
+    {
+      "ocid": "ocds-9t57fa-100167",
+      "release_date": "2024-08-30T00:00:00Z",
+      "buyer_name": "City of Cape Town",
+      "buyer_id": "59",
+      "tender_id": "100167",
+      "tender_title": "057Q/2024/25",
+      "procurement_method": "open",
+      "award_id": "47680",
+      "award_title": "[redacted]",
+      "award_status": "active",
+      "award_value": {
+        "amount": 1981222875.0,
+        "currency": "ZAR"
+      },
+      "award_date_field": null,
+      "supplier_name": "[redacted]",
+      "supplier_id": "140763",
+      "party_identifier": {
+        "legalName": "[redacted]"
+      },
+      "contract_dateSigned": null,
+      "cipc_registration_number": null,
+      "csd_number": null
+    },
+    {
+      "ocid": "ocds-9t57fa-100171",
+      "release_date": "2024-08-30T00:00:00Z",
+      "buyer_name": "City of Cape Town",
+      "buyer_id": "59",
+      "tender_id": "100171",
+      "tender_title": "058Q/2024/25",
+      "procurement_method": "open",
+      "award_id": "50470",
+      "award_title": "BLOEMHOF ELECTRICAL",
+      "award_status": "active",
+      "award_value": {
+        "amount": 5356639625.0,
+        "currency": "ZAR"
+      },
+      "award_date_field": null,
+      "supplier_name": "BLOEMHOF ELECTRICAL",
+      "supplier_id": "74070",
+      "party_identifier": {
+        "legalName": "BLOEMHOF ELECTRICAL"
+      },
+      "contract_dateSigned": null,
+      "cipc_registration_number": null,
+      "csd_number": null
+    },
+    {
+      "ocid": "ocds-9t57fa-100172",
+      "release_date": "2024-08-30T00:00:00Z",
+      "buyer_name": "City of Cape Town",
+      "buyer_id": "59",
+      "tender_id": "100172",
+      "tender_title": "59G/2024/25",
+      "procurement_method": "open",
+      "award_id": "72120",
+      "award_title": "[redacted]",
+      "award_status": "active",
+      "award_value": {
+        "amount": 138000000.0,
+        "currency": "ZAR"
+      },
+      "award_date_field": null,
+      "supplier_name": "[redacted]",
+      "supplier_id": "22983",
+      "party_identifier": {
+        "legalName": "[redacted]"
+      },
+      "contract_dateSigned": null,
+      "cipc_registration_number": null,
+      "csd_number": null
+    }
+  ]
+}

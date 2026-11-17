@@ -2,3 +2,9 @@ node_modules/
 __pycache__/
 .env
 *.sqlite
+
+# Local DEV data (samples under data/samples/ are tracked)
+data/raw/
+data/local/
+.venv/
+*.duckdb

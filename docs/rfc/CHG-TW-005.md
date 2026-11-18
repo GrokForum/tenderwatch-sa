@@ -5,8 +5,8 @@
 | Change | CHG-TW-005 |
 | Type | RFC and process document only. No code, no data change, no build under this record. |
 | Environment | DEV (records only) |
-| Branch | `dev/CHG-TW-005-pre-answer-board`, from `origin/main` at `905562ad649dc07427d77c515f687e84825d09a4` (PR #7 squash merge) |
-| Rollback reference | `905562ad649dc07427d77c515f687e84825d09a4`; snapshot tag `snapshot-2026-11-17-pre-tw-pr7` → `a6443326` |
+| Branch | `dev/CHG-TW-005-pre-answer-board`, rebased onto `origin/main` at `7cc951d5bbff03cfdfa4448d326003a3d793895d` (PR #8 squash merge); first raised from `905562ad` (PR #7 squash merge) |
+| Rollback reference | `7cc951d5bbff03cfdfa4448d326003a3d793895d`; snapshot tag `snapshot-2026-11-18-pre-tw-pr8` → `905562ad` |
 | Author | the author (TenderWatch) |
 | Reviewers | reviewer A (project lead), reviewer B |
 | Basis | Owner GO to draft an RFC pre-answer board, 17 Nov 2026 23:03 SAST, relayed by the project lead; the author and reviewer B have not heard it from the owner directly. |
@@ -101,7 +101,7 @@ On the next RFC that carries owner questions, write the board drafts and commit 
 ## 6. Success, rollback, seen not touched
 
 * **Success:** two reviewer PASSes on the exact head, then the owner's GO to merge. The process is used only after merge.
-* **Rollback:** before merge, delete the branch. After a merge, `git revert` the merge commit, or reset a branch to `905562ad649dc07427d77c515f687e84825d09a4`.
+* **Rollback:** before merge, delete the branch. After a merge, `git revert` the merge commit, or reset a branch to `7cc951d5bbff03cfdfa4448d326003a3d793895d`.
 * **Seen, not touched:** none.
 
 ## 7. CAB review

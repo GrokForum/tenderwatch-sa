@@ -72,13 +72,22 @@ def publish_allowed(cfg: dict, publish_flag: bool) -> bool:
     return cfg.get("publish_enabled") is True and publish_flag is True
 
 
+def origin_matches(remote: str, site_repo: str, allowed_remotes: set[str] | None = None) -> bool:
+    """Exact match on the GitHub repository (https or ssh form), with an optional trailing .git or /.
+    No suffix matching: a look-alike host or owner path is refused. Tests pass allowed_remotes for a local bare repo."""
+    norm = remote.strip().rstrip("/").removesuffix(".git")
+    allowed = allowed_remotes if allowed_remotes is not None else {
+        f"https://github.com/{site_repo}", f"git@github.com:{site_repo}", f"ssh://git@github.com/{site_repo}"}
+    return norm in {a.rstrip("/").removesuffix(".git") for a in allowed}
+
+
 def publish_to_site(staging: Path, site_dir: Path, cfg: dict, publish_flag: bool, date_sast: str,
-                    run: Runner = subprocess.run) -> str:
+                    run: Runner = subprocess.run, allowed_remotes: set[str] | None = None) -> str:
     """Copy the managed files into the site checkout, commit and fast-forward push main. Returns a status text."""
     if not publish_allowed(cfg, publish_flag):
         raise PublishRefused("publish is not enabled (config publish_enabled and --publish are both required)")
     remote = _git(["remote", "get-url", "origin"], site_dir, run)
-    if not remote.rstrip("/").removesuffix(".git").endswith(cfg["site_repo"]):
+    if not origin_matches(remote, cfg["site_repo"], allowed_remotes):
         raise PublishRefused("site checkout origin is not the configured site repository")
     _git(["fetch", "origin", "main"], site_dir, run)
     _git(["checkout", "main"], site_dir, run)
@@ -168,6 +177,9 @@ def run_nightly(*, publish_flag: bool = False, manual: bool = False, site_dir: P
         rec["branch"] = _git(["rev-parse", "--abbrev-ref", "HEAD"], ROOT, run)
         if _git(["status", "--porcelain", "--untracked-files=no"], ROOT, run):
             raise RuntimeError("tracked files have local changes before the run")
+        if not manual and rec["branch"] != "main":
+            # The routine runs in its own clean checkout of main, never in a development worktree.
+            raise RuntimeError("a scheduled run must be on main in the nightly checkout")
     except Exception as e:  # noqa: BLE001
         rec["steps"]["preflight"] = f"FAIL: {e}"
         ok = False

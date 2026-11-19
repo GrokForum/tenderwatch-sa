@@ -230,14 +230,14 @@ def test_publish_fast_forwards_the_site_when_enabled(tmp_path: Path):
     staging = tmp_path / "staging"
     site.build_site(fixture_rows(), staging)
     cfg = {**CFG, "publish_enabled": True}
-    status = nightly.publish_to_site(staging, site_dir, cfg, True, "2026-11-20")
+    status = nightly.publish_to_site(staging, site_dir, cfg, True, "2026-11-20", allowed_remotes={str(origin)})
     assert status.startswith("published")
     log = subprocess.run(["git", "log", "--oneline", "main"], cwd=origin, capture_output=True, text=True).stdout
     assert "data: nightly build 2026-11-20 (CHG-TW-007)" in log
     ident = subprocess.run(["git", "log", "-1", "--format=%an <%ae>|%cn <%ce>", "main"], cwd=origin,
                            capture_output=True, text=True).stdout.strip()
     assert ident == "TenderWatch publisher <noreply@grokforum.site>|TenderWatch publisher <noreply@grokforum.site>"
-    assert nightly.publish_to_site(staging, site_dir, cfg, True, "2026-11-21") == "unchanged"
+    assert nightly.publish_to_site(staging, site_dir, cfg, True, "2026-11-21", allowed_remotes={str(origin)}) == "unchanged"
     assert (site_dir / "CNAME").read_text() == "tenderwatch.example\n"  # never touched
 
 
@@ -290,3 +290,27 @@ def test_streak_breaks_on_fail_gap_or_manual_fix():
     assert nightly.streak([_r("2026-11-20"), _r("2026-11-22")], "2026-11-22")["streak"] == 1
     assert nightly.streak([_r("2026-11-22")], "2026-11-23")["streak"] == 1  # tonight not run yet
     assert nightly.streak([_r("2026-11-22", branch="dev/x")], "2026-11-22")["streak"] == 0
+
+
+def test_origin_must_match_the_github_repository_exactly():
+    repo = "GrokForum/tenderwatch-site"
+    for ok in ("https://github.com/GrokForum/tenderwatch-site", "https://github.com/GrokForum/tenderwatch-site.git",
+               "https://github.com/GrokForum/tenderwatch-site/", "git@github.com:GrokForum/tenderwatch-site.git"):
+        assert nightly.origin_matches(ok, repo), ok
+    for bad in ("https://evil.example/GrokForum/tenderwatch-site", "https://github.com/x/GrokForum/tenderwatch-site",
+                "https://github.com/GrokForum/tenderwatch-site-fork", "/tmp/GrokForum/tenderwatch-site.git", ""):
+        assert not nightly.origin_matches(bad, repo), bad
+
+
+def test_scheduled_run_refuses_a_branch_other_than_main(tmp_path: Path):
+    class OnDevBranch(FakeRun):
+        def __call__(self, cmd, cwd=None, capture_output=True, text=True, timeout=None):
+            if cmd[:3] == ["git", "rev-parse", "--abbrev-ref"]:
+                self.calls.append(list(cmd))
+                return subprocess.CompletedProcess(cmd, 0, "dev/some-branch", "")
+            return super().__call__(cmd, cwd, capture_output, text, timeout)
+    fake = OnDevBranch()
+    rec = nightly.run_nightly(cfg=CFG, run=fake, live=_live_pass, refresh=lambda: None, build=_build_ok, now=_now,
+                              log_commit=False, nightly_dir=tmp_path / "n", staging=tmp_path / "s")
+    assert rec["result"] == "FAIL" and "on main" in rec["steps"]["preflight"]
+    assert not fake.pushed()

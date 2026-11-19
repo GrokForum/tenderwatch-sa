@@ -28,7 +28,7 @@ A nightly job that rebuilds the DRAFT register, gates it with every public-file 
 * New `tw/nightly.py`: the nightly steps, the publish locks, the results log and the streak rule.
 * New `scripts/nightly.py` (the routine runs this) and `scripts/nightly_streak.py` (read-only streak count).
 * New `config/nightly.json`: `site_url` https://tenderwatch.grokforum.site, `site_repo` GrokForum/tenderwatch-site, `publish_enabled: false`, `push_log: false`, `log_branch: ops/nightly-log`, `pages_wait_seconds: 600`.
-* New `tests/test_nightly.py`: 21 tests (a local HTTP server for the live check; a fake git runner for the locks; real temporary git repositories for the fast-forward publish and the log branch; the streak rule).
+* New `tests/test_nightly.py`: 23 tests (a local HTTP server for the live check; a fake git runner for the locks; real temporary git repositories for the fast-forward publish and the log branch; the streak rule).
 * This RFC and one `STATUS.md` row.
 
 ## 3a. What stays
@@ -59,7 +59,7 @@ A night is **PASS** only if every step passed **and** the live site serves tonig
 1. **Committed config**: `config/nightly.json` has `"publish_enabled": false`. Changing it needs a reviewed change merged on the owner's GO on its exact head.
 2. **Command line**: publishing also needs `--publish`. The routine prompt in §7 never passes it.
 3. **Gate**: even with both locks open, a failed scan, a count mismatch, a dirty tree or any earlier failure refuses the publish.
-4. **Target**: the site checkout's `origin` must be `GrokForum/tenderwatch-site`; the push is a plain fast-forward of `main` (`git push origin main`, never `--force`); `CNAME` and `README.md` are never touched; only the managed files are copied. Each publish commit carries the neutral role identity `TenderWatch publisher <noreply@grokforum.site>` as author and committer, never the box's git identity (project lead's answer to CHG-TW-006 Q2, 19 Nov 2026, relayed).
+4. **Target**: the site checkout's `origin` must be exactly `https://github.com/GrokForum/tenderwatch-site` (or its `git@github.com:` form, optional `.git`), with no suffix matching, so a look-alike host or path is refused; the push is a plain fast-forward of `main` (`git push origin main`, never `--force`); `CNAME` and `README.md` are never touched; only the managed files are copied. Each publish commit carries the neutral role identity `TenderWatch publisher <noreply@grokforum.site>` as author and committer, never the box's git identity (project lead's answer to CHG-TW-006 Q2, 19 Nov 2026, relayed).
 
 Tests pin all four: with `publish_enabled` false and `--publish` given, no git command reaches the site and no push is attempted; a gate failure with both locks open refuses; a foreign origin refuses; an enabled publish fast-forwards a temporary bare repository and a second identical build reports `unchanged`; the publish commit's author and committer are the role identity.
 
@@ -75,12 +75,14 @@ Tests pin all four: with `publish_enabled` false and `--publish` given, no git c
 
 **Prompt (dry-run; publish stays off):**
 
-> TenderWatch nightly (CHG-TW-007). Work only in the box checkout of the private repository GrokForum/tenderwatch-sa.
+> TenderWatch nightly (CHG-TW-007). Work only in the dedicated nightly checkout of the private repository GrokForum/tenderwatch-sa (the clean clone of `main` named `tenderwatch-sa-nightly`), never in the development checkout.
 > 1. Run `git fetch origin`, `git checkout main`, `git merge --ff-only origin/main`. If any of these fails, report `ACTION: checkout update failed` and stop.
 > 2. Run `python3 scripts/nightly.py` with no arguments (never add `--publish` or `--manual`). Allow up to 20 minutes.
 > 3. Report every line it prints (RESULT, each step, the failed live checks, the scan totals, where the record was written). Then run `python3 scripts/nightly_streak.py` and report the streak.
 > 4. If RESULT is FAIL, begin the report with `ACTION: nightly FAIL` and the failed steps. If the run crashed (exit code 2), report `ACTION: nightly crashed` and stop.
 > 5. Report a FAIL as a FAIL, never as success. Do not re-run, fix, edit, commit, push, publish or merge anything, and do not touch GitHub Pages settings or the custom domain.
+
+**One-time setup before the routine is created (after GO):** clone `GrokForum/tenderwatch-sa` into its own directory `tenderwatch-sa-nightly`, beside the development checkout, and stay on `main`. Seed its git-ignored `data/local/` once with the DEV inputs only (`raw/`, `check_queue.csv`, `confirmed_suppliers.csv`, `public_scan_extra_terms.txt`), copied from the development checkout; outputs (`export/`, `warehouse/`, `site-build/`, `nightly/`) are regenerated. The nightly never reads or writes the development checkout. A scheduled run that is not on `main` fails preflight (`a scheduled run must be on main in the nightly checkout`); only manual runs may run on a branch, and they never count.
 
 **After a later GO to publish** (a reviewed change sets `publish_enabled: true`): step 2 becomes `python3 scripts/nightly.py --publish`, and the report adds the publish line (`published <sha>` or `unchanged`).
 
@@ -88,9 +90,15 @@ Tests pin all four: with `publish_enabled` false and `--publish` given, no git c
 
 | Check | Result (19 Nov 2026) |
 |---|---|
-| Fresh venv (Python 3.13, `pip install -e ".[test]"`): existing suite + CHG-TW-006 + new | 266 passed (215 + 30 + 21); see §11 for the run on the final head |
-| Real dry run on the box (manual trigger, this branch; log commit off for the trial) | refresh PASS, build PASS, gate PASS (every scan 0), tracked files clean, publish `dry-run (publish not enabled)`, `content_sha256` `55d6b6f5…a857d` (identical to the CHG-TW-006 build after the classification re-run), **check_live FAIL: TLS certificate verification failed** (audit B1). Result **FAIL**, correctly recorded in `data/local/nightly/results.csv` and `2026-11-19-manual-080211.json`. |
+| Fresh venv (Python 3.13, `pip install -e ".[test]"`): existing suite + CHG-TW-006 + new | 268 passed (215 + 30 + 23) on the head with the critic's review points |
+| Real dry run on the box (manual trigger, this branch at the CHG-TW-006 code `6fb5fcd1`; log commit off for the trial) | refresh PASS, build PASS, gate PASS (every scan 0), tracked files clean, publish `dry-run (publish not enabled)`, `content_sha256` `55d6b6f5f254d6cb8a1c749d3623aac605daf588bb3db9a07f2154aefe1cd070` (identical to the CHG-TW-006 build after the classification re-run), **check_live FAIL: TLS certificate verification failed** (audit B1). Result **FAIL**, correctly recorded in `data/local/nightly/results.csv` and `2026-11-19-manual-080211.json`. |
 | Live check against the placeholder with verification off (information only, not a nightly mode) | home 200 and robots PASS; DRAFT, noindex-form, privacy page, `/method/`, 404 page and manifest FAIL, as expected before CHG-TW-006 is deployed |
+
+### Critic's review points (19 Nov 2026, relayed by the project lead)
+
+* The dry-run `content_sha256` above is written in full; it is the build of the CHG-TW-006 code at `6fb5fcd1`. The later CHG-TW-006 privacy-page wording changes the site content hash; the dry run is not re-claimed for it.
+* The publish target check is an exact match on the GitHub repository (`origin_matches`), not a suffix match; a test pins accepted and refused forms.
+* The routine runs in its own clean checkout of `main` (§7 setup); a scheduled run on any other branch fails preflight, and a test pins it.
 
 ## 9. When the streak can start
 

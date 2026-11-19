@@ -182,6 +182,7 @@ def test_every_page_has_draft_noindex_privacy_csp(tmp_path: Path):
     assert (tmp_path / "robots.txt").read_text() == "User-agent: *\nDisallow: /\n"
     priv = (tmp_path / "privacy" / "index.html").read_text(encoding="utf-8")
     assert "mailto:privacy@grokforum.site" in priv and "GrokForum" in priv
+    assert "its buyer and usable value" in priv  # masked rows have no tender reference
     assert "https://inforegulator.org.za/" in priv
 
 

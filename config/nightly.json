@@ -1,0 +1,10 @@
+{
+  "rfc": "CHG-TW-007",
+  "site_url": "https://tenderwatch.grokforum.site",
+  "site_repo": "GrokForum/tenderwatch-site",
+  "publish_enabled": false,
+  "push_log": false,
+  "log_branch": "ops/nightly-log",
+  "pages_wait_seconds": 600,
+  "note": "publish_enabled and push_log stay false until the owner's GO on the exact head of a reviewed change that sets them; the routine also omits --publish until then"
+}

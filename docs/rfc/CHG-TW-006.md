@@ -107,7 +107,7 @@ Git. Private repo: drop the branch, or after a squash merge `git revert <merge c
 ## 10. Open questions
 
 1. **Held row with a Confirmed year.** §13.8 says a held masked row never shows a year digit, but does not give its text when the year becomes Confirmed. The build stops in that case. Show the placeholder, `Year: Unknown`, or something else?
-2. **Commit author on the public site repository.** Its history has one commit authored under the assistant's own name ("… (for the owner)") with a noreply address, which this change follows. Is that author name acceptable in public commit metadata, or should site commits use a GrokForum author?
+2. **Commit author on the public site repository.** Answered by the project lead (19 Nov 2026, relayed; the author has not heard it from the owner directly): no bot name in public metadata; site commits use the neutral role identity `TenderWatch publisher <noreply@grokforum.site>`, as the owner chose for PublicFunds. The site branch commit now carries that author and committer; its files are unchanged.
 3. **Masked rows show the usable value.** §13.2 allows buyer, award date, usable value and title. The value plus date can make a row easy to find in the source; this is the residual risk §13.2 already accepts. Confirm.
 
 ---

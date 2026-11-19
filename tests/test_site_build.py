@@ -270,9 +270,57 @@ def test_dev_export_counts_and_scans(tmp_path: Path):
         pytest.skip("skipped: the DEV export is git-ignored; run scripts/run_chg_tw_002_classify.py first")
     res = site_build.run_build(tmp_path)
     assert res["rows_total"] == 291
-    assert res["group_counts"] == {"unmasked": 61, "held": 5, "personal": 27, "pending": 192, "withheld": 6}
+    assert res["group_counts"] == {"unmasked": 58, "held": 8, "personal": 27, "pending": 192, "withheld": 6}
     if res["lookups_loaded"] == 0:
         assert res["year_counts"] == {"Year: Unknown": 258, "Year: not shown (masked row)": 27,
                                       "Row withheld (no cell)": 6}
-    assert res["names_scanned"]["withheld"] == 198 and res["names_scanned"]["all"] == 718
+    assert res["tracked_holds_applied"] == 3
+    assert res["names_scanned"]["withheld"] == 203 and res["names_scanned"]["all"] == 718
     assert res["scans_clean"], res["scan_findings"]
+
+
+# --- CHG-TW-008: tracked holds -------------------------------------------------
+
+def _holds_file(tmp_path: Path, holds) -> Path:
+    p = tmp_path / "holds.json"
+    p.write_text(json.dumps({"holds": holds}), encoding="utf-8")
+    return p
+
+
+def test_tracked_hold_masks_a_confirmed_row(tmp_path: Path):
+    from tw import site_build
+    rows = fixture_rows()
+    holds = site_build.load_holds(_holds_file(tmp_path, [{"ocid": "ocds-fx-4", "award_id": "4", "basis": "test"}]))
+    assert site_build.apply_holds(rows, holds) == 1
+    model = site.build_rows(rows)
+    d = next(d for d in model["rows"] if d["group"] == "held" and d["supplier"] == site.mask_name("Harbour Lights CC"))
+    assert d["tender_reference"] == "" and d["ocds_id"] == "" and d["supplier_label"] is None
+    assert d["year_cell"] == site.YEAR_UNKNOWN
+    out = tmp_path / "site"
+    site.build_site(rows, out)
+    text = "".join(p.read_text(encoding="utf-8", errors="ignore") for p in out.rglob("*") if p.is_file())
+    assert "Harbour Lights" not in text and "4Q/2025/26" not in text
+
+
+def test_tracked_hold_for_a_missing_record_stops_the_build(tmp_path: Path):
+    from tw import site_build
+    holds = site_build.load_holds(_holds_file(tmp_path, [{"ocid": "ocds-nope", "award_id": "1", "basis": "test"}]))
+    with pytest.raises(site.UnsafeBuild):
+        site_build.apply_holds(fixture_rows(), holds)
+
+
+@pytest.mark.parametrize("bad", [[{"ocid": "x", "award_id": "1"}], [{"ocid": "", "award_id": "1", "basis": "b"}],
+                                 [{"ocid": "x", "award_id": "1", "basis": "b"}, {"ocid": "x", "award_id": "1", "basis": "b"}]])
+def test_holds_file_entries_are_checked(tmp_path: Path, bad):
+    from tw import site_build
+    with pytest.raises(site.UnsafeBuild):
+        site_build.load_holds(_holds_file(tmp_path, bad))
+
+
+def test_committed_holds_file_has_three_records_and_no_names():
+    from tw import site_build
+    holds = site_build.load_holds()
+    assert len(holds) == 3
+    allowed = {"ocid", "award_id", "basis"}
+    assert all(set(h) <= allowed for h in holds)
+    assert all(re.fullmatch(r"ocds-[a-z0-9]+-[0-9]+", h["ocid"]) and h["award_id"].isdigit() for h in holds)

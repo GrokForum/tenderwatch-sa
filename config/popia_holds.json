@@ -1,0 +1,21 @@
+{
+  "rfc": "CHG-TW-008",
+  "note": "POPIA holds kept in git so every build (the nightly clone included) applies them. Keyed by award record only; no supplier name in this file.",
+  "holds": [
+    {
+      "ocid": "ocds-9t57fa-113992",
+      "award_id": "55844",
+      "basis": "Owner decision 19 Nov 2026: Confirmed firm whose name is a person's name; masked like the other masked rows."
+    },
+    {
+      "ocid": "ocds-9t57fa-35931",
+      "award_id": "13114",
+      "basis": "Owner decision 19 Nov 2026: Confirmed firm whose name is a person's name; masked like the other masked rows."
+    },
+    {
+      "ocid": "ocds-9t57fa-76101",
+      "award_id": "49260",
+      "basis": "Owner decision 19 Nov 2026: Confirmed firm whose name is a person's name; masked like the other masked rows."
+    }
+  ]
+}

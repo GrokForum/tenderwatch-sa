@@ -234,6 +234,9 @@ def test_publish_fast_forwards_the_site_when_enabled(tmp_path: Path):
     assert status.startswith("published")
     log = subprocess.run(["git", "log", "--oneline", "main"], cwd=origin, capture_output=True, text=True).stdout
     assert "data: nightly build 2026-11-20 (CHG-TW-007)" in log
+    ident = subprocess.run(["git", "log", "-1", "--format=%an <%ae>|%cn <%ce>", "main"], cwd=origin,
+                           capture_output=True, text=True).stdout.strip()
+    assert ident == "TenderWatch publisher <noreply@grokforum.site>|TenderWatch publisher <noreply@grokforum.site>"
     assert nightly.publish_to_site(staging, site_dir, cfg, True, "2026-11-21") == "unchanged"
     assert (site_dir / "CNAME").read_text() == "tenderwatch.example\n"  # never touched
 

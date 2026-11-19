@@ -56,6 +56,10 @@ def load_config(path: Path = CONFIG) -> dict:
     return cfg
 
 
+PUBLISHER_NAME = "TenderWatch publisher"
+PUBLISHER_EMAIL = "noreply@grokforum.site"
+
+
 def _git(args: list[str], cwd: Path, run: Runner = subprocess.run, check: bool = True) -> str:
     p = run(["git", *args], cwd=cwd, capture_output=True, text=True, timeout=300)
     if check and p.returncode != 0:
@@ -89,7 +93,10 @@ def publish_to_site(staging: Path, site_dir: Path, cfg: dict, publish_flag: bool
     _git(["add", "--", *MANAGED_FILES], site_dir, run)
     if not _git(["status", "--porcelain"], site_dir, run):
         return "unchanged"
-    _git(["commit", "-q", "-m", f"data: nightly build {date_sast} (CHG-TW-007)"], site_dir, run)
+    # Public commits carry the neutral role identity only, never the box's git identity (no bot or personal name).
+    _git(["-c", f"user.name={PUBLISHER_NAME}", "-c", f"user.email={PUBLISHER_EMAIL}",
+          "commit", "-q", f"--author={PUBLISHER_NAME} <{PUBLISHER_EMAIL}>",
+          "-m", f"data: nightly build {date_sast} (CHG-TW-007)"], site_dir, run)
     sha = _git(["rev-parse", "HEAD"], site_dir, run)
     _git(["push", "origin", "main"], site_dir, run)  # fast-forward only: no --force, ever
     return f"published {sha[:12]}"

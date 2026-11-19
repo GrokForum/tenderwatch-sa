@@ -59,9 +59,9 @@ A night is **PASS** only if every step passed **and** the live site serves tonig
 1. **Committed config**: `config/nightly.json` has `"publish_enabled": false`. Changing it needs a reviewed change merged on the owner's GO on its exact head.
 2. **Command line**: publishing also needs `--publish`. The routine prompt in §7 never passes it.
 3. **Gate**: even with both locks open, a failed scan, a count mismatch, a dirty tree or any earlier failure refuses the publish.
-4. **Target**: the site checkout's `origin` must be `GrokForum/tenderwatch-site`; the push is a plain fast-forward of `main` (`git push origin main`, never `--force`); `CNAME` and `README.md` are never touched; only the managed files are copied.
+4. **Target**: the site checkout's `origin` must be `GrokForum/tenderwatch-site`; the push is a plain fast-forward of `main` (`git push origin main`, never `--force`); `CNAME` and `README.md` are never touched; only the managed files are copied. Each publish commit carries the neutral role identity `TenderWatch publisher <noreply@grokforum.site>` as author and committer, never the box's git identity (project lead's answer to CHG-TW-006 Q2, 19 Nov 2026, relayed).
 
-Tests pin all four: with `publish_enabled` false and `--publish` given, no git command reaches the site and no push is attempted; a gate failure with both locks open refuses; a foreign origin refuses; an enabled publish fast-forwards a temporary bare repository and a second identical build reports `unchanged`.
+Tests pin all four: with `publish_enabled` false and `--publish` given, no git command reaches the site and no push is attempted; a gate failure with both locks open refuses; a foreign origin refuses; an enabled publish fast-forwards a temporary bare repository and a second identical build reports `unchanged`; the publish commit's author and committer are the role identity.
 
 ## 6. The results log (durable and dated)
 

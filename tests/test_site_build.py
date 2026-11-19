@@ -287,8 +287,11 @@ def _holds_file(tmp_path: Path, holds) -> Path:
     return p
 
 
-def _h(i, basis="Owner decision: masked like the other masked rows."):
-    return {"ocid": f"ocds-fx-{i}", "award_id": str(i), "basis": basis}
+_KEYS = {r["award_id"]: r["name_key"] for r in fixture_rows()}
+
+
+def _h(i, basis="Owner decision: masked like the other masked rows.", name_key=None):
+    return {"ocid": f"ocds-fx-{i}", "award_id": str(i), "basis": basis, "name_key": name_key or _KEYS[str(i)]}
 
 
 @pytest.fixture
@@ -327,7 +330,7 @@ def test_fewer_holds_than_decided_stops_the_build(tmp_path: Path):
 
 def test_hold_for_a_missing_record_stops_the_build(tmp_path: Path, one_hold_minimum):
     sb = one_hold_minimum
-    holds = sb.load_holds(_holds_file(tmp_path, [{"ocid": "ocds-nope-1", "award_id": "1", "basis": "b"}]))
+    holds = sb.load_holds(_holds_file(tmp_path, [{"ocid": "ocds-nope-1", "award_id": "1", "basis": "b", "name_key": "x"}]))
     with pytest.raises(site.UnsafeBuild, match="not in the input"):
         sb.apply_holds(fixture_rows(), holds)
 
@@ -347,10 +350,17 @@ def test_hold_basis_with_a_supplier_name_stops_the_build(tmp_path: Path, one_hol
 
 
 @pytest.mark.parametrize("bad", [
-    ["not an object"], [None], [{"ocid": "ocds-fx-4", "award_id": "4"}], [{"ocid": "", "award_id": "4", "basis": "b"}],
-    [{"ocid": "ocds-fx-4", "award_id": 0, "basis": "b"}], [{"ocid": "ocds-fx-4", "award_id": "0", "basis": "b"}],
-    [{"ocid": "ocds-fx-4", "award_id": "-4", "basis": "b"}], [{"ocid": "ocds-fx-4", "award_id": True, "basis": "b"}],
-    [{"ocid": "Harbour Lights", "award_id": "4", "basis": "b"}], [_h(4), _h(4)],
+    ["not an object"], [None], [{"ocid": "ocds-fx-4", "award_id": "4", "name_key": "harbour"}],
+    [{"ocid": "", "award_id": "4", "basis": "b", "name_key": "harbour"}],
+    [{"ocid": "ocds-fx-4", "award_id": 0, "basis": "b", "name_key": "harbour"}],
+    [{"ocid": "ocds-fx-4", "award_id": "0", "basis": "b", "name_key": "harbour"}],
+    [{"ocid": "ocds-fx-4", "award_id": "-4", "basis": "b", "name_key": "harbour"}],
+    [{"ocid": "ocds-fx-4", "award_id": True, "basis": "b", "name_key": "harbour"}],
+    [{"ocid": "Harbour Lights", "award_id": "4", "basis": "b", "name_key": "harbour"}],
+    [{"ocid": "ocds-fx-4", "award_id": "4", "basis": "b"}],  # no name key (second detail)
+    [{"ocid": "ocds-fx-4", "award_id": "4", "basis": "b", "name_key": "  "}],
+    [{**_h(4), "supplier_name": "Harbour Lights CC"}],  # extra key
+    [_h(4), _h(4)],
 ])
 def test_holds_file_entries_are_checked(tmp_path: Path, one_hold_minimum, bad):
     with pytest.raises(site.UnsafeBuild):
@@ -365,10 +375,33 @@ def test_unreadable_holds_file_stops_the_build(tmp_path: Path, one_hold_minimum,
         one_hold_minimum.load_holds(p)
 
 
+def test_hold_on_the_wrong_record_stops_the_build(tmp_path: Path, one_hold_minimum):
+    sb = one_hold_minimum
+    # Record id of row 5, name key of row 4: the two details disagree.
+    with pytest.raises(site.UnsafeBuild, match="do not agree"):
+        sb.apply_holds(fixture_rows(), sb.load_holds(_holds_file(tmp_path, [_h(5, name_key="harbour")])))
+
+
+@pytest.mark.parametrize("basis", ["Owner decision: Qwertane is a surname", "the zephyr family"])
+def test_hold_basis_with_a_word_of_the_held_name_stops_the_build(tmp_path: Path, one_hold_minimum, basis):
+    sb = one_hold_minimum
+    with pytest.raises(site.UnsafeBuild, match="word of the held"):
+        sb.apply_holds(fixture_rows(), sb.load_holds(_holds_file(tmp_path, [_h(5, basis)])))
+
+
+def test_generic_trade_words_in_a_basis_are_allowed(tmp_path: Path, one_hold_minimum):
+    sb = one_hold_minimum
+    rows = fixture_rows()
+    assert sb.apply_holds(rows, sb.load_holds(_holds_file(tmp_path, [_h(5, "Owner decision: joint venture, masked")]))) == 1
+
+
 def test_holds_file_is_git_ignored_and_never_committed():
     import subprocess
     from tw import site_build
     root = Path(__file__).resolve().parents[1]
+    inside = subprocess.run(["git", "rev-parse", "--is-inside-work-tree"], cwd=root, capture_output=True, text=True)
+    if inside.returncode != 0 or inside.stdout.strip() != "true":
+        pytest.skip("skipped: not inside a git work tree (for example an unpacked source archive)")
     rel = site_build.HOLDS.relative_to(root).as_posix()
     assert rel == "data/local/popia_holds.json"
     assert subprocess.run(["git", "check-ignore", "-q", rel], cwd=root).returncode == 0

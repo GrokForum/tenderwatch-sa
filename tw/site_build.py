@@ -17,6 +17,11 @@ CLASSIFIED = WAREHOUSE / "awards_classified_chg_tw_002.jsonl"
 CITY = WAREHOUSE / "city_register.jsonl"
 LOOKUPS = ROOT / "data" / "local" / "lookups.csv"
 HOLDS = ROOT / "data" / "local" / "popia_holds.json"  # git-ignored; never committed (CHG-TW-008)
+HOLD_KEYS = {"ocid", "award_id", "basis", "name_key"}
+# Words too common to count as a name in the basis check (legal forms and trade words).
+GENERIC_WORDS = {"and", "associates", "association", "company", "corporation", "electrical", "engineering",
+                 "enterprises", "group", "holdings", "incorporated", "joint", "limited", "venture", "projects", "proprietary",
+                 "services", "solutions", "supplies", "trading", "transport", "construction", "consulting"}
 MIN_HOLDS = 3  # holds decided so far (owner, 19 Nov 2026); a shorter local file stops the build
 EXPECTED_ROWS = 291
 
@@ -52,6 +57,9 @@ def load_holds(path: Path | None = None) -> list[dict]:
     for i, h in enumerate(holds):
         if not isinstance(h, dict):
             raise UnsafeBuild(f"holds file entry {i}: not an object")
+        extra = set(h) - HOLD_KEYS
+        if extra:
+            raise UnsafeBuild(f"holds file entry {i}: unexpected keys {sorted(extra)}")
         ocid = h.get("ocid")
         award = h.get("award_id")
         basis = h.get("basis")
@@ -62,11 +70,14 @@ def load_holds(path: Path | None = None) -> list[dict]:
             raise UnsafeBuild(f"holds file entry {i}: award_id must be a positive whole number")
         if not isinstance(basis, str) or not basis.strip():
             raise UnsafeBuild(f"holds file entry {i}: basis is required")
+        name_key = h.get("name_key")
+        if not isinstance(name_key, str) or not name_key.strip():
+            raise UnsafeBuild(f"holds file entry {i}: name_key is required (second detail, CHG-TW-008 rev 3)")
         key = (ocid.strip(), award)
         if key in seen:
             raise UnsafeBuild(f"holds file entry {i}: duplicate award record")
         seen.add(key)
-        out.append({"ocid": key[0], "award_id": key[1], "basis": basis.strip()})
+        out.append({"ocid": key[0], "award_id": key[1], "basis": basis.strip(), "name_key": name_key.strip()})
     if len(out) < MIN_HOLDS:
         raise UnsafeBuild(f"holds file has {len(out)} holds, fewer than the {MIN_HOLDS} decided; not building")
     return out
@@ -78,12 +89,21 @@ def _names_of(row: dict) -> set[str]:
     return {n.strip().lower() for n in names if isinstance(n, str) and len(n.strip()) >= 4}
 
 
+def _name_words(row: dict) -> set[str]:
+    """Words of four or more letters in a row's names (for example a surname), less generic trade words."""
+    words: set[str] = set()
+    for n in _names_of(row):
+        words.update(w for w in re.findall(r"[^\W\d_]{4,}", n) if w not in GENERIC_WORDS)
+    return words
+
+
 def apply_holds(rows: list[dict], holds: list[dict]) -> int:
     """Set popia_hold on every listed award record.
 
     Stops the build when a listed record is missing from the input, when it is not a Confirmed row (a hold
-    must never move a check-queue or withheld row into a shown group), or when a basis carries any supplier
-    name from the input.
+    must never move a check-queue or withheld row into a shown group), when the record's name key does not
+    match the hold's (second detail), or when a basis carries any supplier name from the input or any
+    four-letter-plus word of the held supplier's own name (for example a surname).
     """
     index: dict[tuple[str, str], list[dict]] = {}
     every_name: set[str] = set()
@@ -101,6 +121,13 @@ def apply_holds(rows: list[dict], holds: list[dict]) -> int:
         for r in hits:
             if r.get("classification_status") != "confirmed_juristic":
                 raise UnsafeBuild("a hold names a row that is not Confirmed; check-queue rows keep their own group")
+            # Second detail (two-detail rule): the record id and the name key must both agree, so a hold on the
+            # wrong record stops the build instead of masking one firm and leaving the intended one shown.
+            if (r.get("name_key") or "").strip().lower() != h["name_key"].lower():
+                raise UnsafeBuild("a hold's record id and name key do not agree")
+            basis_words = set(re.findall(r"[^\W\d_]{4,}", basis))
+            if basis_words & _name_words(r):
+                raise UnsafeBuild("a hold basis contains a word of the held supplier's name")
             r["popia_hold"] = True
             n += 1
     return n

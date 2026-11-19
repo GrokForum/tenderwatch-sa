@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 
 from tw.classification_report import withheld_names
@@ -15,7 +16,8 @@ WAREHOUSE = ROOT / "data" / "local" / "warehouse"
 CLASSIFIED = WAREHOUSE / "awards_classified_chg_tw_002.jsonl"
 CITY = WAREHOUSE / "city_register.jsonl"
 LOOKUPS = ROOT / "data" / "local" / "lookups.csv"
-HOLDS = ROOT / "config" / "popia_holds.json"
+HOLDS = ROOT / "data" / "local" / "popia_holds.json"  # git-ignored; never committed (CHG-TW-008)
+MIN_HOLDS = 3  # holds decided so far (owner, 19 Nov 2026); a shorter local file stops the build
 EXPECTED_ROWS = 291
 
 
@@ -28,37 +30,77 @@ def _date_only(s: str | None) -> str | None:
     return s[:10] if s and len(s) >= 10 and s[4] == "-" and s[7] == "-" else None
 
 
-def load_holds(path: Path = HOLDS) -> list[dict]:
-    """CHG-TW-008: tracked POPIA holds, keyed by award record (ocid and award_id), never by name.
+def load_holds(path: Path | None = None) -> list[dict]:
+    """CHG-TW-008: POPIA holds from the git-ignored local file, keyed by award record (ocid and award_id).
 
-    The repository is to be open-sourced, so this file carries no supplier name.
+    The file is never committed (the repository is to be open-sourced, and a record id next to a hold basis
+    would let anyone look the name up in the public eTenders data). It is seeded once into each checkout,
+    the nightly clone included. A missing, unreadable or short file stops the build (fail closed).
     """
-    data = json.loads(path.read_text(encoding="utf-8"))
-    holds = data.get("holds")
+    path = HOLDS if path is None else path
+    if not path.is_file():
+        raise UnsafeBuild("holds file missing: seed data/local/popia_holds.json (CHG-TW-008); not building")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        raise UnsafeBuild(f"holds file unreadable: {e.__class__.__name__}") from None
+    holds = data.get("holds") if isinstance(data, dict) else None
     if not isinstance(holds, list):
         raise UnsafeBuild("holds file: 'holds' must be a list")
     seen = set()
+    out = []
     for i, h in enumerate(holds):
-        ocid, award = (h.get("ocid") or "").strip(), str(h.get("award_id") or "").strip()
-        if not ocid or not award or not (h.get("basis") or "").strip():
-            raise UnsafeBuild(f"holds file entry {i}: ocid, award_id and basis are required")
-        if (ocid, award) in seen:
+        if not isinstance(h, dict):
+            raise UnsafeBuild(f"holds file entry {i}: not an object")
+        ocid = h.get("ocid")
+        award = h.get("award_id")
+        basis = h.get("basis")
+        if not isinstance(ocid, str) or not re.fullmatch(r"ocds-[a-z0-9]+-[0-9]+", ocid.strip(), flags=re.ASCII):
+            raise UnsafeBuild(f"holds file entry {i}: ocid missing or malformed")
+        award = str(award).strip() if isinstance(award, (str, int)) and not isinstance(award, bool) else ""
+        if not re.fullmatch(r"[1-9][0-9]*", award, flags=re.ASCII):
+            raise UnsafeBuild(f"holds file entry {i}: award_id must be a positive whole number")
+        if not isinstance(basis, str) or not basis.strip():
+            raise UnsafeBuild(f"holds file entry {i}: basis is required")
+        key = (ocid.strip(), award)
+        if key in seen:
             raise UnsafeBuild(f"holds file entry {i}: duplicate award record")
-        seen.add((ocid, award))
-    return holds
+        seen.add(key)
+        out.append({"ocid": key[0], "award_id": key[1], "basis": basis.strip()})
+    if len(out) < MIN_HOLDS:
+        raise UnsafeBuild(f"holds file has {len(out)} holds, fewer than the {MIN_HOLDS} decided; not building")
+    return out
+
+
+def _names_of(row: dict) -> set[str]:
+    names = {row.get("supplier_name"), row.get("legal_name"), row.get("name_key")}
+    names.update((row.get("city_names_linked") or "").split(";"))
+    return {n.strip().lower() for n in names if isinstance(n, str) and len(n.strip()) >= 4}
 
 
 def apply_holds(rows: list[dict], holds: list[dict]) -> int:
-    """Set popia_hold on every listed award record. A listed record missing from the input stops the build."""
+    """Set popia_hold on every listed award record.
+
+    Stops the build when a listed record is missing from the input, when it is not a Confirmed row (a hold
+    must never move a check-queue or withheld row into a shown group), or when a basis carries any supplier
+    name from the input.
+    """
     index: dict[tuple[str, str], list[dict]] = {}
+    every_name: set[str] = set()
     for r in rows:
         index.setdefault((str(r.get("ocid") or ""), str(r.get("award_id") or "")), []).append(r)
+        every_name |= _names_of(r)
     n = 0
     for h in holds:
-        hits = index.get((h["ocid"].strip(), str(h["award_id"]).strip()))
+        basis = h["basis"].lower()
+        if any(name in basis for name in every_name):
+            raise UnsafeBuild("a hold basis contains a supplier name")
+        hits = index.get((h["ocid"], h["award_id"]))
         if not hits:
-            raise UnsafeBuild("a tracked hold names an award record that is not in the input")
+            raise UnsafeBuild("a hold names an award record that is not in the input")
         for r in hits:
+            if r.get("classification_status") != "confirmed_juristic":
+                raise UnsafeBuild("a hold names a row that is not Confirmed; check-queue rows keep their own group")
             r["popia_hold"] = True
             n += 1
     return n
@@ -102,7 +144,7 @@ def run_build(out_dir: Path) -> dict:
         "content_sha256": manifest["content_sha256"],
         "input_sha256": manifest["input_sha256"],
         "lookups_loaded": len(inp["lookups"]),
-        "tracked_holds_applied": inp["holds_applied"],
+        "holds_applied": inp["holds_applied"],
         "names_scanned": {"withheld": len(inp["withheld"]), "all": len(inp["all_names"]),
                           "shown_unmasked": len(allowed)},
         "scans": {k: len(v) for k, v in scans.items()},

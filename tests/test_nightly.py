@@ -387,3 +387,19 @@ def test_default_site_dir_is_the_dedicated_nightly_clone(tmp_path: Path):
     assert nightly.default_site_dir({"site_checkout": "tenderwatch-site-nightly"}, root) == tmp_path / "tenderwatch-site-nightly"
     assert nightly.default_site_dir({}, root).name == "tenderwatch-site-nightly"
     assert nightly.load_config()["site_checkout"] == "tenderwatch-site-nightly"
+
+
+def test_missing_holds_file_fails_the_night_and_never_publishes(tmp_path: Path):
+    from tw.site import UnsafeBuild
+
+    def _build_no_holds(staging: Path):
+        raise UnsafeBuild("holds file missing: seed data/local/popia_holds.json (CHG-TW-008); not building")
+
+    fake = FakeRun()
+    rec = nightly.run_nightly(publish_flag=True, cfg={**CFG, "publish_enabled": True}, run=fake, live=_live_pass,
+                              refresh=lambda: None, build=_build_no_holds, now=_now, log_commit=False,
+                              nightly_dir=tmp_path / "n", staging=tmp_path / "s", site_dir=tmp_path / "site")
+    assert rec["build"] == "FAIL: UnsafeBuild"
+    assert rec["publish"] == "refused (an earlier step failed)"
+    assert rec["result"] == "FAIL"
+    assert not fake.pushed()

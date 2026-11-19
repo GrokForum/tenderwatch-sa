@@ -12,3 +12,5 @@ data/local/confirmed_suppliers.csv
 .venv/
 *.duckdb
 *.egg-info/
+# CHG-TW-008: POPIA holds by award record stay local (never committed)
+data/local/popia_holds.json

@@ -274,12 +274,12 @@ def test_dev_export_counts_and_scans(tmp_path: Path):
     if res["lookups_loaded"] == 0:
         assert res["year_counts"] == {"Year: Unknown": 258, "Year: not shown (masked row)": 27,
                                       "Row withheld (no cell)": 6}
-    assert res["tracked_holds_applied"] == 3
+    assert res["holds_applied"] == 3
     assert res["names_scanned"]["withheld"] == 203 and res["names_scanned"]["all"] == 718
     assert res["scans_clean"], res["scan_findings"]
 
 
-# --- CHG-TW-008: tracked holds -------------------------------------------------
+# --- CHG-TW-008: local holds (git-ignored, fail closed) ------------------------
 
 def _holds_file(tmp_path: Path, holds) -> Path:
     p = tmp_path / "holds.json"
@@ -287,11 +287,21 @@ def _holds_file(tmp_path: Path, holds) -> Path:
     return p
 
 
-def test_tracked_hold_masks_a_confirmed_row(tmp_path: Path):
+def _h(i, basis="Owner decision: masked like the other masked rows."):
+    return {"ocid": f"ocds-fx-{i}", "award_id": str(i), "basis": basis}
+
+
+@pytest.fixture
+def one_hold_minimum(monkeypatch):
     from tw import site_build
+    monkeypatch.setattr(site_build, "MIN_HOLDS", 1)
+    return site_build
+
+
+def test_hold_masks_a_confirmed_row(tmp_path: Path, one_hold_minimum):
+    sb = one_hold_minimum
     rows = fixture_rows()
-    holds = site_build.load_holds(_holds_file(tmp_path, [{"ocid": "ocds-fx-4", "award_id": "4", "basis": "test"}]))
-    assert site_build.apply_holds(rows, holds) == 1
+    assert sb.apply_holds(rows, sb.load_holds(_holds_file(tmp_path, [_h(4)]))) == 1
     model = site.build_rows(rows)
     d = next(d for d in model["rows"] if d["group"] == "held" and d["supplier"] == site.mask_name("Harbour Lights CC"))
     assert d["tender_reference"] == "" and d["ocds_id"] == "" and d["supplier_label"] is None
@@ -299,28 +309,68 @@ def test_tracked_hold_masks_a_confirmed_row(tmp_path: Path):
     out = tmp_path / "site"
     site.build_site(rows, out)
     text = "".join(p.read_text(encoding="utf-8", errors="ignore") for p in out.rglob("*") if p.is_file())
-    assert "Harbour Lights" not in text and "4Q/2025/26" not in text
+    assert "Harbour Lights" not in text and "4Q/2025/26" not in text and "ocds-fx-4" not in text
 
 
-def test_tracked_hold_for_a_missing_record_stops_the_build(tmp_path: Path):
+def test_missing_holds_file_stops_the_build(tmp_path: Path):
     from tw import site_build
-    holds = site_build.load_holds(_holds_file(tmp_path, [{"ocid": "ocds-nope", "award_id": "1", "basis": "test"}]))
+    with pytest.raises(site.UnsafeBuild, match="missing"):
+        site_build.load_holds(tmp_path / "absent.json")
+
+
+def test_fewer_holds_than_decided_stops_the_build(tmp_path: Path):
+    from tw import site_build
+    assert site_build.MIN_HOLDS == 3
+    with pytest.raises(site.UnsafeBuild, match="fewer"):
+        site_build.load_holds(_holds_file(tmp_path, [_h(4), _h(5)]))
+
+
+def test_hold_for_a_missing_record_stops_the_build(tmp_path: Path, one_hold_minimum):
+    sb = one_hold_minimum
+    holds = sb.load_holds(_holds_file(tmp_path, [{"ocid": "ocds-nope-1", "award_id": "1", "basis": "b"}]))
+    with pytest.raises(site.UnsafeBuild, match="not in the input"):
+        sb.apply_holds(fixture_rows(), holds)
+
+
+@pytest.mark.parametrize("i", [8, 9, 7])  # pending, withheld and personal-looking check-queue rows
+def test_hold_on_a_check_queue_row_stops_the_build(tmp_path: Path, one_hold_minimum, i):
+    sb = one_hold_minimum
+    with pytest.raises(site.UnsafeBuild, match="not Confirmed"):
+        sb.apply_holds(fixture_rows(), sb.load_holds(_holds_file(tmp_path, [_h(i)])))
+
+
+@pytest.mark.parametrize("basis", ["Masked: Harbour Lights CC is a family name", "harbour lights cc", "see HARBOUR"])
+def test_hold_basis_with_a_supplier_name_stops_the_build(tmp_path: Path, one_hold_minimum, basis):
+    sb = one_hold_minimum
+    with pytest.raises(site.UnsafeBuild, match="supplier name"):
+        sb.apply_holds(fixture_rows(), sb.load_holds(_holds_file(tmp_path, [_h(4, basis)])))
+
+
+@pytest.mark.parametrize("bad", [
+    ["not an object"], [None], [{"ocid": "ocds-fx-4", "award_id": "4"}], [{"ocid": "", "award_id": "4", "basis": "b"}],
+    [{"ocid": "ocds-fx-4", "award_id": 0, "basis": "b"}], [{"ocid": "ocds-fx-4", "award_id": "0", "basis": "b"}],
+    [{"ocid": "ocds-fx-4", "award_id": "-4", "basis": "b"}], [{"ocid": "ocds-fx-4", "award_id": True, "basis": "b"}],
+    [{"ocid": "Harbour Lights", "award_id": "4", "basis": "b"}], [_h(4), _h(4)],
+])
+def test_holds_file_entries_are_checked(tmp_path: Path, one_hold_minimum, bad):
     with pytest.raises(site.UnsafeBuild):
-        site_build.apply_holds(fixture_rows(), holds)
+        one_hold_minimum.load_holds(_holds_file(tmp_path, bad))
 
 
-@pytest.mark.parametrize("bad", [[{"ocid": "x", "award_id": "1"}], [{"ocid": "", "award_id": "1", "basis": "b"}],
-                                 [{"ocid": "x", "award_id": "1", "basis": "b"}, {"ocid": "x", "award_id": "1", "basis": "b"}]])
-def test_holds_file_entries_are_checked(tmp_path: Path, bad):
-    from tw import site_build
+@pytest.mark.parametrize("raw", ["{not json", "[]", '{"holds": {}}'])
+def test_unreadable_holds_file_stops_the_build(tmp_path: Path, one_hold_minimum, raw):
+    p = tmp_path / "holds.json"
+    p.write_text(raw, encoding="utf-8")
     with pytest.raises(site.UnsafeBuild):
-        site_build.load_holds(_holds_file(tmp_path, bad))
+        one_hold_minimum.load_holds(p)
 
 
-def test_committed_holds_file_has_three_records_and_no_names():
+def test_holds_file_is_git_ignored_and_never_committed():
+    import subprocess
     from tw import site_build
-    holds = site_build.load_holds()
-    assert len(holds) == 3
-    allowed = {"ocid", "award_id", "basis"}
-    assert all(set(h) <= allowed for h in holds)
-    assert all(re.fullmatch(r"ocds-[a-z0-9]+-[0-9]+", h["ocid"]) and h["award_id"].isdigit() for h in holds)
+    root = Path(__file__).resolve().parents[1]
+    rel = site_build.HOLDS.relative_to(root).as_posix()
+    assert rel == "data/local/popia_holds.json"
+    assert subprocess.run(["git", "check-ignore", "-q", rel], cwd=root).returncode == 0
+    tracked = subprocess.run(["git", "ls-files"], cwd=root, capture_output=True, text=True).stdout.split()
+    assert not any(t.endswith("popia_holds.json") for t in tracked)

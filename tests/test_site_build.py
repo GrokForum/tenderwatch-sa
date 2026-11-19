@@ -270,9 +270,140 @@ def test_dev_export_counts_and_scans(tmp_path: Path):
         pytest.skip("skipped: the DEV export is git-ignored; run scripts/run_chg_tw_002_classify.py first")
     res = site_build.run_build(tmp_path)
     assert res["rows_total"] == 291
-    assert res["group_counts"] == {"unmasked": 61, "held": 5, "personal": 27, "pending": 192, "withheld": 6}
+    assert res["group_counts"] == {"unmasked": 58, "held": 8, "personal": 27, "pending": 192, "withheld": 6}
     if res["lookups_loaded"] == 0:
         assert res["year_counts"] == {"Year: Unknown": 258, "Year: not shown (masked row)": 27,
                                       "Row withheld (no cell)": 6}
-    assert res["names_scanned"]["withheld"] == 198 and res["names_scanned"]["all"] == 718
+    assert res["holds_applied"] == 3
+    assert res["names_scanned"]["withheld"] == 203 and res["names_scanned"]["all"] == 718
     assert res["scans_clean"], res["scan_findings"]
+
+
+# --- CHG-TW-008: local holds (git-ignored, fail closed) ------------------------
+
+def _holds_file(tmp_path: Path, holds) -> Path:
+    p = tmp_path / "holds.json"
+    p.write_text(json.dumps({"holds": holds}), encoding="utf-8")
+    return p
+
+
+_KEYS = {r["award_id"]: r["name_key"] for r in fixture_rows()}
+
+
+def _h(i, basis="Owner decision: masked like the other masked rows.", name_key=None):
+    return {"ocid": f"ocds-fx-{i}", "award_id": str(i), "basis": basis, "name_key": name_key or _KEYS[str(i)]}
+
+
+@pytest.fixture
+def one_hold_minimum(monkeypatch):
+    from tw import site_build
+    monkeypatch.setattr(site_build, "MIN_HOLDS", 1)
+    return site_build
+
+
+def test_hold_masks_a_confirmed_row(tmp_path: Path, one_hold_minimum):
+    sb = one_hold_minimum
+    rows = fixture_rows()
+    assert sb.apply_holds(rows, sb.load_holds(_holds_file(tmp_path, [_h(4)]))) == 1
+    model = site.build_rows(rows)
+    d = next(d for d in model["rows"] if d["group"] == "held" and d["supplier"] == site.mask_name("Harbour Lights CC"))
+    assert d["tender_reference"] == "" and d["ocds_id"] == "" and d["supplier_label"] is None
+    assert d["year_cell"] == site.YEAR_UNKNOWN
+    out = tmp_path / "site"
+    site.build_site(rows, out)
+    text = "".join(p.read_text(encoding="utf-8", errors="ignore") for p in out.rglob("*") if p.is_file())
+    assert "Harbour Lights" not in text and "4Q/2025/26" not in text and "ocds-fx-4" not in text
+
+
+def test_missing_holds_file_stops_the_build(tmp_path: Path):
+    from tw import site_build
+    with pytest.raises(site.UnsafeBuild, match="missing"):
+        site_build.load_holds(tmp_path / "absent.json")
+
+
+def test_fewer_holds_than_decided_stops_the_build(tmp_path: Path):
+    from tw import site_build
+    assert site_build.MIN_HOLDS == 3
+    with pytest.raises(site.UnsafeBuild, match="fewer"):
+        site_build.load_holds(_holds_file(tmp_path, [_h(4), _h(5)]))
+
+
+def test_hold_for_a_missing_record_stops_the_build(tmp_path: Path, one_hold_minimum):
+    sb = one_hold_minimum
+    holds = sb.load_holds(_holds_file(tmp_path, [{"ocid": "ocds-nope-1", "award_id": "1", "basis": "b", "name_key": "x"}]))
+    with pytest.raises(site.UnsafeBuild, match="not in the input"):
+        sb.apply_holds(fixture_rows(), holds)
+
+
+@pytest.mark.parametrize("i", [8, 9, 7])  # pending, withheld and personal-looking check-queue rows
+def test_hold_on_a_check_queue_row_stops_the_build(tmp_path: Path, one_hold_minimum, i):
+    sb = one_hold_minimum
+    with pytest.raises(site.UnsafeBuild, match="not Confirmed"):
+        sb.apply_holds(fixture_rows(), sb.load_holds(_holds_file(tmp_path, [_h(i)])))
+
+
+@pytest.mark.parametrize("basis", ["Masked: Harbour Lights CC is a family name", "harbour lights cc", "see HARBOUR"])
+def test_hold_basis_with_a_supplier_name_stops_the_build(tmp_path: Path, one_hold_minimum, basis):
+    sb = one_hold_minimum
+    with pytest.raises(site.UnsafeBuild, match="supplier name"):
+        sb.apply_holds(fixture_rows(), sb.load_holds(_holds_file(tmp_path, [_h(4, basis)])))
+
+
+@pytest.mark.parametrize("bad", [
+    ["not an object"], [None], [{"ocid": "ocds-fx-4", "award_id": "4", "name_key": "harbour"}],
+    [{"ocid": "", "award_id": "4", "basis": "b", "name_key": "harbour"}],
+    [{"ocid": "ocds-fx-4", "award_id": 0, "basis": "b", "name_key": "harbour"}],
+    [{"ocid": "ocds-fx-4", "award_id": "0", "basis": "b", "name_key": "harbour"}],
+    [{"ocid": "ocds-fx-4", "award_id": "-4", "basis": "b", "name_key": "harbour"}],
+    [{"ocid": "ocds-fx-4", "award_id": True, "basis": "b", "name_key": "harbour"}],
+    [{"ocid": "Harbour Lights", "award_id": "4", "basis": "b", "name_key": "harbour"}],
+    [{"ocid": "ocds-fx-4", "award_id": "4", "basis": "b"}],  # no name key (second detail)
+    [{"ocid": "ocds-fx-4", "award_id": "4", "basis": "b", "name_key": "  "}],
+    [{**_h(4), "supplier_name": "Harbour Lights CC"}],  # extra key
+    [_h(4), _h(4)],
+])
+def test_holds_file_entries_are_checked(tmp_path: Path, one_hold_minimum, bad):
+    with pytest.raises(site.UnsafeBuild):
+        one_hold_minimum.load_holds(_holds_file(tmp_path, bad))
+
+
+@pytest.mark.parametrize("raw", ["{not json", "[]", '{"holds": {}}'])
+def test_unreadable_holds_file_stops_the_build(tmp_path: Path, one_hold_minimum, raw):
+    p = tmp_path / "holds.json"
+    p.write_text(raw, encoding="utf-8")
+    with pytest.raises(site.UnsafeBuild):
+        one_hold_minimum.load_holds(p)
+
+
+def test_hold_on_the_wrong_record_stops_the_build(tmp_path: Path, one_hold_minimum):
+    sb = one_hold_minimum
+    # Record id of row 5, name key of row 4: the two details disagree.
+    with pytest.raises(site.UnsafeBuild, match="do not agree"):
+        sb.apply_holds(fixture_rows(), sb.load_holds(_holds_file(tmp_path, [_h(5, name_key="harbour")])))
+
+
+@pytest.mark.parametrize("basis", ["Owner decision: Qwertane is a surname", "the zephyr family"])
+def test_hold_basis_with_a_word_of_the_held_name_stops_the_build(tmp_path: Path, one_hold_minimum, basis):
+    sb = one_hold_minimum
+    with pytest.raises(site.UnsafeBuild, match="word of the held"):
+        sb.apply_holds(fixture_rows(), sb.load_holds(_holds_file(tmp_path, [_h(5, basis)])))
+
+
+def test_generic_trade_words_in_a_basis_are_allowed(tmp_path: Path, one_hold_minimum):
+    sb = one_hold_minimum
+    rows = fixture_rows()
+    assert sb.apply_holds(rows, sb.load_holds(_holds_file(tmp_path, [_h(5, "Owner decision: joint venture, masked")]))) == 1
+
+
+def test_holds_file_is_git_ignored_and_never_committed():
+    import subprocess
+    from tw import site_build
+    root = Path(__file__).resolve().parents[1]
+    inside = subprocess.run(["git", "rev-parse", "--is-inside-work-tree"], cwd=root, capture_output=True, text=True)
+    if inside.returncode != 0 or inside.stdout.strip() != "true":
+        pytest.skip("skipped: not inside a git work tree (for example an unpacked source archive)")
+    rel = site_build.HOLDS.relative_to(root).as_posix()
+    assert rel == "data/local/popia_holds.json"
+    assert subprocess.run(["git", "check-ignore", "-q", rel], cwd=root).returncode == 0
+    tracked = subprocess.run(["git", "ls-files"], cwd=root, capture_output=True, text=True).stdout.split()
+    assert not any(t.endswith("popia_holds.json") for t in tracked)

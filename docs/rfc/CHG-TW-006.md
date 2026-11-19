@@ -65,7 +65,7 @@ Rules the code enforces and the tests pin:
 |---|---|
 | Existing suite plus new tests, fresh venv (Python 3.13, `pip install -e ".[test]"`) | 245 passed (215 existing + 30 new); see §8 for the run on the final head |
 | Build on the DEV data | 291 rows: 61 unmasked, 5 held, 27 personal, 192 pending, 6 withheld; year cells 258 `Year: Unknown`, 27 `Year: not shown (masked row)`, 6 no cell; 285 rows shown |
-| Deterministic | two builds byte-identical; `content_sha256` `55d6b6f5f254d6cb8a1c749d3623aac605daf588bb3db9a07f2154aefe1cd070`; DEV input `awards_classified_chg_tw_002.jsonl` sha256 `f3b8044d0282468ede4b23d6affcead70a2150d066cb38a46a38755bdba1b5ed` |
+| Deterministic | two builds byte-identical; `content_sha256` `55d6b6f5f254d6cb8a1c749d3623aac605daf588bb3db9a07f2154aefe1cd070` at `6fb5fcd1`; after the critic's privacy-page point (identify a record by buyer and usable value where no tender reference is shown, as on the 32 masked rows) `9dd3646841e29c02cec11cd08f30e8e77b61e11fa490d23334b37c4a26f7921b`; DEV input `awards_classified_chg_tw_002.jsonl` sha256 `f3b8044d0282468ede4b23d6affcead70a2150d066cb38a46a38755bdba1b5ed` |
 | 198-name scan (every name tied to a queued or held row) over every generated file | 0 hits; 0 withheld names are also shown |
 | 718-name scan (every OCDS and City supplier name) over every generated file, after removing the 47 distinct names the register shows unmasked | 0 hits |
 | PII scan (emails other than privacy@grokforum.site, SA phone shapes, 13-digit numbers, street-address shapes) | 0 hits. The audit's own regex scanner, run over the same build directory: only the role address; 0 phone, 0 SA ID (Luhn), 0 titled names, 0 bank numbers |

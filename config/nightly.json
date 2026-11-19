@@ -2,6 +2,7 @@
   "rfc": "CHG-TW-007",
   "site_url": "https://tenderwatch.grokforum.site",
   "site_repo": "GrokForum/tenderwatch-site",
+  "site_checkout": "tenderwatch-site-nightly",
   "publish_enabled": false,
   "push_log": false,
   "log_branch": "ops/nightly-log",

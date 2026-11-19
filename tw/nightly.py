@@ -67,6 +67,11 @@ def _git(args: list[str], cwd: Path, run: Runner = subprocess.run, check: bool =
     return (p.stdout or "").strip()
 
 
+def default_site_dir(cfg: dict, root: Path = ROOT) -> Path:
+    """The nightly's own clean clone of the site repository, beside this checkout; never the development site checkout."""
+    return root.parent / cfg.get("site_checkout", "tenderwatch-site-nightly")
+
+
 def publish_allowed(cfg: dict, publish_flag: bool) -> bool:
     """Both locks must be open: the committed config flag and the --publish argument."""
     return cfg.get("publish_enabled") is True and publish_flag is True
@@ -89,11 +94,17 @@ def publish_to_site(staging: Path, site_dir: Path, cfg: dict, publish_flag: bool
     remote = _git(["remote", "get-url", "origin"], site_dir, run)
     if not origin_matches(remote, cfg["site_repo"], allowed_remotes):
         raise PublishRefused("site checkout origin is not the configured site repository")
+    # The push URL can differ from the fetch URL (remote.origin.pushurl): verify it too, then push to that exact URL.
+    push_url = _git(["remote", "get-url", "--push", "origin"], site_dir, run)
+    if not origin_matches(push_url, cfg["site_repo"], allowed_remotes):
+        raise PublishRefused("site checkout push URL is not the configured site repository")
     _git(["fetch", "origin", "main"], site_dir, run)
     _git(["checkout", "main"], site_dir, run)
     _git(["merge", "--ff-only", "origin/main"], site_dir, run)
     if _git(["status", "--porcelain"], site_dir, run):
         raise PublishRefused("site checkout has local changes")
+    if _git(["rev-list", "origin/main..main"], site_dir, run):
+        raise PublishRefused("site checkout main has commits not on origin/main")
     from tw.site import MANAGED_FILES
     for rel in MANAGED_FILES:
         dst = site_dir / rel
@@ -107,7 +118,7 @@ def publish_to_site(staging: Path, site_dir: Path, cfg: dict, publish_flag: bool
           "commit", "-q", f"--author={PUBLISHER_NAME} <{PUBLISHER_EMAIL}>",
           "-m", f"data: nightly build {date_sast} (CHG-TW-007)"], site_dir, run)
     sha = _git(["rev-parse", "HEAD"], site_dir, run)
-    _git(["push", "origin", "main"], site_dir, run)  # fast-forward only: no --force, ever
+    _git(["push", push_url, "main:main"], site_dir, run)  # the verified URL; fast-forward only: no --force, ever
     return f"published {sha[:12]}"
 
 
@@ -228,9 +239,13 @@ def run_nightly(*, publish_flag: bool = False, manual: bool = False, site_dir: P
         rec["publish"] = "dry-run (publish not enabled)"
     elif not ok:
         rec["publish"] = "refused (an earlier step failed)"
+    elif rec.get("branch") != "main":
+        # Any publish, manual runs included, needs the private repository's main.
+        rec["publish"] = "refused (not on main)"
+        ok = False
     else:
         try:
-            rec["publish"] = publish_to_site(staging, site_dir or ROOT.parent / "tenderwatch-site", cfg,
+            rec["publish"] = publish_to_site(staging, site_dir or default_site_dir(cfg), cfg,
                                              publish_flag, rec["date_sast"], run)
         except Exception as e:  # noqa: BLE001
             rec["publish"] = f"FAIL: {e}"

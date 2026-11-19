@@ -314,3 +314,76 @@ def test_scheduled_run_refuses_a_branch_other_than_main(tmp_path: Path):
                               log_commit=False, nightly_dir=tmp_path / "n", staging=tmp_path / "s")
     assert rec["result"] == "FAIL" and "on main" in rec["steps"]["preflight"]
     assert not fake.pushed()
+
+
+def _site_pair(tmp_path: Path):
+    origin = tmp_path / "GrokForum" / "tenderwatch-site.git"
+    origin.parent.mkdir(parents=True)
+    _g("init", "-q", "--bare", "-b", "main", str(origin), cwd=tmp_path)
+    seed = tmp_path / "seed"
+    _g("clone", "-q", str(origin), str(seed), cwd=tmp_path)
+    _init_identity(seed)
+    (seed / "CNAME").write_text("tenderwatch.example\n")
+    _g("add", "CNAME", cwd=seed)
+    _g("commit", "-q", "-m", "init", cwd=seed)
+    _g("push", "-q", "origin", "HEAD:main", cwd=seed)
+    site_dir = tmp_path / "site"
+    _g("clone", "-q", str(origin), str(site_dir), cwd=tmp_path)
+    _init_identity(site_dir)
+    staging = tmp_path / "staging"
+    site.build_site(fixture_rows(), staging)
+    return origin, site_dir, staging
+
+
+def _heads(origin: Path) -> str:
+    return subprocess.run(["git", "rev-parse", "main"], cwd=origin, capture_output=True, text=True).stdout.strip()
+
+
+def test_publish_refuses_a_push_url_that_differs_from_the_fetch_url(tmp_path: Path):
+    origin, site_dir, staging = _site_pair(tmp_path)
+    other = tmp_path / "Someone" / "other.git"
+    other.parent.mkdir(parents=True)
+    _g("init", "-q", "--bare", "-b", "main", str(other), cwd=tmp_path)
+    _g("remote", "set-url", "--push", "origin", str(other), cwd=site_dir)
+    before = _heads(origin)
+    with pytest.raises(nightly.PublishRefused, match="push URL"):
+        nightly.publish_to_site(staging, site_dir, {**CFG, "publish_enabled": True}, True, "2026-11-20",
+                                allowed_remotes={str(origin)})
+    assert _heads(origin) == before
+    assert subprocess.run(["git", "rev-parse", "--verify", "-q", "main"], cwd=other, capture_output=True).returncode != 0
+
+
+def test_publish_refuses_local_commits_not_on_origin(tmp_path: Path):
+    origin, site_dir, staging = _site_pair(tmp_path)
+    (site_dir / "stray.txt").write_text("x\n")
+    _g("add", "stray.txt", cwd=site_dir)
+    _g("commit", "-q", "-m", "stray", cwd=site_dir)
+    before = _heads(origin)
+    with pytest.raises(nightly.PublishRefused, match="not on origin/main"):
+        nightly.publish_to_site(staging, site_dir, {**CFG, "publish_enabled": True}, True, "2026-11-20",
+                                allowed_remotes={str(origin)})
+    assert _heads(origin) == before
+
+
+def test_manual_publish_off_main_is_refused(tmp_path: Path):
+    class OnDevBranch(FakeRun):
+        def __call__(self, cmd, cwd=None, capture_output=True, text=True, timeout=None):
+            if cmd[:3] == ["git", "rev-parse", "--abbrev-ref"]:
+                self.calls.append(list(cmd))
+                return subprocess.CompletedProcess(cmd, 0, "dev/some-branch", "")
+            return super().__call__(cmd, cwd, capture_output, text, timeout)
+    fake = OnDevBranch()
+    rec = nightly.run_nightly(publish_flag=True, manual=True, cfg={**CFG, "publish_enabled": True}, run=fake,
+                              live=_live_pass, refresh=lambda: None, build=_build_ok, now=_now, log_commit=False,
+                              nightly_dir=tmp_path / "n", staging=tmp_path / "s", site_dir=tmp_path / "site")
+    assert rec["publish"] == "refused (not on main)"
+    assert rec["result"] == "FAIL"
+    assert not fake.pushed()
+    assert not any(c[:3] == ["git", "remote", "get-url"] for c in fake.calls)
+
+
+def test_default_site_dir_is_the_dedicated_nightly_clone(tmp_path: Path):
+    root = tmp_path / "tenderwatch-sa-nightly"
+    assert nightly.default_site_dir({"site_checkout": "tenderwatch-site-nightly"}, root) == tmp_path / "tenderwatch-site-nightly"
+    assert nightly.default_site_dir({}, root).name == "tenderwatch-site-nightly"
+    assert nightly.load_config()["site_checkout"] == "tenderwatch-site-nightly"

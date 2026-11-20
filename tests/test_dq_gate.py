@@ -124,3 +124,46 @@ def test_workflow_is_read_only_pinned_and_publishes_nothing():
                  "write-all", "popia_holds.json"):
         assert word not in text, word
     assert "--fixtures" in text
+    assert "--require-hashes" in text
+
+
+def test_dq_gate_script_exits_1_on_fail_and_0_on_pass(tmp_path):
+    bad_cfg = json.loads((ROOT / "config" / "dq.json").read_text(encoding="utf-8"))
+    bad_cfg["fixtures"]["groups"]["held"] = 99
+    cfg_path = tmp_path / "dq-bad.json"
+    cfg_path.write_text(json.dumps(bad_cfg), encoding="utf-8")
+    p_fail = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "dq_gate.py"), "--fixtures", "--config", str(cfg_path),
+         "--out", str(tmp_path / "fail-out")],
+        capture_output=True, text=True, cwd=ROOT, timeout=120,
+    )
+    assert p_fail.returncode == 1, p_fail.stdout + p_fail.stderr
+    assert json.loads(p_fail.stdout)["status"] == "FAIL"
+
+    p_pass = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "dq_gate.py"), "--fixtures", "--out", str(tmp_path / "pass-out")],
+        capture_output=True, text=True, cwd=ROOT, timeout=120,
+    )
+    assert p_pass.returncode == 0, p_pass.stdout + p_pass.stderr
+    assert json.loads(p_pass.stdout)["status"] == "PASS"
+
+
+def test_gate_checks_scans_present(built):
+    result, out = built
+    for missing in ("names_withheld", "names_all_except_shown", "pii"):
+        partial = {k: v for k, v in result["scans"].items() if k != missing}
+        rep = _gate(dict(result, scans=partial), out)
+        failed = {c["check"] for c in rep["checks"] if c["status"] == dq.FAIL}
+        assert rep["status"] == dq.FAIL and "scans_present" in failed
+
+
+def test_synthetic_inputs_redirects_review_candidates_away_from_real_path(tmp_path, monkeypatch):
+    sentinel = tmp_path / "real_review_candidates.csv"
+    sentinel.write_text("do-not-overwrite\n", encoding="utf-8")
+    monkeypatch.setattr(site_build, "REVIEW_CANDIDATES", sentinel, raising=False)
+    with dq.synthetic_inputs(FX, rows_expected=N) as sb:
+        assert sb.REVIEW_CANDIDATES != sentinel
+        assert sb.REVIEW_CANDIDATES.parent != FX
+        sb.run_build(tmp_path / "out")
+    assert site_build.REVIEW_CANDIDATES == sentinel
+    assert sentinel.read_text(encoding="utf-8") == "do-not-overwrite\n"

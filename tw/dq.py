@@ -13,6 +13,7 @@ import contextlib
 import csv
 import json
 import re
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -143,16 +144,23 @@ def synthetic_inputs(fixture_dir: Path, rows_expected: int):
     """
     from tw import public_scan, site_build
     saved = {k: getattr(site_build, k) for k in ("CLASSIFIED", "CITY", "LOOKUPS", "HOLDS", "EXPECTED_ROWS")}
+    has_rc = hasattr(site_build, "REVIEW_CANDIDATES")
+    saved_rc = getattr(site_build, "REVIEW_CANDIDATES", None)
     saved_extra = public_scan.EXTRA_TERMS_PATH
-    try:
-        site_build.CLASSIFIED = fixture_dir / "classified.jsonl"
-        site_build.CITY = fixture_dir / "city_register.jsonl"  # absent: no City rows
-        site_build.LOOKUPS = fixture_dir / "lookups.csv"  # absent
-        site_build.HOLDS = fixture_dir / "popia_holds.synthetic.json"
-        site_build.EXPECTED_ROWS = rows_expected
-        public_scan.EXTRA_TERMS_PATH = fixture_dir / "public_scan_extra_terms.txt"  # absent
-        yield site_build
-    finally:
-        for k, v in saved.items():
-            setattr(site_build, k, v)
-        public_scan.EXTRA_TERMS_PATH = saved_extra
+    with tempfile.TemporaryDirectory(prefix="tw-synth-") as tmp_dir:
+        try:
+            site_build.CLASSIFIED = fixture_dir / "classified.jsonl"
+            site_build.CITY = fixture_dir / "city_register.jsonl"  # absent: no City rows
+            site_build.LOOKUPS = fixture_dir / "lookups.csv"  # absent
+            site_build.HOLDS = fixture_dir / "popia_holds.synthetic.json"
+            if has_rc:
+                site_build.REVIEW_CANDIDATES = Path(tmp_dir) / "popia_review_candidates.csv"
+            site_build.EXPECTED_ROWS = rows_expected
+            public_scan.EXTRA_TERMS_PATH = fixture_dir / "public_scan_extra_terms.txt"  # absent
+            yield site_build
+        finally:
+            for k, v in saved.items():
+                setattr(site_build, k, v)
+            if has_rc:
+                site_build.REVIEW_CANDIDATES = saved_rc
+            public_scan.EXTRA_TERMS_PATH = saved_extra

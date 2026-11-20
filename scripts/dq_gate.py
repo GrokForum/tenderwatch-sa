@@ -29,8 +29,9 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--fixtures", action="store_true", help="build the committed synthetic fixtures (CI)")
     ap.add_argument("--out", type=Path, help="scratch build directory (default: a temporary directory)")
+    ap.add_argument("--config", type=Path, default=CONFIG, help="DQ config JSON (default: config/dq.json)")
     a = ap.parse_args(argv)
-    cfg = json.loads(CONFIG.read_text(encoding="utf-8"))
+    cfg = json.loads(a.config.read_text(encoding="utf-8"))
     out = a.out or Path(tempfile.mkdtemp(prefix="tw-dq-"))
     try:
         if a.fixtures:

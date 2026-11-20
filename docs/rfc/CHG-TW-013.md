@@ -7,7 +7,7 @@
 | Environment | DEV: a read-only mirror clone on the box (all refs, pull-request refs included). |
 | Branch | `dev/CHG-TW-013-popia-repo-scan` from `main` at `4f9dab45214c9621e46c5247b3725e6f4deb0647`. |
 | Rollback reference | `4f9dab45214c9621e46c5247b3725e6f4deb0647`. Revert the merge. |
-| Author | the author (TenderWatch) |
+| Author | the author bot |
 | Reviewers | Reviewer A and the critic |
 | Basis | Project lead's direction of 20 Nov 2026, 20:21 SAST (owner direction relayed): "Repos are public by default now: if tenderwatch-sa is clean after a POPIA scan, propose making it public." |
 | Status | Finding recorded. **Verdict: BLOCK** for making this repository public. Visibility is not changed. |

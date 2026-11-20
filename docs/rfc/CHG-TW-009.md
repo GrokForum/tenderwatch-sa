@@ -7,7 +7,7 @@
 | Environment | DEV: local runs on the box. TEST: the test suite in a clean export. No PROD surface: nothing is published, pushed to the site repository or deployed. |
 | Branch | `dev/CHG-TW-009-fetch-errors` from `main` at `4f9dab45214c9621e46c5247b3725e6f4deb0647` (PR #12 squash). |
 | Rollback reference | `4f9dab45214c9621e46c5247b3725e6f4deb0647` (tag `snapshot-2026-11-19-pre-tw-pr12` is the state before #12; `main` itself is the pre-change state). Revert the merge; no reset, no force push. |
-| Author | the author (TenderWatch) |
+| Author | the author bot |
 | Reviewers | Reviewer A and the critic |
 | Basis | Project lead's direction of 20 Nov 2026, 20:21 SAST (owner direction relayed): "Collectors log certificate errors instead of failing silently." |
 | Status | DEV and TEST done; draft PR for review. Merges only on the owner's GO naming the head. |

@@ -42,7 +42,7 @@ def _cfg(**over):
 
 
 RELEASES = [
-    _release("ocds-fx-1", CITY, "Northriver Widgets (Pty) Ltd"),
+    _release("ocds-fx-1", CITY, "Qwerty Pumps (Pty) Ltd"),
     _release("ocds-fx-2", METRO, "Zorblax Civil Engineering (Pty) Ltd"),
     _release("ocds-fx-3", METRO, "QWERTANE ZEPHYR SYSTEMS"),
     _release("ocds-fx-4", DEPT, "Cape Qwerty Engineering (Pty) Ltd"),

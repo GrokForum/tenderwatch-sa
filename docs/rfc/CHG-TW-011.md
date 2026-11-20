@@ -7,7 +7,7 @@
 | Environment | DEV only: local builds into `data/local/site-build-national-<stage>/` (git-ignored). TEST: the test suite in a clean export and the public-file scans. No PROD: the nightly, the site repository and the published site are not touched. |
 | Branch | `dev/CHG-TW-011-national-staging`, stacked on `dev/CHG-TW-010-one-person-names` (the one-person-name holds must apply to national rows). Base of the stack: `main` at `4f9dab45214c9621e46c5247b3725e6f4deb0647`. |
 | Rollback reference | `4f9dab45214c9621e46c5247b3725e6f4deb0647` (and the CHG-TW-010 head below this change). Revert the merge; no reset, no force push. |
-| Author | the author (TenderWatch) |
+| Author | the author bot |
 | Reviewers | Reviewer A and the critic |
 | Basis | Project lead's direction of 20 Nov 2026, 20:21 SAST (owner direction relayed): go beyond the City of Cape Town using the source pack of 20 Nov 2026; stage eThekwini and Mangaung first, then all buyers if clean. |
 | Status | Stage 1 DEV and TEST done and clean; stage "all" built in DEV and **not clean** (§6), so it stays off. Draft PR for review. Merges only on the owner's GO naming the head. |

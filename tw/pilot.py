@@ -6,7 +6,7 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from tw import dq
+from tw import dq, fetch_log
 from tw.city_register import light_fetch, load_sample_csv
 from tw.config import EXPECTED_OCDS_SHA256, PUBLICFUNDS_PIN, data_dir, load_config, ocds_input_path
 from tw.export import write_public_export
@@ -203,7 +203,7 @@ City register source: {report['city_register_source']}. Light fetch was limited 
 
 Match breakdown (agreeing details): {report['matches'].get('by_details')}. Links on `name_key,buyer` only mean the same normalised name in the same jurisdiction, not necessarily the same tender. Links that also share a tender/TTS reference are the tighter comparison.
 
-Light fetch log: fetched={len(fetch.get('fetched') or [])} URLs; skipped={fetch.get('skipped') or []}; errors={fetch.get('errors') or []}; parsed_rows={fetch.get('parsed_rows')}.
+Light fetch log: fetched={len(fetch.get('fetched') or [])} URLs; skipped={[fetch_log.scrub_text(x) for x in (fetch.get('skipped') or [])]}; errors={[fetch_log.scrub_text(x) for x in (fetch.get('errors') or [])]}; parsed_rows={fetch.get('parsed_rows')}.
 
 Fetch errors by kind (CHG-TW-009): {report.get('fetch_errors', {}).get('errors_by_kind') or 'none'}; hosts with TLS errors: {report.get('fetch_errors', {}).get('tls_error_hosts') or 'none'}; fallbacks: {report.get('fallbacks') or 'none'}.
 

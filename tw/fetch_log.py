@@ -12,29 +12,98 @@ Errors are classified so the run record and the data-quality report can say *why
 * ``connection``       refused, reset or unreachable.
 * ``other``            anything else (the exception class is kept).
 
-Details are short and carry no file paths: only the URL, the kind and a one-line reason.
+Details are short and carry no local file paths, URL userinfo or query strings: only the scrubbed URL,
+the kind and a one-line reason.
 """
 from __future__ import annotations
 
+import re
 import socket
 import ssl
 import urllib.error
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlunsplit
 
 SAST = timezone(timedelta(hours=2), "SAST")
 KINDS = ("tls_certificate", "tls_other", "http_error", "timeout", "dns", "connection", "other")
 MAX_DETAIL = 160
+
+_URL_IN_TEXT_RE = re.compile(r'https?://[^\s<>"\'\])\}]+')
+_QUOTED_PATH_RE = re.compile(r"""(['"])(?:~?[\\/]|[A-Za-z]:[\\/])[^'"]+\1""")
+_WIN_PATH_RE = re.compile(r"""(?<![A-Za-z0-9_])[A-Za-z]:[\\/][^\s'"\])}>,;]+""")
+_HOME_PATH_RE = re.compile(r"""(?<![A-Za-z0-9_.:/-])~[\\/][^\s'"\])}>,;]+""")
+_UNIX_MULTI_PATH_RE = re.compile(r"(?<![A-Za-z0-9_.:/-])/(?:[A-Za-z0-9._~@-]+/)+[A-Za-z0-9._~@-]*")
+_UNIX_TOP_PATH_RE = re.compile(
+    r"""(?<![A-Za-z0-9_.:/-])/(?:tmp|home|workspace|var|etc|usr|opt|root|Users|cursor|mnt|srv|proc|sys|dev|run|boot|lib|bin|sbin)(?:/[^\s'"\])}>,;]*)?"""
+)
 
 
 def _now() -> str:
     return datetime.now(SAST).isoformat(timespec="seconds")
 
 
+def scrub_url(url: str) -> str:
+    """Strip userinfo (user:pass@), query strings and fragments from a URL."""
+    s = str(url or "").strip()
+    if not s:
+        return s
+    try:
+        parts = urlsplit(s)
+    except ValueError:
+        s = re.sub(r"(^[a-zA-Z][a-zA-Z0-9+.-]*://)[^/@]+@", r"\1", s)
+        return s.split("?", 1)[0].split("#", 1)[0]
+    if parts.scheme and parts.netloc:
+        try:
+            host = parts.hostname or ""
+            port = parts.port
+        except ValueError:
+            host = parts.netloc.rsplit("@", 1)[-1]
+            port = None
+        if ":" in host and not host.startswith("["):
+            host = f"[{host}]"
+        netloc = f"{host}:{port}" if port is not None else host
+        return urlunsplit((parts.scheme, netloc, parts.path, "", ""))
+    return s.split("?", 1)[0].split("#", 1)[0]
+
+
+def scrub_text(text: str) -> str:
+    """Remove local filesystem paths and scrub userinfo/query strings from URLs in error text."""
+    s = str(text or "")
+    saved_urls: list[str] = []
+
+    def _hold_url(m: re.Match[str]) -> str:
+        raw = m.group(0)
+        trail = ""
+        while raw and raw[-1] in ".,;:":
+            trail = raw[-1] + trail
+            raw = raw[:-1]
+        token = f"__TW_URL_{len(saved_urls)}__"
+        saved_urls.append(scrub_url(raw))
+        return token + trail
+
+    s = _URL_IN_TEXT_RE.sub(_hold_url, s)
+    s = _QUOTED_PATH_RE.sub("'<path>'", s)
+    s = _WIN_PATH_RE.sub("<path>", s)
+    s = _HOME_PATH_RE.sub("<path>", s)
+    s = _UNIX_MULTI_PATH_RE.sub("<path>", s)
+    s = _UNIX_TOP_PATH_RE.sub("<path>", s)
+    for i, url in enumerate(saved_urls):
+        s = s.replace(f"__TW_URL_{i}__", url)
+    return s
+
+
+def _exc_text(e: BaseException) -> str:
+    if isinstance(e, OSError) and (getattr(e, "filename", None) is not None or getattr(e, "filename2", None) is not None):
+        msg = e.strerror or "OS error"
+        base = f"[Errno {e.errno}] {msg}" if e.errno is not None else msg
+        return scrub_text(base)
+    return scrub_text(str(e))
+
+
 def _short(text: str) -> str:
-    text = " ".join(str(text).split())
+    text = " ".join(scrub_text(str(text)).split())
     return text if len(text) <= MAX_DETAIL else text[: MAX_DETAIL - 1] + "…"
 
 
@@ -52,35 +121,38 @@ def classify_error(exc: BaseException) -> tuple[str, str]:
         e = nxt
     for e in chain:
         if isinstance(e, ssl.SSLCertVerificationError):
-            msg = getattr(e, "verify_message", None) or str(e)
+            msg = getattr(e, "verify_message", None) or _exc_text(e)
             return "tls_certificate", _short(f"TLS certificate verification failed: {msg}")
     for e in chain:
         if isinstance(e, urllib.error.HTTPError):
             return "http_error", f"HTTP {e.code}"
     for e in chain:
         if isinstance(e, ssl.SSLError):
-            if "CERTIFICATE_VERIFY_FAILED" in str(e):
-                return "tls_certificate", _short(f"TLS certificate verification failed: {e}")
-            return "tls_other", _short(f"TLS error: {type(e).__name__}: {e}")
+            msg = _exc_text(e)
+            if "CERTIFICATE_VERIFY_FAILED" in msg:
+                return "tls_certificate", _short(f"TLS certificate verification failed: {msg}")
+            return "tls_other", _short(f"TLS error: {type(e).__name__}: {msg}")
     for e in chain:
         if isinstance(e, (socket.timeout, TimeoutError)):
             return "timeout", "timed out"
     for e in chain:
         if isinstance(e, socket.gaierror):
-            return "dns", _short(f"name did not resolve: {e}")
+            return "dns", _short(f"name did not resolve: {_exc_text(e)}")
     # A message that names the certificate problem (for example a wrapped ConnectionError) still counts.
     for e in chain:
-        msg = str(e)
+        msg = _exc_text(e)
         if "CERTIFICATE_VERIFY_FAILED" in msg or "certificate verification failed" in msg.lower():
             return "tls_certificate", _short(msg if msg.lower().startswith("tls certificate verification failed")
                                              else f"TLS certificate verification failed: {msg}")
     for e in chain:
         if isinstance(e, (ConnectionError, ConnectionRefusedError, ConnectionResetError)):
-            return "connection", _short(f"{type(e).__name__}: {e}")
+            return "connection", _short(f"{type(e).__name__}: {_exc_text(e)}")
     for e in chain:
         if isinstance(e, urllib.error.URLError):
-            return "connection", _short(f"URLError: {getattr(e, 'reason', e)}")
-    return "other", _short(f"{type(exc).__name__}: {exc}")
+            reason = getattr(e, "reason", e)
+            rtxt = _exc_text(reason) if isinstance(reason, BaseException) else scrub_text(str(reason))
+            return "connection", _short(f"URLError: {rtxt}")
+    return "other", _short(f"{type(exc).__name__}: {_exc_text(exc)}")
 
 
 class FetchLog:
@@ -92,7 +164,7 @@ class FetchLog:
         self._now = now
 
     def ok(self, url: str, *, note: str | None = None, nbytes: int | None = None) -> None:
-        ev = {"source": self.source, "url": url, "outcome": "ok", "at": self._now()}
+        ev = {"source": self.source, "url": scrub_url(url), "outcome": "ok", "at": self._now()}
         if note:
             ev["note"] = note
         if nbytes is not None:
@@ -100,15 +172,16 @@ class FetchLog:
         self.events.append(ev)
 
     def error(self, url: str, exc: BaseException) -> dict:
+        clean_url = scrub_url(url)
         kind, detail = classify_error(exc)
-        ev = {"source": self.source, "url": url, "outcome": "error", "kind": kind, "detail": detail,
-              "host": urlsplit(url).hostname or "", "at": self._now()}
+        ev = {"source": self.source, "url": clean_url, "outcome": "error", "kind": kind, "detail": detail,
+              "host": urlsplit(clean_url).hostname or "", "at": self._now()}
         self.events.append(ev)
         return ev
 
     def skipped(self, url: str, reason: str) -> None:
-        self.events.append({"source": self.source, "url": url, "outcome": "skipped", "detail": _short(reason),
-                            "at": self._now()})
+        self.events.append({"source": self.source, "url": scrub_url(url), "outcome": "skipped",
+                            "detail": _short(reason), "at": self._now()})
 
     def call(self, url: str, fn: Callable[[], Any], *, note: str | None = None) -> Any:
         """Run fn(); record ok or the classified error, then re-raise so the caller decides what to do."""

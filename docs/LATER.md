@@ -20,6 +20,14 @@ Started 2026-11-19.
 - Government Gazette award notices as a second confirming source.
 - Published AGSA findings linked to the department, never to a private person.
 
+## National expansion follow-ups (from CHG-TW-011)
+
+- Widen past stage 1 (eThekwini, Mangaung) only once the "all buyers" DEV build scans clean: buyer names taken from short or placeholder source strings, phone-shaped values in titles, and loaded words in titles still fail closed.
+- A company-age source for national rows: OCP Pub 143 has no CIPC numbers, so every national row is Year: Unknown today. Only a free, public source; no CIPC login.
+- Municipal award lists (PDF, HTML, xlsx) per metro: read each site's terms and robots first. Several metro hosts currently fail TLS certificate checks; those stay logged as fetch errors, never fetched with verification off.
+- Re-pin OCP Pub 143 when the publisher refreshes it, with the new size, SHA-256 and Last-Modified in the run record.
+- Per-buyer review load: all 138 stage-1 national rows sit in the check queue (no legal suffix or personal-name shape), so reviewer time scales with buyers added.
+
 ## Process and quality
 
 - Make GENERIC_WORDS a tracked config (BAU queue item).

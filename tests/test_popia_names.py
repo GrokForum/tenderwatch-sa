@@ -22,7 +22,7 @@ from tw.site import UnsafeBuild
     ("Zorblax (Pty) Ltd", "single_word_stem"),                # a surname alone or a brand: for review
     ("Cape Qwerty Engineering (Pty) Ltd", None),                # starts with a place/trade word
     ("Zorblax Civil Engineering (Pty) Ltd", None),             # one-word head
-    ("Zorblax South Africa (Pty) Ltd", None),
+    ("Zorblax Southern Qwerty (Pty) Ltd", None),
     ("Qwerty 2000 Trading CC", None),
     ("QZ (Pty) Ltd", None),
     ("", None),

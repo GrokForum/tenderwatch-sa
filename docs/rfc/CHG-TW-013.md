@@ -15,6 +15,7 @@
 ## 1. What was scanned
 
 * A mirror clone of `GrokForum/tenderwatch-sa` taken 20 Nov 2026 (SAST): 96 commits reachable from 38 refs (`main`, 12 other branches, 11 tags, 14 pull-request refs including `refs/pull/13/merge`). Every text blob reachable from any ref was read.
+* **Recount (20 Nov 2026, 21:15 SAST, after PR #13 and PR #16 landed on `main`):** a fresh mirror clone of `GrokForum/tenderwatch-sa` has **133 commits reachable from 52 refs** (`main`, 15 other branches, 12 tags, and 24 pull-request refs: 19 `/head` and 5 `/merge`). (Before PR #13 and PR #16 were closed/merged and their branches and `/merge` refs dropped, the open-PR snapshot had 55 refs.)
 * Terms (kept outside the repository, mode 600, never printed): 713 supplier and vendor names of six characters or more from the DEV warehouse (eTenders and City register), the 195 queued or withheld names (CHG-TW-002), the 5 names tied to the owner's three holds (CHG-TW-008), and the 3 held record ids. Patterns: SA ID-number shape (13 digits), SA phone shape, email addresses, box paths, the review kit's agent-name list. Commit author and committer identities.
 * The review kit with `--scan-tree` and the same terms on the tree at `main` (gitleaks over the last three merges: 0 findings).
 
@@ -36,7 +37,7 @@ Findings below give counts, paths and refs only.
 
 | # | Finding | Refs | Weight |
 |---|---|---|---|
-| H1 | **Commit identities**: the owner's personal-name address is the author of 11 commits on `main` (the GitHub web squash merges; 22 across all refs), and a `localhost` bot identity is on 25 `main` commits. Only 5 `main` commits use the neutral publisher identity. | `main`, all branches and tags | **Blocking**: the owner must stay anonymous in a public repository. |
+| H1 | **Commit identities**: the owner's personal-name address is the author of 11 commits on `main` (the GitHub web squash merges; 22 across all refs at the initial 38-ref scan, **28** across all refs at the 55-ref review snapshot, and **26** across all refs in the 52-ref recount after PR #13 and PR #16 landed), and a `localhost` bot identity is on 25 `main` commits (60 across all refs). Only 5 `main` commits use a neutral `grokforum.site` noreply identity (47 across all refs: 38 publisher, 9 noreply bot). | `main`, all branches and tags | **Blocking**: the owner must stay anonymous in a public repository. |
 | H2 | A per-name classification report with the held names and held record ids | `refs/pull/3/head` (PR #3, closed unmerged) | **Blocking**: held names are exactly what CHG-TW-008 masks. |
 | H3 | The first CHG-TW-008 revision's tracked holds file (`config/popia_holds.json`, `902dac4f`) with the three held record ids | `refs/pull/12/head` | **Blocking** (known; CHG-TW-008 §2). |
 | H4 | Queued or withheld names (9 blobs over 4 paths: `SOURCES.md`, the eTenders sample, the classification report, a test) | `refs/pull/1/head` to `refs/pull/5/head` | **Blocking**: these names are withheld from the public site. |

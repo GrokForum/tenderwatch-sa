@@ -37,7 +37,7 @@ The real build needs the git-ignored holds file (CHG-TW-008) and DEV data, which
 
 ## 5. Results (DEV and TEST)
 
-* Tests: 330 collected, 330 passed in a fresh virtual environment from a clean export (320 + 10).
+* Tests: 330 collected (320 + 10). In this checkout with the DEV data: 330 passed. In a fresh virtual environment from a clean export: 327 passed, 3 skipped. In GitHub Actions (a git checkout without DEV data) only the DEV-data tests skip.
 * Gate, fixtures: PASS (19 checks), 14 rows, groups 6 / 3 / 2 / 2 / 1.
 * Gate, real DEV build on the box: PASS, 291 rows, `content_sha256` `c1d2e3d9e0109920f814ba84009918e75b7ee24a49fee44bd4dd5872cd8d05c6` (unchanged).
 * Actions minutes: one job of about one minute per run (nightly, plus pull requests and pushes to `main`).

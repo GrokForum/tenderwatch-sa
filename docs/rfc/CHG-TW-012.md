@@ -7,7 +7,7 @@
 | Environment | TEST: GitHub Actions on the private repository `GrokForum/tenderwatch-sa` (tests and the gate on committed synthetic fixtures) and the box (the gate on the real DEV build). No PROD: nothing is published, deployed or pushed by the workflow. |
 | Branch | `dev/CHG-TW-012-actions-ci`, stacked on `dev/CHG-TW-009-fetch-errors` (the gate reports the fetch-error section CHG-TW-009 adds to the data-quality report). Base of the stack: `main` at `4f9dab45214c9621e46c5247b3725e6f4deb0647`. |
 | Rollback reference | `4f9dab45214c9621e46c5247b3725e6f4deb0647` (and the CHG-TW-009 head below this change). Revert the merge, or disable the workflow in the repository settings; no reset, no force push. |
-| Author | the author (TenderWatch) |
+| Author | the author bot |
 | Reviewers | Reviewer A and the critic |
 | Basis | Project lead's direction of 20 Nov 2026, 20:21 SAST (owner direction relayed): "add an Actions nightly with tests and a data-quality gate". |
 | Status | DEV and TEST done on the box; the workflow runs on the draft PR. Merges only on the owner's GO naming the head. |

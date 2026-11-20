@@ -140,7 +140,7 @@ def test_build_holds_trading_as_personal_name_and_legal_name_only(tmp_path: Path
         _row(1, "Zorblax Holdings (Pty) Ltd", key="zorblax holdings"),
         _row(2, "Cape Qwerty Engineering (Pty) Ltd t.a. Lindiwe Qwertane", key="cape qwerty"),
         # supplier_name is non-personal, linked legal_name is personal (catches dropping legal_name in _names)
-        {**_row(3, "Qwerty Widgets (Pty) Ltd", key="qwerty widgets"), "legal_name": "Thandeka Qwertane Transport CC"},
+        {**_row(3, "Qwerty Hardware (Pty) Ltd", key="qwerty widgets"), "legal_name": "Thandeka Qwertane Transport CC"},
     ]
     _synthetic_inputs(tmp_path, monkeypatch, rows)
     res = site_build.run_build(tmp_path / "out")

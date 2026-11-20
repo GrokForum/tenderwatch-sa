@@ -8,6 +8,7 @@ from pathlib import Path
 
 from tw.classification_report import withheld_names
 from tw.config import load_config
+from tw.popia_names import apply_auto_holds, one_person_reason, write_review_candidates
 from tw.public_scan import run_all
 from tw.site import UnsafeBuild, build_rows, build_site, load_lookups, shown_names
 
@@ -17,6 +18,7 @@ CLASSIFIED = WAREHOUSE / "awards_classified_chg_tw_002.jsonl"
 CITY = WAREHOUSE / "city_register.jsonl"
 LOOKUPS = ROOT / "data" / "local" / "lookups.csv"
 HOLDS = ROOT / "data" / "local" / "popia_holds.json"  # git-ignored; never committed (CHG-TW-008)
+REVIEW_CANDIDATES = ROOT / "data" / "local" / "popia_review_candidates.csv"  # git-ignored (CHG-TW-010)
 HOLD_KEYS = {"ocid", "award_id", "basis", "name_key"}
 # Words too common to count as a name in the basis check (legal forms and trade words).
 GENERIC_WORDS = {"and", "associates", "association", "company", "corporation", "electrical", "engineering",
@@ -140,6 +142,8 @@ def load_inputs() -> dict:
     if len(rows) != EXPECTED_ROWS:
         raise ValueError(f"expected {EXPECTED_ROWS} rows in the DEV export, got {len(rows)}")
     holds_applied = apply_holds(rows, load_holds())  # before withheld_names, so the scans also look for held names
+    auto_holds = apply_auto_holds(rows)  # CHG-TW-010: one-person business names, also before withheld_names
+    write_review_candidates(rows, REVIEW_CANDIDATES)
     city = _jsonl(CITY) if CITY.is_file() else []
     city_meta = {}
     for c in city:
@@ -152,7 +156,7 @@ def load_inputs() -> dict:
     all_names = {n.strip() for n in all_names if n and n.strip()}
     return {"rows": rows, "city_meta": city_meta, "etenders_retrieved": retrieved, "input_sha256": digest,
             "withheld": withheld_names(rows), "all_names": all_names, "lookups": load_lookups(LOOKUPS),
-            "holds_applied": holds_applied}
+            "holds_applied": holds_applied, "auto_holds": auto_holds}
 
 
 def run_build(out_dir: Path) -> dict:
@@ -162,6 +166,9 @@ def run_build(out_dir: Path) -> dict:
     model = build_rows(inp["rows"], lookups=inp["lookups"], city_meta=inp["city_meta"],
                        etenders_retrieved=inp["etenders_retrieved"])
     allowed = shown_names(model["rows"])
+    # CHG-TW-010 gate: no shown name may read as a person's name (defence in depth behind apply_auto_holds).
+    if any(one_person_reason(n) == "personal_stem" for n in allowed):
+        raise UnsafeBuild("a shown supplier name reads as a person's name (CHG-TW-010); not building")
     scans = run_all(out_dir, withheld=inp["withheld"], all_names=inp["all_names"], allowed=allowed)
     return {
         "build": "OK",
@@ -172,6 +179,7 @@ def run_build(out_dir: Path) -> dict:
         "input_sha256": manifest["input_sha256"],
         "lookups_loaded": len(inp["lookups"]),
         "holds_applied": inp["holds_applied"],
+        "auto_holds": inp["auto_holds"],
         "names_scanned": {"withheld": len(inp["withheld"]), "all": len(inp["all_names"]),
                           "shown_unmasked": len(allowed)},
         "scans": {k: len(v) for k, v in scans.items()},

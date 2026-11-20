@@ -5,11 +5,12 @@ A registered company or close corporation can be named after its owner ("<given 
 other held rows (CHG-TW-004 §13.2, CHG-TW-008). This module finds such names automatically; the owner's
 fail-closed holds file (CHG-TW-008, git-ignored) stays in force for anything the detector misses.
 
-Rule ``personal_stem``: take the legal-name part (before "t/a"), drop outer brackets, trailing legal-form
-suffixes and a leading "the"; the *head* is the run of words before the first trade, place or legal word, or
-the first word with a digit. If the head has two to four words (name particles such as "van" or "du" not
-counted), every one alphabetic, the name is treated as a person's name and held. Initials written together
-("JT") count as a word. Over-holding is the safe side: a firm named after its founders is masked too.
+Rule ``personal_stem``: split any "t/a" / "trading as" / "t.a." marker into legal-name and trading-name
+parts, drop outer brackets, trailing legal-form suffixes and a leading "the"; the *head* is the run of words
+before the first trade, place or legal word, or the first word with a digit. If the head of either part has
+two to four words (name particles such as "van" or "du" not counted), every one alphabetic, the name is treated
+as a person's name and held. Initials written together ("JT") count as a word. Over-holding is the safe side:
+a firm named after its founders is masked too.
 
 Rule ``single_word_stem``: a stem of one word (for example a surname alone, or a coined brand) cannot be told
 apart automatically. It is not held; it is listed for a person to review in a git-ignored local file.
@@ -19,6 +20,7 @@ No names live in this module or its tests; tests use invented names only.
 from __future__ import annotations
 
 import csv
+import re
 from pathlib import Path
 from typing import Iterable, Mapping
 
@@ -27,7 +29,6 @@ from tw.supplier_type import (
     _LEGAL_TOKENS,
     _SUFFIX_TABLE,
     normalise_tokens,
-    split_trading_as,
     strip_outer_brackets,
 )
 
@@ -45,11 +46,22 @@ EXTRA_NON_NAME_WORDS = {
 NON_NAME_WORDS = frozenset(_BUSINESS_WORDS | _LEGAL_TOKENS | EXTRA_NON_NAME_WORDS)
 AUTO_REASONS = ("personal_stem",)
 
+_TRADING_MARKER_RE = re.compile(r"""(?i)(?:^|[\s,;(])(?:t\s*/\s*a|t\s*\.\s*a\.?|trading\s+as)(?=$|[\s,;:)('"])""")
 
-def name_stem(name: str | None) -> list[str]:
-    """Lower-case words of the legal-name part without trailing legal-form suffixes or a leading 'the'."""
-    legal, _trading = split_trading_as(name)
-    toks = normalise_tokens(strip_outer_brackets(legal))
+
+def _split_parts(name: str | None) -> tuple[str, str | None]:
+    """Return (legal part, trading part or None), matching t/a, T/A, t.a., and trading as."""
+    s = strip_outer_brackets(name)
+    m = _TRADING_MARKER_RE.search(s)
+    if not m:
+        return s, None
+    legal = s[: m.start()].strip(" ,;(")
+    trading = strip_outer_brackets(s[m.end() :].strip(" ,;)"))
+    return legal, (trading or None)
+
+
+def _stem_part(part: str | None) -> list[str]:
+    toks = normalise_tokens(strip_outer_brackets(part))
     changed = True
     while changed:
         changed = False
@@ -66,6 +78,12 @@ def name_stem(name: str | None) -> list[str]:
     return toks
 
 
+def name_stem(name: str | None) -> list[str]:
+    """Lower-case words of the legal-name part without trailing legal-form suffixes or a leading 'the'."""
+    legal, _trading = _split_parts(name)
+    return _stem_part(legal)
+
+
 def name_head(stem: Iterable[str]) -> list[str]:
     head: list[str] = []
     for t in stem:
@@ -75,9 +93,8 @@ def name_head(stem: Iterable[str]) -> list[str]:
     return head
 
 
-def one_person_reason(name: str | None) -> str | None:
-    """'personal_stem' when the name reads as a person's name, 'single_word_stem' when it cannot be told, else None."""
-    stem = name_stem(name)
+def _part_reason(part: str | None) -> str | None:
+    stem = _stem_part(part)
     if not stem:
         return None
     head = name_head(stem)
@@ -85,6 +102,17 @@ def one_person_reason(name: str | None) -> str | None:
     if 2 <= len(counted) <= 4 and all(t.isalpha() for t in head):
         return "personal_stem"
     if len(stem) == 1 and stem[0].isalpha() and len(stem[0]) >= 3:
+        return "single_word_stem"
+    return None
+
+
+def one_person_reason(name: str | None) -> str | None:
+    """'personal_stem' when either legal or trading part reads as a person's name, 'single_word_stem' if ambiguous, else None."""
+    legal, trading = _split_parts(name)
+    reasons = {_part_reason(p) for p in (legal, trading) if p}
+    if "personal_stem" in reasons:
+        return "personal_stem"
+    if "single_word_stem" in reasons:
         return "single_word_stem"
     return None
 

@@ -163,3 +163,49 @@ def test_dev_stage1_counts_and_scans(tmp_path):
     assert res["group_counts"] == {"unmasked": 56, "held": 10, "personal": 36, "pending": 321, "withheld": 6}
     assert res["names_scanned"]["pending_names_shown_elsewhere"] == 1
     assert res["scans_clean"], res["scan_findings"]
+
+
+def test_synthetic_personal_national_rows_are_held_and_masked(tmp_path: Path, monkeypatch):
+    releases = [
+        _release("ocds-fx-10", METRO, "Zorblax Civil Engineering (Pty) Ltd"),
+        _release("ocds-fx-11", METRO, "Thandeka Qwertane Transport CC"),
+        _release("ocds-fx-12", METRO, "Cape Qwerty Engineering (Pty) Ltd t/a Lindiwe Qwertane"),
+        _release("ocds-fx-13", METRO, "Sipho Zorblax"),
+    ]
+    gz_path, sha = _gz(tmp_path, releases)
+    cfg = _cfg(row_bounds={"stage1": [4, 4], "all": [4, 4]})
+    extra = national.ingest("stage1", cfg=cfg, ocds_path=gz_path, expected_sha256=sha)
+
+    city_rows = [
+        _row(1, "Qwerty Pumps (Pty) Ltd", CITY, key="qwerty pumps"),
+        _row(2, "Harbour Lights CC", CITY, key="harbour lights"),
+    ]
+    wh = tmp_path / "wh"
+    wh.mkdir()
+    cls = wh / "classified.jsonl"
+    cls.write_text("".join(json.dumps(r) + "\n" for r in city_rows), encoding="utf-8")
+    holds = tmp_path / "holds.json"
+    holds.write_text(json.dumps({"holds": [{
+        "ocid": "ocds-fx-2", "award_id": "2", "basis": "Owner decision: masked.", "name_key": "harbour lights",
+    }]}), encoding="utf-8")
+    monkeypatch.setattr(site_build, "CLASSIFIED", cls)
+    monkeypatch.setattr(site_build, "CITY", wh / "none.jsonl")
+    monkeypatch.setattr(site_build, "LOOKUPS", tmp_path / "none.csv")
+    monkeypatch.setattr(site_build, "HOLDS", holds)
+    monkeypatch.setattr(site_build, "REVIEW_CANDIDATES", tmp_path / "cand.csv")
+    monkeypatch.setattr(site_build, "MIN_HOLDS", 1)
+    monkeypatch.setattr(site_build, "EXPECTED_ROWS", 2)
+
+    out = tmp_path / "site"
+    res = site_build.run_build(out, extra_rows=extra, municipal_buyers=national.municipal_buyers(extra, cfg))
+    assert res["group_counts"] == {"unmasked": 2, "held": 3, "personal": 1, "pending": 0, "withheld": 0}
+    assert res["auto_holds"]["personal_stem"] == 2
+    assert res["scans_clean"], res["scan_findings"]
+    blob = "".join(p.read_text(encoding="utf-8") for p in out.rglob("*") if p.is_file()).upper()
+    for hidden in ("THANDEKA", "LINDIWE", "QWERTANE", "SIPHO"):
+        assert hidden not in blob, hidden
+
+    # Gate also blocks an unheld personal-looking national row if auto-holds are bypassed.
+    monkeypatch.setattr(site_build, "apply_auto_holds", lambda r: {"personal_stem": 0})
+    with pytest.raises(site.UnsafeBuild, match="person's name"):
+        site_build.run_build(out, extra_rows=extra, municipal_buyers=national.municipal_buyers(extra, cfg))

@@ -30,7 +30,7 @@ Add buyers beyond the City of Cape Town from the pinned eTenders OCDS file, unde
 * `tw/site.py`: I1 is counted **per buyer** (it was per supplier and year, which was only right while there was one buyer) and only for municipal buyers when a municipal list is given (the municipal financial year is 1 July to 30 June); owner lookups and the City register citation apply only to City rows; the home and method pages describe more than one buyer when there is more than one. **City-only builds are byte-identical** (content hash unchanged from CHG-TW-010).
 * `tw/site_build.py`: `run_build(out, extra_rows=…, municipal_buyers=…)`; a national row that repeats a City row stops the build; the input hash covers the national rows; `pending_names_shown_elsewhere()` (below); the result reports `buyers`.
 * `scripts/build_national.py` (new): DEV build of a stage; exit 0 only if every scan is clean.
-* `tests/test_national.py` (new, 9 tests, invented names; one DEV-data test that skips on a fresh clone).
+* `tests/test_national.py` (new, 10 tests, invented names, including a synthetic test that personal-looking national rows are held; one DEV-data test that skips on a fresh clone).
 * This RFC and one `STATUS.md` row.
 
 **Withheld-name scan, one narrow exemption.** The same supplier string can be a shown, Confirmed company on a City row (legal form from the City register) and a name-pending row for another buyer, where eTenders prints it without a suffix. No cross-buyer link is made (two-detail rule): the other row still shows "Supplier name pending check". Because the name is already public on the City row, it is not a finding of the withheld-name scan. A name tied to any held, personal-looking or withheld row is never exempted; the count is reported (`pending_names_shown_elsewhere`; 1 in stage 1). The all-names scan is unchanged.
@@ -44,7 +44,7 @@ Add buyers beyond the City of Cape Town from the pinned eTenders OCDS file, unde
 
 * National rows: 138 (eThekwini 80, Mangaung 58), award dates 14 Jul 2021 to 12 Jun 2026. eTenders gives these buyers' supplier names **without legal-form suffixes**: 0 Confirmed, 129 name-pending, 9 personal-looking (masked). Registration year known: 0.
 * Combined DEV build: 429 rows, 3 buyers; groups 56 named, 10 held, 36 personal-looking masked, 321 name-pending, 6 withheld; years 387 Unknown, 36 not shown (masked), 6 withheld. Names scanned: 332 withheld (after 1 exemption above), 843 in all. **All five scans clean.** `content_sha256` `bb58333a9076b1dcab13c0a9ca2595a6f6a648300444c3b9b02c7e924c5c6d4e`.
-* Tests: 331 collected (322 + 9). In this checkout with the DEV data: 331 passed. In a fresh virtual environment from a clean export: 327 passed, 4 skipped (DEV-data and git-checkout tests skip by design).
+* Tests: 339 collected (329 + 10). In this checkout with the DEV data: 339 passed. In a fresh virtual environment from a clean export: 335 passed, 4 skipped (DEV-data and git-checkout tests skip by design).
 
 ## 6. Results — stage "all" (DEV only, not clean; stays off)
 

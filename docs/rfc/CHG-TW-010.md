@@ -41,7 +41,7 @@ A registered firm whose name is a person's name ("<given name> <surname> Transpo
 
 * DEV build (291 rows): groups **56 named, 10 held**, 27 personal-looking masked, 192 name-pending, 6 withheld (was 58 / 8). Auto holds: 2 new rows; the detector also finds, by itself, all 3 owner holds and the 5 classifier holds (`already_held` 8); 7 single-word stems listed for review (not held).
 * Names scanned: 207 withheld (was 203), 718 in all; all five scans clean. `content_sha256` `581ed60be042de50a0db41e219597bb8e34f67d67927c0721e7a63de941bd866` (was `c1d2e3d9…`).
-* Tests: 322 collected, 322 passed in a fresh virtual environment from a clean export (304 + 18).
+* Tests: 322 collected (304 + 18). In this checkout with the DEV data: 322 passed. In a fresh virtual environment from a clean export: 319 passed, 3 skipped (DEV-data and git-checkout tests skip by design).
 
 ## 6. Rollback
 

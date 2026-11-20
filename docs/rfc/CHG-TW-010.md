@@ -7,7 +7,7 @@
 | Environment | DEV: local build into `data/local/site-build/` (git-ignored). TEST: the test suite in a clean export and the public-file scans. PROD: none in this change; the site repository is not touched. The next publish would carry two more masked rows and needs the owner's GO naming its head. |
 | Branch | `dev/CHG-TW-010-one-person-names` from `main` at `4f9dab45214c9621e46c5247b3725e6f4deb0647`. |
 | Rollback reference | `4f9dab45214c9621e46c5247b3725e6f4deb0647`. Revert the merge; no reset, no force push. |
-| Author | the author (TenderWatch) |
+| Author | the author bot |
 | Reviewers | Reviewer A and the critic |
 | Basis | Project lead's direction of 20 Nov 2026, 20:21 SAST (owner direction relayed): "Mask one-person business names (POPIA)." Extends CHG-TW-008. |
 | Status | DEV and TEST done; draft PR for review. Merges only on the owner's GO naming the head. |

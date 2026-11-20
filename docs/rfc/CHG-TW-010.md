@@ -18,7 +18,7 @@ A registered firm whose name is a person's name ("<given name> <surname> Transpo
 
 ## 2. Rule (tw/popia_names.py)
 
-* Take the legal-name part (before "t/a"), drop outer brackets, trailing legal-form suffixes (stacked "(RF) (Pty) Ltd" included) and a leading "the".
+* Split any `"t/a"` / `"T/A"` / `"t.a."` / `"trading as"` marker into legal-name and trading-name parts, drop outer brackets, trailing legal-form suffixes (stacked "(RF) (Pty) Ltd" included) and a leading "the" on each part, and hold the row if **either** part reads as a person's name.
 * The **head** is the run of words before the first trade, place or legal word, or the first word with a digit. The word list is the classifier's business words plus a detector-only list of place and trade words (north, south, western, truck, financial, and similar). The classifier's own list is not changed, because it also decides which bare names are held in the check queue, and adding words there would hold fewer of them.
 * **`personal_stem`**: a head of two to four alphabetic words (name particles such as "van", "der", "du" not counted) → the row is held (`popia_hold`, reason `auto:personal_stem`). Initials written together ("JQ") count as a word.
 * **`single_word_stem`**: a stem of a single word (a surname alone or a coined brand cannot be told apart) → not held; listed for a person to review.
@@ -28,8 +28,8 @@ A registered firm whose name is a person's name ("<given name> <surname> Transpo
 ## 3. What changes (exact files)
 
 * `tw/popia_names.py` (new): `name_stem`, `name_head`, `one_person_reason`, `apply_auto_holds` (counts only) and `write_review_candidates` (a git-ignored local CSV, `data/local/popia_review_candidates.csv`, mode 600, with the auto-held and single-word names for a person to review; never committed, never published).
-* `tw/site_build.py`: after the owner's holds and **before** the withheld-name list is made (so the scans also search for auto-held names), `apply_auto_holds` runs and the review list is written. A new **build gate** stops the build (`UnsafeBuild`) if any shown, unmasked name still reads as a person's name. The result reports `auto_holds`.
-* `tests/test_popia_names.py` (new, 18 tests, invented names only), including the gate with the detector switched off. `tests/test_site_build.py`: DEV counts updated (below).
+* `tw/site_build.py`: after the owner's holds and **before** the withheld-name list is made (so the scans also search for auto-held names), `apply_auto_holds` runs and the review list is written. `run_build()` writes into a temporary directory alongside the target and atomically replaces the target only after the **build gate** (`UnsafeBuild` if any shown, unmasked name reads as a person's name) and the scans complete; a gate failure leaves any previous output untouched. The result reports `auto_holds`.
+* `tests/test_popia_names.py` (new, 25 tests, invented names only), including the gate with the detector switched off. `tests/test_site_build.py`: DEV counts updated (below).
 * This RFC and one `STATUS.md` row.
 
 ## 4. What stays
@@ -41,7 +41,7 @@ A registered firm whose name is a person's name ("<given name> <surname> Transpo
 
 * DEV build (291 rows): groups **56 named, 10 held**, 27 personal-looking masked, 192 name-pending, 6 withheld (was 58 / 8). Auto holds: 2 new rows; the detector also finds, by itself, all 3 owner holds and the 5 classifier holds (`already_held` 8); 7 single-word stems listed for review (not held).
 * Names scanned: 207 withheld (was 203), 718 in all; all five scans clean. `content_sha256` `581ed60be042de50a0db41e219597bb8e34f67d67927c0721e7a63de941bd866` (was `c1d2e3d9…`).
-* Tests: 322 collected (304 + 18). In this checkout with the DEV data: 322 passed. In a fresh virtual environment from a clean export: 319 passed, 3 skipped (DEV-data and git-checkout tests skip by design).
+* Tests: 329 collected (304 + 25). In this checkout with the DEV data: 329 passed. In a fresh virtual environment from a clean export: 326 passed, 3 skipped (DEV-data and git-checkout tests skip by design).
 
 ## 6. Rollback
 

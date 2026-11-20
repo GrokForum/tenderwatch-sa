@@ -12,8 +12,8 @@ Errors are classified so the run record and the data-quality report can say *why
 * ``connection``       refused, reset or unreachable.
 * ``other``            anything else (the exception class is kept).
 
-Details are short and carry no local file paths, URL userinfo or query strings: only the scrubbed URL,
-the kind and a one-line reason.
+Details are short and carry no local file paths, no file: (or other non-http(s) scheme) URLs, and no URL
+userinfo or query strings: only the scrubbed http(s) URL, the kind and a one-line reason.
 """
 from __future__ import annotations
 
@@ -30,7 +30,9 @@ SAST = timezone(timedelta(hours=2), "SAST")
 KINDS = ("tls_certificate", "tls_other", "http_error", "timeout", "dns", "connection", "other")
 MAX_DETAIL = 160
 
-_URL_IN_TEXT_RE = re.compile(r'https?://[^\s<>"\'\])\}]+')
+_SCHEME_URL_RE = re.compile(
+    r'(?i)(?:[a-z][a-z0-9+.-]*:)*(?:file:/*|[a-z][a-z0-9+.-]*://)[^\s<>"\'\])\}]+'
+)
 _QUOTED_PATH_RE = re.compile(r"""(['"])(?:~?[\\/]|[A-Za-z]:[\\/])[^'"]+\1""")
 _WIN_PATH_RE = re.compile(r"""(?<![A-Za-z0-9_])[A-Za-z]:[\\/][^\s'"\])}>,;]+""")
 _HOME_PATH_RE = re.compile(r"""(?<![A-Za-z0-9_.:/-])~[\\/][^\s'"\])}>,;]+""")
@@ -44,11 +46,30 @@ def _now() -> str:
     return datetime.now(SAST).isoformat(timespec="seconds")
 
 
+def _leading_schemes(url: str) -> list[str]:
+    """Scheme names at the start of a URL, including nested schemes such as jar:file:."""
+    m = re.match(r"(?i)^((?:[a-z][a-z0-9+.-]*:)+)", str(url or "").strip())
+    if not m:
+        return []
+    return re.findall(r"(?i)([a-z][a-z0-9+.-]*):", m.group(1))
+
+
+def _is_http_url(url: str) -> bool:
+    schemes = _leading_schemes(url)
+    return bool(schemes) and all(s.lower() in {"http", "https"} for s in schemes)
+
+
 def scrub_url(url: str) -> str:
-    """Strip userinfo (user:pass@), query strings and fragments from a URL."""
+    """Strip userinfo (user:pass@), query strings and fragments from an http(s) URL.
+
+    file: and any other non-http(s) scheme (ftp:, jar:file:, …) are treated as a local
+    path and replaced with ``<path>``.
+    """
     s = str(url or "").strip()
     if not s:
         return s
+    if _leading_schemes(s) and not _is_http_url(s):
+        return "<path>"
     try:
         parts = urlsplit(s)
     except ValueError:
@@ -69,21 +90,27 @@ def scrub_url(url: str) -> str:
 
 
 def scrub_text(text: str) -> str:
-    """Remove local filesystem paths and scrub userinfo/query strings from URLs in error text."""
+    """Remove local filesystem paths and scrub userinfo/query strings from URLs in error text.
+
+    file: and any other non-http(s) scheme URL are redacted like a bare path (``<path>``);
+    http(s) URLs keep the scheme, host and path, with userinfo, query and fragment removed.
+    """
     s = str(text or "")
     saved_urls: list[str] = []
 
-    def _hold_url(m: re.Match[str]) -> str:
+    def _hold_or_redact(m: re.Match[str]) -> str:
         raw = m.group(0)
         trail = ""
         while raw and raw[-1] in ".,;:":
             trail = raw[-1] + trail
             raw = raw[:-1]
+        if raw and not _is_http_url(raw):
+            return "<path>" + trail
         token = f"__TW_URL_{len(saved_urls)}__"
         saved_urls.append(scrub_url(raw))
         return token + trail
 
-    s = _URL_IN_TEXT_RE.sub(_hold_url, s)
+    s = _SCHEME_URL_RE.sub(_hold_or_redact, s)
     s = _QUOTED_PATH_RE.sub("'<path>'", s)
     s = _WIN_PATH_RE.sub("<path>", s)
     s = _HOME_PATH_RE.sub("<path>", s)

@@ -16,7 +16,7 @@ import pytest
 
 from tw import check_live as cl
 from tw import dq
-from tw.fetch_log import FetchLog, classify_error, merge, summarise
+from tw.fetch_log import FetchLog, classify_error, merge, scrub_text, scrub_url, summarise
 from tw.nightly import live_fetch_errors
 
 
@@ -249,3 +249,30 @@ def test_pilot_write_report_scrubs_paths_and_url_secrets(tmp_path: Path) -> None
     for secret in ("u:p", "k=v", "/home/box", "secret.pdf"):
         assert secret not in text, secret
     assert "https://host.example/p" in text
+
+
+@pytest.mark.parametrize("raw, url, kept, gone", [
+    ("cannot read file:///home/x/y", "file:///home/x/y", "<path>", ["file://", "/home/x/y"]),
+    ("open file://host/share/z failed", "file://host/share/z", "<path>", ["file://", "host/share", "/share/z"]),
+    ("ftp://files.example/pub/a.dat failed", "ftp://files.example/pub/a.dat", "<path>",
+     ["ftp://", "files.example", "pub/a.dat"]),
+    ("jar:file:///tmp/lib.jar!/Entry failed", "jar:file:///tmp/lib.jar!/Entry", "<path>",
+     ["jar:file:", "/tmp/lib.jar", "Entry"]),
+    ("GET https://alice:secret@city.example:8443/a/b.pdf?token=xyz",
+     "https://alice:secret@city.example:8443/a/b.pdf?token=xyz",
+     "https://city.example:8443/a/b.pdf", ["alice", "secret", "token=", "xyz"]),
+    ("GET http://alice:secret@city.example/a?q=1",
+     "http://alice:secret@city.example/a?q=1",
+     "http://city.example/a", ["alice", "secret", "q=1"]),
+])
+def test_scrub_text_redacts_non_http_scheme_urls(raw, url, kept, gone) -> None:
+    got = scrub_text(raw)
+    assert kept in got
+    for part in gone:
+        assert part not in got, part
+    url_got = scrub_url(url)
+    if kept.startswith("http"):
+        assert url_got == kept
+    else:
+        assert url_got == "<path>"
+

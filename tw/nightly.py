@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import shutil
 import subprocess
 import time
@@ -181,7 +182,8 @@ def run_nightly(*, publish_flag: bool = False, manual: bool = False, site_dir: P
     rec: dict = {"date_sast": started.strftime("%Y-%m-%d"), "started_sast": started.isoformat(timespec="seconds"),
                  "trigger": "manual" if manual else "scheduled", "refresh": "not run", "build": "not run",
                  "gate": "not run", "tracked_clean": "not run", "publish": "not run", "check_live": "not run",
-                 "check_live_failed": "", "content_sha256": "", "steps": {}}
+                 "check_live_failed": "", "content_sha256": "", "steps": {},
+                 "fetch_errors": {"count": 0, "by_kind": {}, "note": "check_live not run"}}
     ok = True
     try:
         rec["repo_head"] = _git(["rev-parse", "HEAD"], ROOT, run)
@@ -259,6 +261,7 @@ def run_nightly(*, publish_flag: bool = False, manual: bool = False, site_dir: P
             results = live(cfg["site_url"], expected=manifest)
     rec["check_live"] = cl.overall(results)
     rec["check_live_failed"] = ";".join(f"{c}: {d}" for c, s, d in results if s != cl.PASS)
+    rec["fetch_errors"] = live_fetch_errors(results)  # CHG-TW-009: never silent; counted in the record
     rec["steps"]["check_live"] = [list(r) for r in results]
     ok = ok and rec["check_live"] == cl.PASS and manifest is not None
     rec["result"] = "PASS" if ok else "FAIL"
@@ -270,6 +273,19 @@ def run_nightly(*, publish_flag: bool = False, manual: bool = False, site_dir: P
         except Exception as e:  # noqa: BLE001
             rec["log"] = f"FAIL: {e}"
     return rec
+
+
+FETCH_ERROR_RE = re.compile(r"\[fetch error: ([a-z_]+)\]")
+
+
+def live_fetch_errors(results: list) -> dict:
+    """CHG-TW-009: count the live checks that failed because a fetch failed, by kind (TLS certificate etc.)."""
+    kinds: dict[str, int] = {}
+    for r in results:
+        m = FETCH_ERROR_RE.search(str(r[2])) if len(r) > 2 else None
+        if m:
+            kinds[m.group(1)] = kinds.get(m.group(1), 0) + 1
+    return {"count": sum(kinds.values()), "by_kind": dict(sorted(kinds.items()))}
 
 
 def streak(rows: list[dict], today: str) -> dict:

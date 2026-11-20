@@ -14,12 +14,14 @@ from urllib.parse import quote, urljoin, urlparse, urlunparse
 from urllib.robotparser import RobotFileParser
 
 from tw.config import DEFAULT_BUYER, RIGHT_OF_REPLY, ROOT
+from tw.fetch_log import FetchLog, classify_error
 from tw.normalise import extract_cipc, extract_csd, norm_name, parse_mdy, registration_year_from_cipc
 from tw.supplier_type import classify_supplier_type
 
 SAST = timezone(timedelta(hours=2), name="SAST")
 USER_AGENT = "TenderWatchSA-DEV/0.1 (research; local box; read-only award register)"
 DEFAULT_REQUEST_PAUSE_S = 1.5
+SOURCE_ID = "city_of_cape_town_register"
 SAMPLE_CSV = ROOT / "data/samples/city-of-cape-town/tenders-awarded-october-2026-samples.csv"
 
 # Conservative robots: we only request paths under the official City site.
@@ -308,13 +310,18 @@ def light_fetch(
     if request_pause_s is None and city.get("request_pause_s") is not None:
         pause = float(city["request_pause_s"])
     requests_made = 0
+    log = FetchLog(SOURCE_ID)  # CHG-TW-009: every request is recorded; errors are classified, never silent
 
     def polite_get(url: str, dest: Path | None = None) -> bytes:
         nonlocal requests_made
         if requests_made:
             sleep(pause)
         requests_made += 1
-        return http_get(url, dest=dest)
+        return log.call(url, lambda: http_get(url, dest=dest))
+
+    def err(prefix: str, exc: Exception) -> None:
+        kind, detail = classify_error(exc)
+        result["errors"].append(f"{prefix}: {kind}: {detail}")
 
     result = {
         "robots_allowed": {},
@@ -323,13 +330,16 @@ def light_fetch(
         "errors": [],
         "rows": [],
         "provenance_written": [],
+        "fetch_log": log,
     }
     try:
         robots_txt = polite_get(robots_url, dest=raw_dir / "robots.txt").decode("utf-8", errors="replace")
         result["fetched"].append(robots_url)
     except Exception as exc:  # noqa: BLE001 — fail closed, do not fetch further
-        result["errors"].append(f"robots.txt: {type(exc).__name__}: {exc}")
+        err("robots.txt", exc)
         result["skipped"].append("robots.txt unavailable; fail closed, no fetch")
+        log.skipped(index_url, "robots.txt unavailable; fail closed, no fetch")
+        result["fetch_log"] = log.as_dict()
         return result
 
     targets = [index_url]
@@ -339,6 +349,7 @@ def light_fetch(
         result["robots_allowed"][url] = robots_allows(robots_txt, url)
         if not result["robots_allowed"][url]:
             result["skipped"].append(f"robots disallows {url}")
+            log.skipped(url, "robots disallows")
             continue
         if url == index_url:
             try:
@@ -352,11 +363,12 @@ def light_fetch(
                         continue
                     if not robots_allows(robots_txt, abs_url):
                         result["skipped"].append(f"robots disallows {abs_url}")
+                        log.skipped(abs_url, "robots disallows")
                         continue
                     if abs_url not in targets:
                         targets.append(abs_url)
             except Exception as exc:  # noqa: BLE001
-                result["errors"].append(f"index: {type(exc).__name__}: {exc}")
+                err("index", exc)
             continue
         # PDF
         name = Path(urlparse(url).path).name or "register.pdf"
@@ -364,6 +376,7 @@ def light_fetch(
         try:
             if dest.is_file() and dest.stat().st_size > 0:
                 result["fetched"].append(url + " (cached)")
+                log.ok(url, note="cached")
                 prov = dest.with_suffix(dest.suffix + ".provenance.json")
                 retrieved_at = _now_sast_label()
                 if prov.is_file():
@@ -378,5 +391,6 @@ def light_fetch(
             rows = parse_register_pdf(dest, source_url=url, retrieved_at=retrieved_at, period=period)
             result["rows"].extend(rows)
         except Exception as exc:  # noqa: BLE001
-            result["errors"].append(f"pdf {url}: {type(exc).__name__}: {exc}")
+            err(f"pdf {url}", exc)
+    result["fetch_log"] = log.as_dict()
     return result

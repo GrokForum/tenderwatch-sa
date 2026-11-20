@@ -39,7 +39,7 @@ The source pack of 20 Nov 2026 found that three metro sites (eThekwini, Tshwane,
 
 ## 5. Results (DEV and TEST)
 
-* Tests: 320 collected, 320 passed in a fresh virtual environment from a clean export (was 304; +16).
+* Tests: 320 collected (was 304; +16). In this checkout with the DEV data: 320 passed. In a fresh virtual environment from a clean export: 317 passed, 3 skipped (the DEV-data and git-checkout tests skip there by design).
 * DEV pilot in a scratch copy: 291 rows; City live fetch 11 requests, 11 ok, 0 errors; data-quality report `OK`.
 * DEV site build: unchanged, `content_sha256` `c1d2e3d9e0109920f814ba84009918e75b7ee24a49fee44bd4dd5872cd8d05c6`; groups 58 / 8 / 27 / 192 / 6; all five scans clean.
 

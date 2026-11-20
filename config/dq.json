@@ -1,0 +1,13 @@
+{
+  "rfc": "CHG-TW-012",
+  "dev": {
+    "rows": [291, 291],
+    "note": "the City DEV export has exactly 291 rows (CHG-TW-002); a change in the source needs a reviewed change here"
+  },
+  "fixtures": {
+    "dir": "tests/fixtures/synthetic",
+    "rows": [14, 14],
+    "groups": {"unmasked": 6, "held": 3, "personal": 2, "pending": 2, "withheld": 1},
+    "note": "invented records only; CI builds these, never the real data"
+  }
+}

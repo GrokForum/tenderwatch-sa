@@ -14,7 +14,7 @@ from urllib.parse import quote, urljoin, urlparse, urlunparse
 from urllib.robotparser import RobotFileParser
 
 from tw.config import DEFAULT_BUYER, RIGHT_OF_REPLY, ROOT
-from tw.fetch_log import FetchLog, classify_error
+from tw.fetch_log import FetchLog, classify_error, scrub_text, scrub_url
 from tw.normalise import extract_cipc, extract_csd, norm_name, parse_mdy, registration_year_from_cipc
 from tw.supplier_type import classify_supplier_type
 
@@ -321,7 +321,7 @@ def light_fetch(
 
     def err(prefix: str, exc: Exception) -> None:
         kind, detail = classify_error(exc)
-        result["errors"].append(f"{prefix}: {kind}: {detail}")
+        result["errors"].append(f"{scrub_text(prefix)}: {kind}: {detail}")
 
     result = {
         "robots_allowed": {},
@@ -334,7 +334,7 @@ def light_fetch(
     }
     try:
         robots_txt = polite_get(robots_url, dest=raw_dir / "robots.txt").decode("utf-8", errors="replace")
-        result["fetched"].append(robots_url)
+        result["fetched"].append(scrub_url(robots_url))
     except Exception as exc:  # noqa: BLE001 — fail closed, do not fetch further
         err("robots.txt", exc)
         result["skipped"].append("robots.txt unavailable; fail closed, no fetch")
@@ -348,13 +348,13 @@ def light_fetch(
     for url in targets:
         result["robots_allowed"][url] = robots_allows(robots_txt, url)
         if not result["robots_allowed"][url]:
-            result["skipped"].append(f"robots disallows {url}")
+            result["skipped"].append(f"robots disallows {scrub_url(url)}")
             log.skipped(url, "robots disallows")
             continue
         if url == index_url:
             try:
                 body = polite_get(url, dest=raw_dir / "tenders-awarded.html")
-                result["fetched"].append(url)
+                result["fetched"].append(scrub_url(url))
                 html = body.decode("utf-8", errors="replace")
                 hrefs = sorted(set(re.findall(r'href="([^"]+\.pdf)"', html, flags=re.I)))
                 for href in hrefs:
@@ -362,7 +362,7 @@ def light_fetch(
                     if not abs_url:
                         continue
                     if not robots_allows(robots_txt, abs_url):
-                        result["skipped"].append(f"robots disallows {abs_url}")
+                        result["skipped"].append(f"robots disallows {scrub_url(abs_url)}")
                         log.skipped(abs_url, "robots disallows")
                         continue
                     if abs_url not in targets:
@@ -375,7 +375,7 @@ def light_fetch(
         dest = raw_dir / name
         try:
             if dest.is_file() and dest.stat().st_size > 0:
-                result["fetched"].append(url + " (cached)")
+                result["fetched"].append(scrub_url(url) + " (cached)")
                 log.ok(url, note="cached")
                 prov = dest.with_suffix(dest.suffix + ".provenance.json")
                 retrieved_at = _now_sast_label()
@@ -384,13 +384,13 @@ def light_fetch(
                     retrieved_at = _json.loads(prov.read_text()).get("fetched_at") or retrieved_at
             else:
                 polite_get(url, dest=dest)
-                result["fetched"].append(url)
+                result["fetched"].append(scrub_url(url))
                 retrieved_at = _now_sast_label()
             period = None
             period = period_from_filename(name)
             rows = parse_register_pdf(dest, source_url=url, retrieved_at=retrieved_at, period=period)
             result["rows"].extend(rows)
         except Exception as exc:  # noqa: BLE001
-            err(f"pdf {url}", exc)
+            err(f"pdf {scrub_url(url)}", exc)
     result["fetch_log"] = log.as_dict()
     return result

@@ -161,3 +161,91 @@ def test_check_live_names_a_real_certificate_error(self_signed_server: str) -> N
     assert res[0][2].startswith("TLS certificate verification failed")
     assert res[0][2].endswith("[fetch error: tls_certificate]")
     assert live_fetch_errors(res)["by_kind"] == {"tls_certificate": 1}
+
+
+def test_classify_error_strips_local_filesystem_paths_and_url_secrets() -> None:
+    err1 = FileNotFoundError(2, "No such file or directory", "/home/box/private/secret.pdf")
+    kind1, detail1 = classify_error(err1)
+    assert kind1 == "other"
+    assert "/home/box" not in detail1 and "secret.pdf" not in detail1
+
+    err2 = OSError("cannot open /tmp/tw/local_file.txt or C:\\Users\\box\\creds.txt")
+    kind2, detail2 = classify_error(err2)
+    assert kind2 == "other"
+    assert "/tmp/tw" not in detail2 and "local_file" not in detail2
+    assert "Users" not in detail2 and "creds.txt" not in detail2
+
+    err3 = urllib.error.URLError("failed GET https://alice:secret@city.example:8443/a/b.pdf?token=xyz")
+    kind3, detail3 = classify_error(err3)
+    assert kind3 == "connection"
+    assert "alice" not in detail3 and "secret" not in detail3 and "token=" not in detail3 and "xyz" not in detail3
+    assert "https://city.example:8443/a/b.pdf" in detail3
+
+
+def test_fetch_log_and_city_register_scrub_userinfo_query_and_paths(tmp_path: Path) -> None:
+    from tw.city_register import light_fetch
+
+    log = FetchLog("src", now=lambda: "T")
+    log.ok("https://u:pw@a.example/x.pdf?sig=secret#frag")
+    log.error("https://u:pw@b.example/y.pdf?token=abc", FileNotFoundError(2, "missing", "/workspace/secret/y.pdf"))
+    log.skipped("https://u:pw@c.example/z.pdf?key=1", "robots disallows /tmp/private")
+    m = merge(log)
+    blob = json.dumps(log.as_dict()) + json.dumps(m)
+    for secret in ("u:pw", "pw@", "sig=secret", "token=abc", "key=1", "/workspace/secret", "/tmp/private", "frag"):
+        assert secret not in blob, secret
+    assert "https://a.example/x.pdf" in blob
+    assert "https://b.example/y.pdf" in blob
+
+    def fake_get(url, dest=None, timeout=60):
+        if url.endswith(".pdf") or "tenders-awarded.pdf" in url:
+            raise FileNotFoundError(2, "No such file or directory", "/home/box/secret/local.pdf")
+        return b"User-agent: *\nAllow: /\n" if "robots" in url else b"<html></html>"
+
+    cfg = {"city_register": {
+        "robots_url": "https://user:pass@city.example/robots.txt?v=1",
+        "index_url": "https://user:pass@city.example/tenders/?q=1",
+        "known_pdf": "https://user:pass@city.example/a/tenders-awarded.pdf?token=xyz",
+        "request_pause_s": 0,
+    }}
+    r = light_fetch(tmp_path, cfg, sleep=lambda s: None, http_get=fake_get)
+    err_blob = " ".join(r["errors"] + r["fetched"] + r["skipped"])
+    for secret in ("user:pass", "pass@", "token=xyz", "v=1", "q=1", "/home/box", "local.pdf"):
+        assert secret not in err_blob, secret
+
+
+def test_pilot_write_report_scrubs_paths_and_url_secrets(tmp_path: Path) -> None:
+    from tw.pilot import _write_report
+
+    rep_path = tmp_path / "run-report.md"
+    fake_report = {
+        "run_at": "2026-11-20 20:00 SAST",
+        "finished_at": "2026-11-20 20:01 SAST",
+        "publicfunds_pin": "pin",
+        "ocds_path": "full.jsonl.gz",
+        "ocds_sha256": "0" * 64,
+        "awards_loaded": 1,
+        "unique_ocids": 1,
+        "suppliers_by_type": {},
+        "indicator_counts": {},
+        "age_band_counts": {},
+        "city_register_rows": 0,
+        "city_register_unique_tts": 0,
+        "city_register_named_rows": 0,
+        "city_register_source": "sample",
+        "matches": {"awards_with_at_least_one_city_link": 0, "link_pairs": 0, "by_details": {}},
+        "public_export_rows": 0,
+        "public_export_named_suppliers": 0,
+        "city_fetch": {
+            "fetched": [],
+            "skipped": ["skipped https://u:p@host.example/p?k=v"],
+            "errors": ["pdf https://u:p@host.example/p?k=v: other: [Errno 2] missing '/home/box/secret.pdf'"],
+            "parsed_rows": 0,
+        },
+        "fetch_errors": {},
+        "fallbacks": [],
+    }
+    _write_report(rep_path, fake_report)
+    text = rep_path.read_text(encoding="utf-8")
+    for secret in ("u:p", "k=v", "/home/box", "secret.pdf"):
+        assert secret not in text, secret
+    assert "https://host.example/p" in text

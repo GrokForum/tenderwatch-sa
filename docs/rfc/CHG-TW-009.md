@@ -22,13 +22,13 @@ The source pack of 20 Nov 2026 found that three metro sites (eThekwini, Tshwane,
 
 ## 3. What changes (exact files)
 
-* `tw/fetch_log.py` (new): `classify_error()` sorts an exception (following `reason`, `__cause__` and `__context__`) into `tls_certificate`, `tls_other`, `http_error`, `timeout`, `dns`, `connection` or `other`, with a one-line detail of at most 160 characters and no file paths. `FetchLog` records ok, error and skipped events per source; `summarise()` and `merge()` give counts, errors by kind and the hosts with TLS errors.
+* `tw/fetch_log.py` (new): `classify_error()` sorts an exception (following `reason`, `__cause__` and `__context__`) into `tls_certificate`, `tls_other`, `http_error`, `timeout`, `dns`, `connection` or `other`, with a one-line detail of at most 160 characters; `scrub_url()` and `scrub_text()` strip local filesystem paths and scrub URL userinfo/query strings across `classify_error()`, `FetchLog`, `city_register.light_fetch`, and `pilot._write_report`. `FetchLog` records ok, error and skipped events per source; `summarise()` and `merge()` give counts, errors by kind and the hosts with TLS errors.
 * `tw/city_register.py`: `light_fetch()` records every request (robots.txt, index, each PDF, cached PDFs as ok "cached", robots disallows as skipped) and returns `fetch_log`; error strings now read `<step>: <kind>: <detail>`. Fail-closed behaviour on a missing robots.txt is unchanged.
 * `tw/check_live.py`: `_describe()` uses `classify_error()`; the final `ConnectionError` keeps its cause; a check that failed because the fetch failed carries `[fetch error: <kind>]` in its detail.
 * `tw/nightly.py`: the nightly record gains `fetch_errors` (count and kinds of live-check fetch errors). `results.csv` columns are unchanged.
 * `tw/dq.py` (new): the run's data-quality report, `data/local/warehouse/dq-report.json` (git-ignored), with a `fetch` section, the fallbacks used, and `status` `WARN` whenever a fetch failed or a fallback was used (`OK` otherwise). CHG-TW-012 adds the gate checks to this report.
 * `tw/pilot.py`: the run summary (`run-summary.json`) and the run report gain `fetch_errors`, `fetch_error_list` and `fallbacks`; the sample fallback is recorded as a fallback, and the data-quality report is written.
-* `tests/test_fetch_errors.py` (new, 16 tests), including a real TLS failure against a local HTTPS server with a self-signed certificate (skipped where `openssl` is missing). `tests/test_nightly.py`: one expected detail string updated for the classified form.
+* `tests/test_fetch_errors.py` (new, 19 tests), including a real TLS failure against a local HTTPS server with a self-signed certificate (skipped where `openssl` is missing). `tests/test_nightly.py`: one expected detail string updated for the classified form.
 * This RFC and one `STATUS.md` row.
 
 ## 4. What stays
@@ -39,7 +39,7 @@ The source pack of 20 Nov 2026 found that three metro sites (eThekwini, Tshwane,
 
 ## 5. Results (DEV and TEST)
 
-* Tests: 320 collected (was 304; +16). In this checkout with the DEV data: 320 passed. In a fresh virtual environment from a clean export: 317 passed, 3 skipped (the DEV-data and git-checkout tests skip there by design).
+* Tests: 323 collected (was 304; +19). In this checkout with the DEV data: 323 passed. In a fresh virtual environment from a clean export: 320 passed, 3 skipped (the DEV-data and git-checkout tests skip there by design).
 * DEV pilot in a scratch copy: 291 rows; City live fetch 11 requests, 11 ok, 0 errors; data-quality report `OK`.
 * DEV site build: unchanged, `content_sha256` `c1d2e3d9e0109920f814ba84009918e75b7ee24a49fee44bd4dd5872cd8d05c6`; groups 58 / 8 / 27 / 192 / 6; all five scans clean.
 

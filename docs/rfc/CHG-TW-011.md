@@ -44,7 +44,7 @@ Add buyers beyond the City of Cape Town from the pinned eTenders OCDS file, unde
 
 * National rows: 138 (eThekwini 80, Mangaung 58), award dates 14 Jul 2021 to 12 Jun 2026. eTenders gives these buyers' supplier names **without legal-form suffixes**: 0 Confirmed, 129 name-pending, 9 personal-looking (masked). Registration year known: 0.
 * Combined DEV build: 429 rows, 3 buyers; groups 56 named, 10 held, 36 personal-looking masked, 321 name-pending, 6 withheld; years 387 Unknown, 36 not shown (masked), 6 withheld. Names scanned: 332 withheld (after 1 exemption above), 843 in all. **All five scans clean.** `content_sha256` `bb58333a9076b1dcab13c0a9ca2595a6f6a648300444c3b9b02c7e924c5c6d4e`.
-* Tests: 331 collected, 331 passed in this checkout (DEV data present); in a clean export the DEV-data tests skip (see the PR).
+* Tests: 331 collected (322 + 9). In this checkout with the DEV data: 331 passed. In a fresh virtual environment from a clean export: 327 passed, 4 skipped (DEV-data and git-checkout tests skip by design).
 
 ## 6. Results — stage "all" (DEV only, not clean; stays off)
 

@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+import shutil
+import tempfile
 from pathlib import Path
 
 from tw.classification_report import withheld_names
@@ -159,17 +162,41 @@ def load_inputs() -> dict:
             "holds_applied": holds_applied, "auto_holds": auto_holds}
 
 
+def _replace_dir(tmp_dir: Path, out_dir: Path) -> None:
+    if not out_dir.exists():
+        os.replace(tmp_dir, out_dir)
+        return
+    backup = Path(tempfile.mkdtemp(prefix=f".{out_dir.name or 'site'}.old-", dir=out_dir.parent))
+    backup.rmdir()
+    os.replace(out_dir, backup)
+    try:
+        os.replace(tmp_dir, out_dir)
+    except BaseException:
+        if not out_dir.exists() and backup.exists():
+            os.replace(backup, out_dir)
+        raise
+    shutil.rmtree(backup, ignore_errors=True)
+
+
 def run_build(out_dir: Path) -> dict:
     inp = load_inputs()
-    manifest = build_site(inp["rows"], out_dir, lookups=inp["lookups"], city_meta=inp["city_meta"],
-                          etenders_retrieved=inp["etenders_retrieved"], input_sha256=inp["input_sha256"])
-    model = build_rows(inp["rows"], lookups=inp["lookups"], city_meta=inp["city_meta"],
-                       etenders_retrieved=inp["etenders_retrieved"])
-    allowed = shown_names(model["rows"])
-    # CHG-TW-010 gate: no shown name may read as a person's name (defence in depth behind apply_auto_holds).
-    if any(one_person_reason(n) == "personal_stem" for n in allowed):
-        raise UnsafeBuild("a shown supplier name reads as a person's name (CHG-TW-010); not building")
-    scans = run_all(out_dir, withheld=inp["withheld"], all_names=inp["all_names"], allowed=allowed)
+    target = Path(out_dir).resolve()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    tmp_dir = Path(tempfile.mkdtemp(prefix=f".{target.name or 'site'}.tmp-", dir=target.parent))
+    try:
+        manifest = build_site(inp["rows"], tmp_dir, lookups=inp["lookups"], city_meta=inp["city_meta"],
+                              etenders_retrieved=inp["etenders_retrieved"], input_sha256=inp["input_sha256"])
+        model = build_rows(inp["rows"], lookups=inp["lookups"], city_meta=inp["city_meta"],
+                           etenders_retrieved=inp["etenders_retrieved"])
+        allowed = shown_names(model["rows"])
+        # CHG-TW-010 gate: no shown name may read as a person's name (defence in depth behind apply_auto_holds).
+        if any(one_person_reason(n) == "personal_stem" for n in allowed):
+            raise UnsafeBuild("a shown supplier name reads as a person's name (CHG-TW-010); not building")
+        scans = run_all(tmp_dir, withheld=inp["withheld"], all_names=inp["all_names"], allowed=allowed)
+        _replace_dir(tmp_dir, target)
+    finally:
+        if tmp_dir.exists():
+            shutil.rmtree(tmp_dir, ignore_errors=True)
     return {
         "build": "OK",
         "rows_total": manifest["rows_total"],

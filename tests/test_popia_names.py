@@ -122,3 +122,48 @@ def test_build_gate_stops_when_the_detector_is_bypassed(tmp_path: Path, monkeypa
     monkeypatch.setattr(site_build, "apply_auto_holds", lambda rows: {"personal_stem": 0})
     with pytest.raises(UnsafeBuild, match="person's name"):
         site_build.run_build(tmp_path / "out")
+
+
+@pytest.mark.parametrize("name, reason", [
+    ("Zorblax (Pty) Ltd t/a Thandeka Qwertane", "personal_stem"),
+    ("Cape Qwerty Engineering (Pty) Ltd T/A Lindiwe Qwertane Services", "personal_stem"),
+    ("Zorblax Holdings (Pty) Ltd t.a. Sipho Zorblax", "personal_stem"),
+    ("Zorblax Holdings (Pty) Ltd trading as Marietjie van der Qwerty", "personal_stem"),
+    ("Cape Qwerty Engineering (Pty) Ltd t/a North Coast Plumbing", None),
+])
+def test_one_person_reason_checks_trading_as_variants(name, reason):
+    assert one_person_reason(name) == reason
+
+
+def test_build_holds_trading_as_personal_name_and_legal_name_only(tmp_path: Path, monkeypatch):
+    rows = [
+        _row(1, "Zorblax Holdings (Pty) Ltd", key="zorblax holdings"),
+        _row(2, "Cape Qwerty Engineering (Pty) Ltd t.a. Lindiwe Qwertane", key="cape qwerty"),
+        # supplier_name is non-personal, linked legal_name is personal (catches dropping legal_name in _names)
+        {**_row(3, "Qwerty Widgets (Pty) Ltd", key="qwerty widgets"), "legal_name": "Thandeka Qwertane Transport CC"},
+    ]
+    _synthetic_inputs(tmp_path, monkeypatch, rows)
+    res = site_build.run_build(tmp_path / "out")
+    assert res["group_counts"]["held"] == 3 and res["group_counts"]["unmasked"] == 0
+    assert res["auto_holds"]["personal_stem"] == 2
+    assert res["scans_clean"], res["scan_findings"]
+    blob = "".join(p.read_text(encoding="utf-8") for p in (tmp_path / "out").rglob("*") if p.is_file()).upper()
+    assert "LINDIWE" not in blob and "THANDEKA" not in blob and "QWERTANE" not in blob
+
+
+def test_gate_failure_leaves_previous_output_untouched(tmp_path: Path, monkeypatch):
+    rows = _site_rows()
+    _synthetic_inputs(tmp_path, monkeypatch, rows)
+    out = tmp_path / "out"
+    site_build.run_build(out)
+    prev_index = (out / "index.html").read_bytes()
+    sentinel = out / "sentinel.txt"
+    sentinel.write_text("keep-me", encoding="utf-8")
+
+    monkeypatch.setattr(site_build, "apply_auto_holds", lambda r: {"personal_stem": 0})
+    with pytest.raises(UnsafeBuild, match="person's name"):
+        site_build.run_build(out)
+
+    assert (out / "index.html").read_bytes() == prev_index
+    assert sentinel.read_text(encoding="utf-8") == "keep-me"
+    assert not list(tmp_path.glob(f".{out.name}.tmp-*"))

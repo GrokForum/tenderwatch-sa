@@ -6,6 +6,7 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from tw import dq, fetch_log
 from tw.city_register import light_fetch, load_sample_csv
 from tw.config import EXPECTED_OCDS_SHA256, PUBLICFUNDS_PIN, data_dir, load_config, ocds_input_path
 from tw.export import write_public_export
@@ -83,9 +84,13 @@ def run(report_path: Path | None = None) -> dict:
     city_fetch = light_fetch(raw_city, cfg)
     city_rows = list(city_fetch.get("rows") or [])
     city_source = "live_fetch"
+    fallbacks: list[str] = []
     if not city_rows:
         city_rows = load_sample_csv()
         city_source = "in_repo_october_2026_sample" + ("; live fetch had no parsed rows" if not city_fetch.get("errors") else "; live fetch failed or was skipped")
+        fallbacks.append("City register: in-repo October 2026 sample used (" + city_source.split("; ", 1)[-1] + ")")
+    # CHG-TW-009: every request and every fetch error goes into the run record and the data-quality report.
+    fetch = dq.fetch_section(city_fetch.get("fetch_log"))
     assert_clean(city_rows, context="warehouse.city_register")
 
     awards = attach_matches(awards, city_rows)
@@ -131,6 +136,9 @@ def run(report_path: Path | None = None) -> dict:
             "robots_allowed": city_fetch.get("robots_allowed"),
             "parsed_rows": len(city_fetch.get("rows") or []),
         },
+        "fetch_errors": fetch["summary"],
+        "fetch_error_list": fetch["errors"],
+        "fallbacks": fallbacks,
         "matches": {
             "awards_with_at_least_one_city_link": n_matched_awards,
             "link_pairs": n_match_links,
@@ -146,6 +154,8 @@ def run(report_path: Path | None = None) -> dict:
     }
     _write_report(report_path or REPORT_PATH_DEFAULT, report)
     (warehouse / "run-summary.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    dq.write_report(warehouse / "dq-report.json",
+                    dq.build_report(rfc="CHG-TW-009", run_at=started, fetch=fetch, fallbacks=fallbacks))
     return report
 
 
@@ -193,7 +203,9 @@ City register source: {report['city_register_source']}. Light fetch was limited 
 
 Match breakdown (agreeing details): {report['matches'].get('by_details')}. Links on `name_key,buyer` only mean the same normalised name in the same jurisdiction, not necessarily the same tender. Links that also share a tender/TTS reference are the tighter comparison.
 
-Light fetch log: fetched={len(fetch.get('fetched') or [])} URLs; skipped={fetch.get('skipped') or []}; errors={fetch.get('errors') or []}; parsed_rows={fetch.get('parsed_rows')}.
+Light fetch log: fetched={len(fetch.get('fetched') or [])} URLs; skipped={[fetch_log.scrub_text(x) for x in (fetch.get('skipped') or [])]}; errors={[fetch_log.scrub_text(x) for x in (fetch.get('errors') or [])]}; parsed_rows={fetch.get('parsed_rows')}.
+
+Fetch errors by kind (CHG-TW-009): {report.get('fetch_errors', {}).get('errors_by_kind') or 'none'}; hosts with TLS errors: {report.get('fetch_errors', {}).get('tls_error_hosts') or 'none'}; fallbacks: {report.get('fallbacks') or 'none'}.
 
 All award rows are fact-labelled **Confirmed** as published by the source. Registration year and the young-supplier indicator are **Unknown** unless a sourced CIPC number in a free public document supplied a year (labelled Confirmed, with a link). `Right of reply: pending` is stored on every row. Nothing was sent or published.
 

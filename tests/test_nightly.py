@@ -88,7 +88,8 @@ def test_check_live_tls_failure_is_a_fail():
     def bad(_url):
         raise ConnectionError("TLS certificate verification failed")
     res = cl.check_live("https://example.invalid", fetch=bad)
-    assert res == [("tls_home", cl.FAIL, "TLS certificate verification failed")]
+    # CHG-TW-009: the fetch error is classified in the detail, so the run record can count it.
+    assert res == [("tls_home", cl.FAIL, "TLS certificate verification failed [fetch error: tls_certificate]")]
     assert cl.overall(res) == cl.FAIL
     assert cl.overall([]) == cl.FAIL
 

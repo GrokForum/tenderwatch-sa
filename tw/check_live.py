@@ -24,6 +24,9 @@ import urllib.parse
 import urllib.request
 from typing import Callable, Mapping
 
+from tw.fetch_log import classify_error
+
+
 DEFAULT_SITE = "https://tenderwatch.grokforum.site"
 USER_AGENT = "tenderwatch-check/1"
 PASS, FAIL = "PASS", "FAIL"
@@ -73,20 +76,19 @@ def make_fetch(site: str, *, timeout: float = 20.0, retries: int = 2, retry_dela
                 last = e
             if attempt < retries:
                 time.sleep(retry_delay)
-        raise ConnectionError(_describe(last))
+        raise ConnectionError(_describe(last)) from last
 
     return fetch
 
 
 def _describe(e: Exception | None) -> str:
+    """CHG-TW-009: one classified line (tw/fetch_log.py), so a certificate error is named, not hidden."""
     if e is None:
         return "unknown error"
-    reason = getattr(e, "reason", None)
-    if isinstance(reason, ssl.SSLCertVerificationError) or isinstance(e, ssl.SSLCertVerificationError):
-        return "TLS certificate verification failed"
-    if isinstance(e, urllib.error.HTTPError):
-        return f"HTTP {e.code}"
-    return type(reason or e).__name__
+    kind, detail = classify_error(e)
+    if kind in ("tls_certificate", "http_error"):
+        return detail
+    return f"{kind}: {detail}"
 
 
 def _page_ok(status: int, body: bytes, want: int) -> str | None:
@@ -110,7 +112,8 @@ def check_live(site: str = DEFAULT_SITE, *, expected: Mapping | None = None, fet
         try:
             return fetch(site + path)
         except Exception as e:  # noqa: BLE001
-            return str(e) or type(e).__name__
+            kind, _ = classify_error(e)
+            return f"{str(e) or type(e).__name__} [fetch error: {kind}]"  # CHG-TW-009: counted in the run record
 
     home = get("/")
     if isinstance(home, str):

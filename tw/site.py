@@ -56,6 +56,7 @@ CITY_INDEX_URL = (
     "tenders-rfqs-and-supply/tenders-awarded/"
 )
 CITY_ACK = "This information resides at and is the property of the City of Cape Town."
+CITY_BUYER = "City of Cape Town"  # the one buyer with a second source (its award registers); CHG-TW-011
 
 LEGAL_FORM_TEXT = {
     "company": "Company",
@@ -252,8 +253,14 @@ def _city_sources(row: Mapping, city_meta: Mapping[str, Mapping]) -> list[dict]:
 
 
 def build_rows(rows: Sequence[Mapping], *, lookups: Mapping[str, Mapping] | None = None,
-               city_meta: Mapping[str, Mapping] | None = None, etenders_retrieved: str = "") -> dict:
-    """Display rows plus counts. Raises UnsafeBuild if any rule fails."""
+               city_meta: Mapping[str, Mapping] | None = None, etenders_retrieved: str = "",
+               municipal_buyers: set[str] | None = None) -> dict:
+    """Display rows plus counts. Raises UnsafeBuild if any rule fails.
+
+    CHG-TW-011: I1 is counted per buyer, and only for buyers in ``municipal_buyers`` (the municipal financial
+    year runs 1 July to 30 June; other buyers keep other years). ``None`` means every buyer (City-only builds).
+    Owner lookups and the City register citation apply only to City of Cape Town rows.
+    """
     lookups = lookups or {}
     city_meta = city_meta or {}
     groups = [row_group(r) for r in rows]
@@ -262,12 +269,15 @@ def build_rows(rows: Sequence[Mapping], *, lookups: Mapping[str, Mapping] | None
     year_counts: Counter = Counter()
 
     # I1 (CHG-TW-004 §13.4): repeat awards per supplier per financial year, unmasked rows only.
-    fy_awards: dict[tuple[str, str], list[Mapping]] = defaultdict(list)
+    def i1_applies(r: Mapping) -> bool:
+        return municipal_buyers is None or (r.get("buyer_name") or "") in municipal_buyers
+
+    fy_awards: dict[tuple[str, str, str], list[Mapping]] = defaultdict(list)
     for r, g in zip(rows, groups):
-        if g == "unmasked":
+        if g == "unmasked" and i1_applies(r):
             fy = financial_year(r.get("award_date"))
             if fy:
-                fy_awards[(r.get("name_key") or "", fy)].append(r)
+                fy_awards[(r.get("buyer_name") or "", r.get("name_key") or "", fy)].append(r)
 
     etenders_src = {
         "label": "eTenders OCDS (publication 143)",
@@ -275,7 +285,8 @@ def build_rows(rows: Sequence[Mapping], *, lookups: Mapping[str, Mapping] | None
         "retrieved": etenders_retrieved,
     }
     for r, g in zip(rows, groups):
-        lk = lookups.get(r.get("name_key") or "") if g in ("unmasked", "held") else None
+        is_city = (r.get("buyer_name") or "") == CITY_BUYER
+        lk = lookups.get(r.get("name_key") or "") if g in ("unmasked", "held") and is_city else None
         cell = year_cell(r, g, lk)
         if g == "withheld":
             year_counts["Row withheld (no cell)"] += 1
@@ -305,8 +316,8 @@ def build_rows(rows: Sequence[Mapping], *, lookups: Mapping[str, Mapping] | None
                 "indicator": None,
                 "indicator_highlight": False,
             })
-            fy = financial_year(r.get("award_date"))
-            peers = fy_awards.get((r.get("name_key") or "", fy), []) if fy else []
+            fy = financial_year(r.get("award_date")) if i1_applies(r) else None
+            peers = fy_awards.get((r.get("buyer_name") or "", r.get("name_key") or "", fy), []) if fy else []
             if len(peers) >= 2:
                 vals = [usable_value(p)[0] for p in peers]
                 total = sum(v for v in vals if v is not None)
@@ -339,7 +350,7 @@ def build_rows(rows: Sequence[Mapping], *, lookups: Mapping[str, Mapping] | None
                     {"label": "eTenders OCDS dataset (register-level citation)", "url": ETENDERS_DATASET_URL,
                      "retrieved": etenders_retrieved},
                 ] + ([{"label": "City of Cape Town tenders awarded registers (register-level citation)",
-                       "url": CITY_INDEX_URL, "retrieved": None}] if g == "held" else []),
+                       "url": CITY_INDEX_URL, "retrieved": None}] if g == "held" and is_city else []),
                 "indicator": None,
                 "indicator_highlight": False,
                 "popia_note": "Masked row (POPIA): the name is shown as its first and last character only.",
@@ -366,8 +377,14 @@ def build_rows(rows: Sequence[Mapping], *, lookups: Mapping[str, Mapping] | None
         raise UnsafeBuild("year-cell counts do not add up to the row count")
     _check_rules(shown)
     shown.sort(key=lambda d: (d["award_date"], d["ocds_id"], d["supplier"]), reverse=True)
+    buyers = sorted({(r.get("buyer_name") or "") for r in rows})
     return {"rows": shown, "group_counts": {g: counts.get(g, 0) for g in GROUPS}, "total": total,
-            "year_counts": dict(year_counts)}
+            "year_counts": dict(year_counts), "buyers": buyers}
+
+
+def _national(model: Mapping) -> bool:
+    """True when the build holds any buyer other than the City (CHG-TW-011); City-only pages are unchanged."""
+    return any(b != CITY_BUYER for b in model.get("buyers") or [CITY_BUYER])
 
 
 _DIGIT = re.compile(r"[0-9]")
@@ -463,6 +480,16 @@ def _label(text: str | None) -> str:
     return f' <span class="note">({E(text)})</span>' if text else ""
 
 
+def _coverage(model: Mapping, etenders_retrieved: str) -> str:
+    if not _national(model):
+        return (f"This draft covers one buyer, the City of Cape Town, from National Treasury's eTenders data "
+                f"(retrieved {E(etenders_retrieved)}), cross-referenced with the City's published award registers.")
+    n = len(model.get("buyers") or [])
+    return (f"This draft covers {n} buyers from National Treasury's eTenders data (retrieved {E(etenders_retrieved)}). "
+            "City of Cape Town rows are cross-referenced with the City's published award registers; rows from the "
+            "other buyers come from eTenders alone, and no second source has been checked for them yet.")
+
+
 def render_index(model: Mapping, *, etenders_retrieved: str) -> str:
     gc = model["group_counts"]
     yc = model["year_counts"]
@@ -500,7 +527,7 @@ def render_index(model: Mapping, *, etenders_retrieved: str) -> str:
     )
     body = f"""
 <h1>Register of tender awards (DRAFT)</h1>
-<p>A neutral, sourced register of South African government tender awards and how established each winning supplier is. This draft covers one buyer, the City of Cape Town, from National Treasury's eTenders data (retrieved {E(etenders_retrieved)}), cross-referenced with the City's published award registers. Facts are shown as found, each with its source and a fact label: <strong>Confirmed</strong>; <strong>Reported, Unconfirmed</strong>; or <strong>Unknown</strong>. See <a href="/method/">Sources and method</a>.</p>
+<p>A neutral, sourced register of South African government tender awards and how established each winning supplier is. {_coverage(model, etenders_retrieved)} Facts are shown as found, each with its source and a fact label: <strong>Confirmed</strong>; <strong>Reported, Unconfirmed</strong>; or <strong>Unknown</strong>. See <a href="/method/">Sources and method</a>.</p>
 <h2>Every row accounted for</h2>
 <div class="wrap"><table>
 <caption class="note">{total} award rows in the source extract</caption>
@@ -556,8 +583,20 @@ def render_method(model: Mapping, *, etenders_retrieved: str) -> str:
 <li><strong>I1, repeat awards to one supplier</strong>: the number of awards and the total usable value to the same supplier from one buyer in one municipal financial year (1 July to 30 June). Shown for 2 or more awards; highlighted at 3 or more. Shown only on rows where the supplier is named.</li>
 <li>Indicators I2 to I7 are defined but not yet shown: each needs a source this draft does not hold.</li>
 </ul>
-""".strip()
+{_national_method(model)}""".strip()
     return page("Sources and method", body)
+
+
+def _national_method(model: Mapping) -> str:
+    if not _national(model):
+        return ""
+    return ("<h2>Buyers beyond the City of Cape Town</h2>\n<ul>\n"
+            "<li>Rows from buyers other than the City of Cape Town come from the eTenders data alone. eTenders carries "
+            "no company registration numbers, so their registration year is <code>Year: Unknown</code> until a second "
+            "free public source gives a detail that matches.</li>\n"
+            "<li>Indicator I1 is counted per buyer, and only for municipal buyers, whose financial year runs from "
+            "1 July to 30 June.</li>\n"
+            "<li>Names are masked by the same rules, including a firm whose name reads as a person's name.</li>\n</ul>")
 
 
 def render_privacy() -> str:
@@ -632,9 +671,10 @@ def sha256_bytes(b: bytes) -> str:
 
 def build_site(rows: Sequence[Mapping], out_dir: Path, *, lookups: Mapping[str, Mapping] | None = None,
                city_meta: Mapping[str, Mapping] | None = None, etenders_retrieved: str = "",
-               input_sha256: str = "") -> dict:
+               input_sha256: str = "", municipal_buyers: set[str] | None = None) -> dict:
     """Write the managed site files into out_dir and return the manifest. Deterministic."""
-    model = build_rows(rows, lookups=lookups, city_meta=city_meta, etenders_retrieved=etenders_retrieved)
+    model = build_rows(rows, lookups=lookups, city_meta=city_meta, etenders_retrieved=etenders_retrieved,
+                       municipal_buyers=municipal_buyers)
     files = {
         "index.html": render_index(model, etenders_retrieved=etenders_retrieved),
         "method/index.html": render_method(model, etenders_retrieved=etenders_retrieved),

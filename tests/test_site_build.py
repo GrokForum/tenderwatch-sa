@@ -270,12 +270,15 @@ def test_dev_export_counts_and_scans(tmp_path: Path):
         pytest.skip("skipped: the DEV export is git-ignored; run scripts/run_chg_tw_002_classify.py first")
     res = site_build.run_build(tmp_path)
     assert res["rows_total"] == 291
-    assert res["group_counts"] == {"unmasked": 58, "held": 8, "personal": 27, "pending": 192, "withheld": 6}
+    # CHG-TW-010: the one-person-name detector holds 2 more Confirmed rows (58 -> 56 named, 8 -> 10 held) and
+    # finds the 3 owner holds by itself (counted under already_held with the 5 classifier holds).
+    assert res["group_counts"] == {"unmasked": 56, "held": 10, "personal": 27, "pending": 192, "withheld": 6}
+    assert res["auto_holds"] == {"personal_stem": 2, "already_held": 8, "review_single_word": 7}
     if res["lookups_loaded"] == 0:
         assert res["year_counts"] == {"Year: Unknown": 258, "Year: not shown (masked row)": 27,
                                       "Row withheld (no cell)": 6}
     assert res["holds_applied"] == 3
-    assert res["names_scanned"]["withheld"] == 203 and res["names_scanned"]["all"] == 718
+    assert res["names_scanned"]["withheld"] == 207 and res["names_scanned"]["all"] == 718
     assert res["scans_clean"], res["scan_findings"]
 
 

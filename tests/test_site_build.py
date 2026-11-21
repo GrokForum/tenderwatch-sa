@@ -433,3 +433,32 @@ def test_holds_file_is_git_ignored_and_never_committed():
     assert subprocess.run(["git", "check-ignore", "-q", rel], cwd=root).returncode == 0
     tracked = subprocess.run(["git", "ls-files"], cwd=root, capture_output=True, text=True).stdout.split()
     assert not any(t.endswith("popia_holds.json") for t in tracked)
+
+
+# Critic and Reviewer A (CHG-TW-014): every fail-closed path of the generic-words loader is tested.
+from tw import site_build  # noqa: E402
+
+
+@pytest.mark.parametrize(
+    "content",
+    ["", "\n\n", "# only a comment\n", "   \n# another comment\n  \n"],
+)
+def test_empty_generic_words_file_stops_the_build(tmp_path: Path, content: str):
+    p = tmp_path / "generic_words.txt"
+    p.write_text(content, encoding="utf-8")
+    with pytest.raises(site.UnsafeBuild, match="empty"):
+        site_build.load_generic_words(p)
+
+
+@pytest.mark.parametrize("bad", ["trans-port", "electrical1", "two words", "co.", "*"])
+def test_non_alpha_generic_word_stops_the_build(tmp_path: Path, bad: str):
+    p = tmp_path / "generic_words.txt"
+    p.write_text(f"transport\n{bad}\n", encoding="utf-8")
+    with pytest.raises(site.UnsafeBuild, match="letters only"):
+        site_build.load_generic_words(p)
+
+
+def test_generic_words_file_loads_letters_lowercased(tmp_path: Path):
+    p = tmp_path / "generic_words.txt"
+    p.write_text("# comment\nTransport\n  electrical  \n\n", encoding="utf-8")
+    assert site_build.load_generic_words(p) == frozenset({"transport", "electrical"})

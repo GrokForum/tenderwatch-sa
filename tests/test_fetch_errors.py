@@ -276,3 +276,38 @@ def test_scrub_text_redacts_non_http_scheme_urls(raw, url, kept, gone) -> None:
     else:
         assert url_got == "<path>"
 
+
+
+# Reviewer A (CHG-TW-009): any leading RFC 3986 scheme in error text is redacted, not only file: or "://".
+import pytest as _pytest_schemes  # noqa: E402
+
+from tw.fetch_log import scrub_text as _scrub_text_schemes  # noqa: E402
+
+
+@_pytest_schemes.mark.parametrize(
+    "raw",
+    [
+        "data:text/plain,secret",
+        "javascript:alert(secret)",
+        "vbscript:msgbox(secret)",
+        "mailto:secret@example.invalid",
+        "about:secret",
+        "jar:data:text/plain,secret",
+    ],
+)
+def test_scrub_text_redacts_any_non_http_scheme(raw):
+    out = _scrub_text_schemes(f"fetch failed for {raw} (bad link)")
+    assert "secret" not in out
+    assert "<path>" in out
+
+
+def test_scrub_text_keeps_http_and_plain_reasons():
+    out = _scrub_text_schemes(
+        "HTTP Error 404: Not Found at https://u:p@example.org/a/b?q=1 via example.org:443 "
+        "[SSL: CERTIFICATE_VERIFY_FAILED] (_ssl.c:1006)"
+    )
+    assert "https://example.org/a/b" in out
+    assert "u:p" not in out and "q=1" not in out
+    assert "HTTP Error 404: Not Found" in out
+    assert "example.org:443" in out
+    assert "[SSL: CERTIFICATE_VERIFY_FAILED]" in out and "_ssl.c:1006" in out

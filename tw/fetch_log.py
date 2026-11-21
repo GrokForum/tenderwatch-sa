@@ -31,8 +31,13 @@ KINDS = ("tls_certificate", "tls_other", "http_error", "timeout", "dns", "connec
 MAX_DETAIL = 160
 
 _SCHEME_URL_RE = re.compile(
-    r'(?i)(?:[a-z][a-z0-9+.-]*:)*(?:file:/*|[a-z][a-z0-9+.-]*://)[^\s<>"\'\])\}]+'
+    r'(?i)(?<![a-z0-9+.-])(?:[a-z][a-z0-9+.-]*:)*'
+    r'(?:file:/*|[a-z][a-z0-9+.-]*://|[a-z][a-z0-9+.-]*:(?![\d\s/\\]))'
+    r'[^\s<>"\'\])\}]+'
 )
+# Any leading RFC 3986 scheme (data:, javascript:, mailto:, vbscript:, about:, ...) is matched; only
+# http(s) URLs are kept (host and path). "host:443" (digit after the colon) and "Error: x" (space) are
+# not schemes; Windows drive paths ("C:\\") are left to _WIN_PATH_RE.
 _QUOTED_PATH_RE = re.compile(r"""(['"])(?:~?[\\/]|[A-Za-z]:[\\/])[^'"]+\1""")
 _WIN_PATH_RE = re.compile(r"""(?<![A-Za-z0-9_])[A-Za-z]:[\\/][^\s'"\])}>,;]+""")
 _HOME_PATH_RE = re.compile(r"""(?<![A-Za-z0-9_.:/-])~[\\/][^\s'"\])}>,;]+""")

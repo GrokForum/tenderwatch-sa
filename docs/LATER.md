@@ -10,7 +10,7 @@ Started 2026-11-19.
 - A combined site that aggregates all four watch registers (Build project, private repo; owned by the owner, not TenderWatch).
 - Per-department and per-municipality views (award counts, share going to companies under 2 years old).
 - Supplier age-band chart over time (by award month).
-- Downloadable CSV of the published (masked) register, with a data dictionary.
+- Data dictionary for the published (masked) register CSV (`/register.csv` already ships).
 - RSS or Atom feed of new awards added each night.
 - Search by tender reference and by CSD number.
 

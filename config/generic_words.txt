@@ -1,0 +1,27 @@
+# Legal-form and trade words too common to count as a name in a hold-basis
+# check, unless the word also occurs in the held supplier's own name
+# (CHG-TW-014). One word per line; letters only. The build fails closed
+# if this file is missing or empty.
+and
+associates
+association
+company
+construction
+consulting
+corporation
+electrical
+engineering
+enterprises
+group
+holdings
+incorporated
+joint
+limited
+projects
+proprietary
+services
+solutions
+supplies
+trading
+transport
+venture

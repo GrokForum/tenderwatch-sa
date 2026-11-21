@@ -182,7 +182,7 @@ def test_every_page_has_draft_noindex_privacy_csp(tmp_path: Path):
     assert (tmp_path / "robots.txt").read_text() == "User-agent: *\nDisallow: /\n"
     priv = (tmp_path / "privacy" / "index.html").read_text(encoding="utf-8")
     assert "mailto:privacy@grokforum.site" in priv and "GrokForum" in priv
-    assert "its buyer and usable value" in priv  # masked rows have no tender reference
+    assert "its buyer and the award value shown on the row" in priv  # masked rows have no tender reference
     assert "https://inforegulator.org.za/" in priv
 
 
@@ -395,7 +395,27 @@ def test_hold_basis_with_a_word_of_the_held_name_stops_the_build(tmp_path: Path,
 def test_generic_trade_words_in_a_basis_are_allowed(tmp_path: Path, one_hold_minimum):
     sb = one_hold_minimum
     rows = fixture_rows()
-    assert sb.apply_holds(rows, sb.load_holds(_holds_file(tmp_path, [_h(5, "Owner decision: joint venture, masked")]))) == 1
+    # Row 4's invented name has none of these trade words, so they may appear in the basis.
+    assert sb.apply_holds(rows, sb.load_holds(_holds_file(tmp_path, [_h(4, "Owner decision: joint venture, masked")]))) == 1
+
+
+@pytest.mark.parametrize("name,key,basis", [
+    ("Northriver Transport (Pty) Ltd", "northriver-transport", "Owner decision: transport company, masked"),
+    ("Northriver Electrical (Pty) Ltd", "northriver-electrical", "Owner decision: electrical contractor, masked"),
+    ("Northriver Associates CC", "northriver-associates", "Owner decision: associates, masked"),
+])
+def test_generic_word_in_the_held_suppliers_own_name_is_not_exempted(tmp_path: Path, one_hold_minimum, name, key, basis):
+    sb = one_hold_minimum
+    rows = fixture_rows() + [_row(10, name, sub="company", link="tender_ref", label="Confirmed", key=key)]
+    with pytest.raises(site.UnsafeBuild, match="word of the held"):
+        sb.apply_holds(rows, sb.load_holds(_holds_file(tmp_path, [_h(10, basis, name_key=key)])))
+
+
+def test_missing_generic_words_file_stops_the_build(tmp_path: Path, one_hold_minimum, monkeypatch):
+    sb = one_hold_minimum
+    monkeypatch.setattr(sb, "GENERIC_WORDS_PATH", tmp_path / "absent.txt")
+    with pytest.raises(site.UnsafeBuild, match="generic words file missing"):
+        sb.apply_holds(fixture_rows(), sb.load_holds(_holds_file(tmp_path, [_h(4)])))
 
 
 def test_holds_file_is_git_ignored_and_never_committed():
@@ -405,6 +425,9 @@ def test_holds_file_is_git_ignored_and_never_committed():
     inside = subprocess.run(["git", "rev-parse", "--is-inside-work-tree"], cwd=root, capture_output=True, text=True)
     if inside.returncode != 0 or inside.stdout.strip() != "true":
         pytest.skip("skipped: not inside a git work tree (for example an unpacked source archive)")
+    top = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=root, capture_output=True, text=True)
+    if top.returncode != 0 or Path(top.stdout.strip()).resolve() != root.resolve():
+        pytest.skip("skipped: git toplevel is not this repository root (for example a parent repo)")
     rel = site_build.HOLDS.relative_to(root).as_posix()
     assert rel == "data/local/popia_holds.json"
     assert subprocess.run(["git", "check-ignore", "-q", rel], cwd=root).returncode == 0

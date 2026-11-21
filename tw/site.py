@@ -620,7 +620,7 @@ def render_privacy() -> str:
 <p>The site uses no cookies, no analytics, no trackers and no scripts. It has no forms and no accounts.</p></section>
 <section id="corrections"><h2>5. Corrections, removal and right of reply</h2>
 <p>To ask for a correction or a removal, or to reply about a record, send an e-mail to {m}.</p>
-<p>Identify the record by its award date and its tender reference or, where no reference is shown (masked rows), its buyer and usable value. Do not send ID numbers, phone numbers or addresses.</p></section>
+<p>Identify the record by its award date and its tender reference. Where no tender reference is shown (masked rows), identify it by its buyer and the award value shown on the row. Do not send ID numbers, phone numbers or addresses.</p></section>
 <section id="retention"><h2>6. How long data stays</h2>
 <p>Each build replaces the published files. Earlier versions stay in the site's version history.</p></section>
 <section id="responsible"><h2>7. Who is responsible</h2>

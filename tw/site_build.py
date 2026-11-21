@@ -24,9 +24,33 @@ HOLDS = ROOT / "data" / "local" / "popia_holds.json"  # git-ignored; never commi
 REVIEW_CANDIDATES = ROOT / "data" / "local" / "popia_review_candidates.csv"  # git-ignored (CHG-TW-010)
 HOLD_KEYS = {"ocid", "award_id", "basis", "name_key"}
 # Words too common to count as a name in the basis check (legal forms and trade words).
-GENERIC_WORDS = {"and", "associates", "association", "company", "corporation", "electrical", "engineering",
-                 "enterprises", "group", "holdings", "incorporated", "joint", "limited", "venture", "projects", "proprietary",
-                 "services", "solutions", "supplies", "trading", "transport", "construction", "consulting"}
+# Tracked config, fail closed if missing (CHG-TW-014). A word from this list is not
+# exempted when it also occurs in the held supplier's own name.
+GENERIC_WORDS_PATH = ROOT / "config" / "generic_words.txt"
+
+
+def load_generic_words(path: Path | None = None) -> frozenset[str]:
+    """Load the tracked generic-words list. A missing, unreadable or empty file stops the build."""
+    path = GENERIC_WORDS_PATH if path is None else path
+    if not path.is_file():
+        raise UnsafeBuild("generic words file missing: config/generic_words.txt; not building")
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except OSError as e:
+        raise UnsafeBuild(f"generic words file unreadable: {e.__class__.__name__}") from None
+    words: set[str] = set()
+    for line in raw.splitlines():
+        s = line.strip().lower()
+        if not s or s.startswith("#"):
+            continue
+        if not s.isalpha():
+            raise UnsafeBuild("generic words file: a word must be letters only")
+        words.add(s)
+    if not words:
+        raise UnsafeBuild("generic words file is empty; not building")
+    return frozenset(words)
+
+
 MIN_HOLDS = 3  # holds decided so far (owner, 19 Nov 2026); a shorter local file stops the build
 EXPECTED_ROWS = 291
 
@@ -95,10 +119,14 @@ def _names_of(row: dict) -> set[str]:
 
 
 def _name_words(row: dict) -> set[str]:
-    """Words of four or more letters in a row's names (for example a surname), less generic trade words."""
+    """Words of four or more letters in a row's names (for example a surname).
+
+    Generic trade words that occur in this row's names stay in the set: they are not
+    exempted for that supplier (CHG-TW-014).
+    """
     words: set[str] = set()
     for n in _names_of(row):
-        words.update(w for w in re.findall(r"[^\W\d_]{4,}", n) if w not in GENERIC_WORDS)
+        words.update(re.findall(r"[^\W\d_]{4,}", n))
     return words
 
 
@@ -110,6 +138,7 @@ def apply_holds(rows: list[dict], holds: list[dict]) -> int:
     match the hold's (second detail), or when a basis carries any supplier name from the input or any
     four-letter-plus word of the held supplier's own name (for example a surname).
     """
+    generic = load_generic_words()
     index: dict[tuple[str, str], list[dict]] = {}
     every_name: set[str] = set()
     for r in rows:
@@ -131,7 +160,11 @@ def apply_holds(rows: list[dict], holds: list[dict]) -> int:
             if (r.get("name_key") or "").strip().lower() != h["name_key"].lower():
                 raise UnsafeBuild("a hold's record id and name key do not agree")
             basis_words = set(re.findall(r"[^\W\d_]{4,}", basis))
-            if basis_words & _name_words(r):
+            held_words = _name_words(r)
+            # A generic trade word may appear in a basis only when it is not also a
+            # word of this held supplier's name (generic - held_words).
+            exempt = generic - held_words
+            if (basis_words - exempt) & held_words:
                 raise UnsafeBuild("a hold basis contains a word of the held supplier's name")
             r["popia_hold"] = True
             n += 1

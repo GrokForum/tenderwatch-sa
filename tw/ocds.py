@@ -104,12 +104,16 @@ def award_rows_from_release(
     sha256: str,
     retrieved_at: str,
     source_url: str = OCDS_SOURCE_URL,
+    buyer_filter=None,
 ) -> list[dict]:
-    """One compiled release → award-supplier rows, contacts already dropped."""
+    """One compiled release → award-supplier rows, contacts already dropped.
+
+    ``buyer_filter`` (CHG-TW-011) picks the buyers; the default is the City of Cape Town only.
+    """
     rel = strip_forbidden(rel)
     buyer = rel.get("buyer") or {}
     buyer_name = (buyer.get("name") or "").strip() or None
-    if not is_cape_town_buyer(buyer_name):
+    if not (buyer_filter or is_cape_town_buyer)(buyer_name):
         return []
     tender = rel.get("tender") or {}
     signed = {}
@@ -222,3 +226,29 @@ def iter_cape_town_awards(
                 retrieved_at=retrieved_at,
             ):
                 yield row
+
+
+def iter_awards(
+    path: Path,
+    *,
+    retrieved_at: str,
+    buyer_filter,
+    expected_sha256: str = EXPECTED_OCDS_SHA256,
+) -> Iterator[dict]:
+    """CHG-TW-011: award-supplier rows for any set of buyers from the pinned file (same row shape as above)."""
+    digest = sha256_file(path)
+    if digest != expected_sha256:
+        raise ValueError(f"etenders_ocds sha256 mismatch: got {digest}, expected {expected_sha256}")
+    with gzip.open(path, "rt", encoding="utf-8") as fh:
+        for i, line in enumerate(fh, start=1):
+            if not line.strip():
+                continue
+            rel = json.loads(line)
+            yield from award_rows_from_release(
+                rel,
+                locator=f"{path.name}:line {i}",
+                source_file=path.name,
+                sha256=digest,
+                retrieved_at=retrieved_at,
+                buyer_filter=buyer_filter,
+            )

@@ -1,0 +1,22 @@
+{
+  "rfc": "CHG-TW-011",
+  "env": "DEV",
+  "source": {
+    "publication_page": "https://data.open-contracting.org/en/publication/143",
+    "licence": "Open Data Commons Public Domain Dedication and Licence (PDDL); National Treasury publication policy https://data.etenders.gov.za/Home/LearnMore (keep a link to the original source)",
+    "robots": "https://data.open-contracting.org/robots.txt allows all paths (checked 20 Nov 2026)",
+    "note": "the pinned file in config/chg-tw-001-dev.json is the publication's current file (same size and Last-Modified 20 Sep 2026); no new download"
+  },
+  "stages": {
+    "stage1": ["Ethekwini Metropolitan Municipality", "Mangaung Metropolitan Municipality"],
+    "all": "*"
+  },
+  "default_stage": "stage1",
+  "row_bounds": {
+    "stage1": [100, 200],
+    "all": [9000, 9400]
+  },
+  "municipal_buyer_pattern": "(?i)(\\bmunicipality\\b|\\bmetropolitan\\b|^city of )",
+  "excluded_buyers": ["City of Cape Town"],
+  "excluded_note": "City of Cape Town rows come from the CHG-TW-002 DEV export, which carries the City register as a second source"
+}

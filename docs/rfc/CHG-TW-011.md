@@ -57,12 +57,28 @@ Add buyers beyond the City of Cape Town from the pinned eTenders OCDS file, unde
 | Source | Format | Status from this box, 20 Nov 2026 | Plan |
 |---|---|---|---|
 | eThekwini awarded tenders | monthly PDFs | `www.durban.gov.za` fails TLS certificate verification (CHG-TW-009 probe: "unable to get local issuer certificate") | Blocked: TLS is never switched off. Retry when the chain verifies, or the owner decides on a pinned intermediate certificate. Then a PDF parser like the City's, second source for the 80 eTenders rows. |
-| Mangaung awarded bids | monthly PDFs (`File/download.aspx`) | TLS ok; `robots.txt` returns HTTP 404 (no robots file) | Terms of use not yet read; PDF parser is a medium job. Second source for the 58 eTenders rows. |
+| Mangaung awarded bids | monthly PDFs (`File/download.aspx`) on `www.mangaung.co.za` | TLS ok; `robots.txt` still HTTP 404 (rechecked 20 Nov 2026, 20:50 SAST). Terms read 20 Nov 2026, 20:51 SAST (see below). | **Not allowed.** The site's copyright statement forbids redistribution and reproduction except personal, non-commercial local copies (and copies to individual third parties for their personal use, with acknowledgement). No collector was built; CHG-TW-014 was not opened. |
 | Ekurhuleni bids awarded | HTML tables | TLS certificate verification fails | Blocked as eThekwini. Easiest parser once readable. |
 | Tshwane awarded tenders | XLSX and DOCX | TLS certificate verification fails; bare requests get HTTP 403 | Blocked as eThekwini; a browser-like user agent is not used to get past a 403. |
 | Buffalo City awarded tenders | PDFs | not probed in this change | Later; 0 eTenders awards, so single-source rows (Reported, Unconfirmed). |
 
 None of these was quick and allowed, so none is implemented here.
+
+### 7.1 Mangaung terms (read 20 Nov 2026, 20:51 SAST; records only)
+
+Read-only fetch of https://www.mangaung.co.za/Privacy/ (HTTP 200). The page is titled "Privacy Policy, Disclaimer and Cookies" and states that the site's terms of use consist of the disclaimer, privacy policy and copyright statement on that page. No separate `/Terms`, `/Disclaimer` or `/Copyright` URL exists (each returned HTTP 404). `https://www.mangaung.co.za/robots.txt` returned HTTP 404 (no robots file). Award-list pages and PDFs were not fetched. No form was submitted and no login was used.
+
+The copyright statement includes:
+
+> This website and its content is copyright of Mangaung Metropolitan Municipality All rights are reserved. Any redistribution or reproduction of part or all of the contents in any form is prohibited, other than the following:
+> You may print or download to a local hard disk extracts for your personal and non-commercial use only You may copy the content to individual third parties for their personal use, but only if you acknowledge our website as the source of the material.
+> You may not, except with our express written permission, distribute or commercially exploit the content. Should such permission be granted, then each such reference must acknowledge that the information resides at and is the property of the Mangaung Metropolitan Municipality.
+> The information created by Mangaung Metropolitan Municipality on this site is the property of the Municipality. Unless otherwise specified, permission to include URL references to this information for non-commercial purposes is granted, provided that each such reference acknowledges that the information resides at and is the property of Mangaung Metropolitan Municipality.
+
+(The page also names a contact for written-permission enquiries; that address is not repeated here.)
+
+A public register that reproduces award-list content is redistribution, which those clauses prohibit without express written permission. Linking to the municipality's pages remains allowed under the URL-reference sentence. Verdict: do not build a Mangaung collector.
+
 
 ## 8. Rollback
 
@@ -73,5 +89,6 @@ Revert the merge of this change on `main` (`git revert -m 1 <merge>`). The publi
 * Q-011-1: Publish stage 1 (429 rows, 3 buyers) on the next site change? It adds 138 rows, none named (eTenders prints these buyers' names without suffixes). Needs the owner's GO naming a head and a site change of its own.
 * Q-011-2: A tender title that contains a loaded word (for example the name of an offence in a tender for a related service): show as published by the source, or blank it?
 * Q-011-3: eThekwini, Ekurhuleni and Tshwane fail certificate verification from this box. Wait for the sites, or allow a pinned intermediate certificate per host (never switching verification off)?
+* Q-011-4: Mangaung's published terms (fetched 20 Nov 2026, 20:51 SAST) do not allow reuse of the award lists on a public register. Leave them unused, or request the municipality's express written permission if a second source for the 58 eTenders rows is still wanted?
 
-Result: SUCCEEDED for stage 1 in DEV and TEST (awaiting review); stage "all" NOT CLEAN, kept off.
+Result: SUCCEEDED for stage 1 in DEV and TEST (awaiting review); stage "all" NOT CLEAN, kept off. Mangaung municipal lists: terms forbid reuse; no collector (20 Nov 2026, 20:51 SAST).

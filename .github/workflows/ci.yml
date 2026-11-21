@@ -1,0 +1,36 @@
+# CHG-TW-012: tests plus the data-quality gate on committed synthetic fixtures.
+# Never publishes, never pushes, needs no secrets: the real build (real data, holds file) stays on the box.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "30 1 * * *"  # 03:30 SAST nightly
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install test runner
+        run: python -m pip install --disable-pip-version-check --no-cache-dir --require-hashes -r .github/requirements-ci.txt
+      - name: Tests
+        run: python -m pytest -q -p no:cacheprovider
+      - name: Data-quality gate (synthetic fixtures)
+        run: python scripts/dq_gate.py --fixtures --out "$RUNNER_TEMP/dq-build"

@@ -1,0 +1,23 @@
+{
+  "note": "SYNTHETIC test data for CI (CHG-TW-012); invented records only, never the real holds file",
+  "holds": [
+    {
+      "ocid": "ocds-synth-7",
+      "award_id": "7",
+      "basis": "Synthetic hold for the CI gate.",
+      "name_key": "testcorp logistics (pty) ltd"
+    },
+    {
+      "ocid": "ocds-synth-8",
+      "award_id": "8",
+      "basis": "Synthetic hold for the CI gate.",
+      "name_key": "ondru security (pty) ltd"
+    },
+    {
+      "ocid": "ocds-synth-9",
+      "award_id": "9",
+      "basis": "Synthetic hold for the CI gate.",
+      "name_key": "kwopa plant hire cc"
+    }
+  ]
+}

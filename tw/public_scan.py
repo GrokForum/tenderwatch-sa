@@ -14,7 +14,9 @@ ROLE_EMAIL = "privacy@grokforum.site"
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 # SA phone numbers: +27 or 0, then 9 digits, optional spaces or hyphens between groups.
 SA_PHONE_RE = re.compile(r"(?<![0-9])(?:\+27|0027|0)[\s-]?[1-9][0-9][\s-]?[0-9]{3}[\s-]?[0-9]{4}(?![0-9])")
-SA_ID_RE = re.compile(r"(?<![0-9])[0-9]{13}(?![0-9])")
+# SA ID shape: 13 digits not preceded or followed by a hex character, so a
+# 13-digit run inside a sha256 (or other hex token) in manifest.json is not an ID.
+SA_ID_RE = re.compile(r"(?<![0-9a-fA-F])[0-9]{13}(?![0-9a-fA-F])")
 # Street-address shapes: a house number then a street word.
 ADDRESS_RE = re.compile(
     r"(?i)\b[0-9]{1,5}[A-Za-z]?\s+(?:[A-Z][a-z]+\s+){1,3}"

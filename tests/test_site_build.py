@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from tw import site
-from tw.public_scan import run_all, scan_names, scan_paths_and_bot_names, scan_pii, scan_wording, public_files
+from tw.public_scan import SA_ID_RE, run_all, scan_names, scan_paths_and_bot_names, scan_pii, scan_wording, public_files
 
 
 def _row(i, name, *, status="confirmed_juristic", hold=False, reason=None, sub="company",
@@ -246,6 +246,45 @@ def test_scans_catch_planted_problems(tmp_path: Path):
     assert any("loaded word" in f for f in w) and any("bare 'Reported'" in f for f in w)
     assert scan_names(files, tmp_path, {"Mismatchia Trading"}) != []
     assert "Mismatchia" not in " ".join(scan_names(files, tmp_path, {"Mismatchia Trading"}))  # never echo the name
+
+
+def _fake_id_digits() -> str:
+    # Sequential, clearly fake; built at run time so the tree has no 13-digit literal.
+    return "".join(["12", "34", "56", "78", "90", "12", "3"])
+
+
+def test_sa_id_scan_ignores_thirteen_digit_run_inside_hex_token(tmp_path: Path):
+    digits = _fake_id_digits()
+    assert len(digits) == 13
+    # 64-char sha256-like tokens with the run in the middle, at the start, and at the end.
+    mid = ("a" * 20) + digits + ("b" * 31)
+    start = digits + ("c" * 51)
+    end = ("d" * 51) + digits
+    upper = ("A" * 20) + digits + ("F" * 31)
+    assert all(len(t) == 64 for t in (mid, start, end, upper))
+    for token in (mid, start, end, upper):
+        assert SA_ID_RE.search(token) is None, token[:16]
+    (tmp_path / "manifest.json").write_text(
+        json.dumps({"status": "DRAFT", "content_sha256": mid, "files": {"index.html": upper}}),
+        encoding="utf-8",
+    )
+    assert scan_pii([tmp_path / "manifest.json"], tmp_path) == []
+
+
+def test_sa_id_scan_still_flags_standalone_thirteen_digit_numbers(tmp_path: Path):
+    digits = _fake_id_digits()
+    cases = {
+        "prose.txt": f"The number is {digits} in this sentence.",
+        "id_label.txt": f"ID:{digits}",
+        "row.csv": f"name,id,note\nAcme,{digits},ok\n",
+        "row.json": json.dumps({"id": digits, "note": "synthetic"}),
+    }
+    for name, text in cases.items():
+        p = tmp_path / name
+        p.write_text(text, encoding="utf-8")
+        findings = scan_pii([p], tmp_path)
+        assert any("13-digit" in f for f in findings), (name, findings)
+        assert SA_ID_RE.search(text)
 
 
 def test_role_address_and_grokforum_are_allowed(tmp_path: Path):

@@ -10,7 +10,7 @@
 | Author | the author bot |
 | Reviewers | Reviewer A and the critic |
 | Basis | Project lead's direction of 20 Nov 2026, 20:21 SAST (owner direction relayed): "add an Actions nightly with tests and a data-quality gate". |
-| Status | DEV and TEST done on the box; the workflow runs on the draft PR. Merges only on the owner's GO naming the head. |
+| Status | DEV and TEST done on the box. Squash-merged to `main` as [PR #18](https://github.com/GrokForum/tenderwatch-sa/pull/18) at `30e6b899b92411f2c7f2a8b1bced03da7db07627`. The workflow runs on `main`. |
 
 ## 1. Goal
 

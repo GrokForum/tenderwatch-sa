@@ -10,7 +10,7 @@
 | Author | the author bot |
 | Reviewers | Reviewer A and the critic |
 | Basis | Project lead's direction of 20 Nov 2026, 20:21 SAST (owner direction relayed): go beyond the City of Cape Town using the source pack of 20 Nov 2026; stage eThekwini and Mangaung first, then all buyers if clean. |
-| Status | Stage 1 DEV and TEST done and clean; stage "all" built in DEV and **not clean** (§6), so it stays off. Draft PR for review. Merges only on the owner's GO naming the head. |
+| Status | Stage 1 DEV and TEST done and clean; stage "all" built in DEV and **not clean** (§6), so it stays off. Squash-merged to `main` as [PR #17](https://github.com/GrokForum/tenderwatch-sa/pull/17) at `cb9338ee49365cce34d15362fa9c06fa63ab50d3` and the Mangaung terms record as [PR #19](https://github.com/GrokForum/tenderwatch-sa/pull/19) at `91f8dfbc12d24b90a9d1499c1cd4c257c0a056b3`. |
 
 ## 1. Goal
 

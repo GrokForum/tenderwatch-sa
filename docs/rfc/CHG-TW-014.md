@@ -10,7 +10,7 @@
 | Author | the author bot |
 | Reviewers | Reviewer A and the critic |
 | Basis | Project lead's direction of 21 Nov 2026 (owner work resumed): continue the next DEV milestone on a new branch from `main` after CHG-TW-010, CHG-TW-011 and the Mangaung-terms record landed. Items from the local BAU queue (critic and Reviewer A nits). |
-| Status | DEV and TEST done; draft PR for review. Merges only on the owner's GO naming the head. |
+| Status | Squash-merged to `main` as [PR #21](https://github.com/GrokForum/tenderwatch-sa/pull/21) at `8f16c93ff37b7a11bf0226daaa4d772477fa9a37`. |
 
 ## 1. Goal
 

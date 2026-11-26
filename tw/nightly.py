@@ -10,8 +10,8 @@ Steps (each one is recorded):
                  (never force). Otherwise "dry-run": nothing is copied, committed or pushed.
   6. check_live  read-only check of the live site against tonight's build (tw/check_live.py)
   7. record      append one line to results.csv and write YYYY-MM-DD.json, under data/local/nightly/ and on the
-                 log branch (a git worktree at data/local/nightly-log/); the log branch is pushed to the private
-                 origin only if "push_log": true
+                 log branch (a git worktree at data/local/nightly-log/); the log branch is pushed only if
+                 "push_log": true; the push destination is pending a later reviewed decision
 
 A night is PASS only if every step passed and the live site serves tonight's build. Only a scheduled run on
 main counts for the streak; a manual run is recorded with trigger "manual".
@@ -242,7 +242,7 @@ def run_nightly(*, publish_flag: bool = False, manual: bool = False, site_dir: P
     elif not ok:
         rec["publish"] = "refused (an earlier step failed)"
     elif rec.get("branch") != "main":
-        # Any publish, manual runs included, needs the private repository's main.
+        # Any publish, manual runs included, needs this repository (GrokForum/tenderwatch-sa) on main.
         rec["publish"] = "refused (not on main)"
         ok = False
     else:

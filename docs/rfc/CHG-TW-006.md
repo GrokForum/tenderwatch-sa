@@ -10,7 +10,7 @@
 | Author | the author (TenderWatch) |
 | Reviewers | the project lead and the critic |
 | Basis | Phase 0 audit of 19 Nov 2026 (findings B3, H2, M4, L2; TenderWatch rows 2, 3 and 4), relayed by the project lead under the owner's rule that all four test sites must be rock-solid. Publication rules: CHG-TW-004 revisions 7 and 8 (§13.2, §13.3, §13.5, §13.6, §13.7, §13.8), merged to `main`. Privacy page pattern: PublicFunds CHG-2026-067. |
-| Status | Draft for CAB on its own pull request. Not pushed, not merged, not deployed. |
+| Status | Squash-merged to `main` as [PR #10](https://github.com/GrokForum/tenderwatch-sa/pull/10) at `df7c55d2e013a2748f43356c5afad96adc9b62e4` (19 Nov 2026). The site was not deployed under this record; a later owner GO published the site files (see CHG-TW-008). |
 
 ## 1. Goal
 
@@ -18,7 +18,7 @@ Replace the "coming soon" placeholder on the TenderWatch test site with the real
 
 ## 2. What changes (exact files)
 
-**This repository** (`GrokForum/tenderwatch-sa`, private):
+**This repository** (`GrokForum/tenderwatch-sa`, private; historical: the repo has since been made public):
 
 * New `tw/site.py`: groups every row, applies the mask and year-cell rules, renders the pages, `register.csv` and `manifest.json`. Deterministic: no clock in any output, so the same inputs give the same bytes.
 * New `tw/site_build.py`: loads the git-ignored DEV inputs (`data/local/warehouse/awards_classified_chg_tw_002.jsonl`, `data/local/warehouse/city_register.jsonl`, and the optional owner-lookup file `data/local/lookups.csv`, absent today), builds, and runs the scans.

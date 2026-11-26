@@ -10,7 +10,7 @@
 | Author | the author (TenderWatch) |
 | Reviewers | the project lead and the critic |
 | Basis | Owner decision of 19 Nov 2026, relayed by the project lead: the public site can publish only after the three Confirmed firms whose names are personal names are masked the same way as the other masked rows. Owner decision of 19 Nov 2026, 13:31 SAST, on the critic's review point: the holds file is fixed before this change merges. |
-| Status | Site files published on the owner's GO (site `main` at `14270cf5`, 19 Nov 2026). The private-repo change is for CAB and merges only after review of this revision. |
+| Status | Site files published on the owner's GO (site `main` at `14270cf5`, 19 Nov 2026). The data-repo change (private-repo; historical: the repo has since been made public) was squash-merged to `main` as [PR #12](https://github.com/GrokForum/tenderwatch-sa/pull/12) at `4f9dab45214c9621e46c5247b3725e6f4deb0647` (19 Nov 2026). |
 
 ## 1. Goal
 

@@ -10,7 +10,7 @@
 | Author | the author bot |
 | Reviewers | Reviewer A and the critic |
 | Basis | Project lead's direction of 25 Nov 2026 (owner GO relayed): BAU item 7, fix the flaky public SA-ID scan with a non-hex boundary, not by exempting hash fields. |
-| Status | DEV and TEST done; draft PR for review. Merges under the standing BAU GO once both reviewers give a plain PASS on the named head. |
+| Status | Squash-merged to `main` as [PR #23](https://github.com/GrokForum/tenderwatch-sa/pull/23) at `1f234a2455c254d7b3c43c551b758b5a85c86cd3`. |
 
 ## 1. Goal
 

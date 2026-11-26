@@ -10,7 +10,7 @@
 | Author | the author bot |
 | Reviewers | Reviewer A and the critic |
 | Basis | Project lead's direction of 20 Nov 2026, 20:21 SAST (owner direction relayed): "Repos are public by default now: if tenderwatch-sa is clean after a POPIA scan, propose making it public." |
-| Status | Finding recorded. **Verdict: BLOCK** for making this repository public. Visibility is not changed. |
+| Status | Finding recorded. **Verdict: BLOCK** for making this repository public. Visibility is not changed. (historical: the repo has since been made public) |
 
 ## 1. What was scanned
 
@@ -47,7 +47,7 @@ Repository users cannot delete `refs/pull/*`; only GitHub Support can remove the
 
 ## 4. Verdict
 
-**BLOCK** for changing the visibility of `GrokForum/tenderwatch-sa`. Items removed: none (records only). The tree at `main` has no private person's details, but its history and pull-request refs carry held and withheld names (H2–H4) and the owner's identity (H1).
+**BLOCK** for changing the visibility of `GrokForum/tenderwatch-sa` (the scan-time verdict; historical: the repo has since been made public). Items removed: none (records only). The tree at `main` has no private person's details, but its history and pull-request refs carry held and withheld names (H2–H4) and the owner's identity (H1).
 
 ## 5. Recommendation
 

@@ -2,7 +2,7 @@
 
 Reads the local (git-ignored) DEV warehouse written by the CHG-TW-001 pilot,
 classifies every award supplier exactly once, writes a local classified
-warehouse and a local public export, and renders the private-repo DEV report.
+warehouse and a local public export, and renders the DEV report (historical: private-repo; the repo has since been made public).
 No network access. No PublicFunds writes.
 """
 from __future__ import annotations

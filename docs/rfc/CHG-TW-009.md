@@ -10,7 +10,7 @@
 | Author | the author bot |
 | Reviewers | Reviewer A and the critic |
 | Basis | Project lead's direction of 20 Nov 2026, 20:21 SAST (owner direction relayed): "Collectors log certificate errors instead of failing silently." |
-| Status | DEV and TEST done; draft PR for review. Merges only on the owner's GO naming the head. |
+| Status | Squash-merged to `main` as [PR #14](https://github.com/GrokForum/tenderwatch-sa/pull/14) at `1e627d26e590b12115df05482ea0690e713f9452`. |
 
 ## 1. Goal
 

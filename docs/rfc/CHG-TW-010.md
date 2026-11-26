@@ -10,7 +10,7 @@
 | Author | the author bot |
 | Reviewers | Reviewer A and the critic |
 | Basis | Project lead's direction of 20 Nov 2026, 20:21 SAST (owner direction relayed): "Mask one-person business names (POPIA)." Extends CHG-TW-008. |
-| Status | DEV and TEST done; draft PR for review. Merges only on the owner's GO naming the head. |
+| Status | Squash-merged to `main` as [PR #15](https://github.com/GrokForum/tenderwatch-sa/pull/15) at `023f949cf015564a66d8a6264a548570269aa6df`. |
 
 ## 1. Goal
 

@@ -67,7 +67,7 @@ Tests pin all four: with `publish_enabled` false and `--publish` given, no git c
 
 * Every run appends one line to `results.csv` (date in SAST, start and finish, trigger, branch, repository head, each step, the live-check result and failed checks, `content_sha256`, PASS or FAIL) and writes `YYYY-MM-DD.json` with the full detail (counts, scan totals, every live check). Counts and check results only; no names.
 * Written twice: `data/local/nightly/` (git-ignored, on the box) and the orphan branch `ops/nightly-log` of this repository (a git worktree at `data/local/nightly-log/`), one commit per night, so the history cannot be rewritten silently.
-* The log branch is pushed to the private origin only when `push_log` is true (owner GO; recommended, so the log survives loss of the box).
+* The log branch is pushed only when `push_log` is true. The push destination waits for a later reviewed decision. Recommended, so the log survives loss of the box.
 
 ## 7. Routine for the owner to create after GO
 
@@ -120,14 +120,17 @@ Git: drop the branch, or after a squash merge `git revert <merge commit>` throug
 
 * Merge: the standing GO (both reviewers give a plain PASS on the same head); it deploys nothing.
 * Creating the routine: the owner (§7).
-* Pushing the `ops/nightly-log` branch (`push_log: true`): owner GO.
+* `push_log` true, 04:10 SAST (recorded in §13). The push destination is pending a later reviewed decision. Not implemented in this records-only change.
 * Turning publishing on (`publish_enabled: true` plus `--publish` in the routine): owner GO on the exact head of that change. Every nightly publish after that pushes to the public site repository under that GO; whether that GO is a standing one for nightly data publishes (like PublicFunds' data-refresh exemption) is an owner question (Q1).
+* `publish_enabled` stays `false` until a separate change that explicitly turns publishing on, with its own GO on that head. A Q-011-1 site-change GO does not lift it. Q1 itself (standing GO vs GO per head once publishing is on) stays open.
 
 ## 13. Open questions
 
-1. When publishing is turned on, is the owner's GO a standing GO for nightly publishes of the same build code (only data and build output change), or a GO per head?
-2. Push the log branch to the private origin (recommended), or keep it on the box only?
-3. 04:10 SAST, or another time?
+**Decided 2026-11-26 by owner (relayed by the orchestrator).** Recorded only: this change does not create the nightly routine, edit `config/nightly.json`, or enable a publish. The answers were given at 08:06 SAST.
+
+1. When publishing is turned on, is the owner's GO a standing GO for nightly publishes of the same build code (only data and build output change), or a GO per head? **Still open.** Related decision: `publish_enabled` stays `false` until a separate change that explicitly turns publishing on, with its own GO on that head. A Q-011-1 site-change GO does not lift it.
+2. Push the log branch to the private origin (recommended), or keep it on the box only? **Decided: `push_log` true, 04:10 SAST.** The push destination is pending a later reviewed decision.
+3. 04:10 SAST, or another time? **Decided: 04:10 SAST.**
 
 ---
 *POPIA check: PASS. No supplier or personal names; the log holds counts and check results only; test names invented.*

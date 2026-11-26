@@ -51,16 +51,19 @@ Repository users cannot delete `refs/pull/*`; only GitHub Support can remove the
 
 ## 5. Recommendation
 
-1. Do not change this repository's visibility. It stays private (owner's decision on deleting it later, as in the owner's repo plan).
+1. Do not change this repository's visibility. ~~It stays private (owner's decision on deleting it later, as in the owner's repo plan).~~ **Overtaken** (the owner made this repository public himself).
 2. Open-source through the agreed **fresh repository** with **one clean root commit** under `TenderWatch publisher <noreply@tenderwatch.grokforum.site>`, built from a clean export of `main` after the open changes merge, with:
    * `data/samples/` replaced by invented fixtures, and the tests that use real names (T1) moved to invented names;
    * `scripts/*.out.json` removed and box paths taken out of `config/chg-tw-001-dev.json`, `SOURCES.md`, the run report and RFC-001 (input paths move to a git-ignored local config);
    * role words in every RFC header (T6); no `data/local/`, no holds file, no names file, no old history, no PR records;
    * the full test suite, the public-file scans and the review kit (names file of all DEV supplier names, `--scan-tree`) clean on the seed tree, reviewed by both reviewers on the exact head, then the owner's GO to push.
-3. After the fresh repository exists, squash merges there must keep the neutral identity (GitHub web merges carry the merger's address; merge from the box under the publisher identity, or check each merge).
+   **Dropped.**
+3. After the fresh repository exists, squash merges there must keep the neutral identity (GitHub web merges carry the merger's address; merge from the box under the publisher identity, or check each merge). **Dropped.**
+
+**Decided 2026-11-26 by owner (relayed by the orchestrator).** Recommendation 1 is overtaken, because the owner made this repository public himself. The fresh public seed (recommendations 2 and 3) is dropped. This record does not change visibility, rewrite history, or seed another repository. Counts only. The answers were given at 08:06 SAST.
 
 ## 6. Rollback
 
 Records only: revert the merge of this change.
 
-Result: SUCCEEDED (finding recorded; visibility unchanged).
+Result: SUCCEEDED (finding recorded; visibility unchanged at the time of this RFC). The fresh public seed was later dropped (owner decision of 2026-11-26, §5).

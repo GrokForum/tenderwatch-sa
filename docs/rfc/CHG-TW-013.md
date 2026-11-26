@@ -51,7 +51,7 @@ Repository users cannot delete `refs/pull/*`; only GitHub Support can remove the
 
 ## 5. Recommendation
 
-1. Do not change this repository's visibility. It stays private (owner's decision on deleting it later, as in the owner's repo plan). **Overtaken** (the owner made this repository public himself).
+1. Do not change this repository's visibility. ~~It stays private (owner's decision on deleting it later, as in the owner's repo plan).~~ **Overtaken** (the owner made this repository public himself).
 2. Open-source through the agreed **fresh repository** with **one clean root commit** under `TenderWatch publisher <noreply@tenderwatch.grokforum.site>`, built from a clean export of `main` after the open changes merge, with:
    * `data/samples/` replaced by invented fixtures, and the tests that use real names (T1) moved to invented names;
    * `scripts/*.out.json` removed and box paths taken out of `config/chg-tw-001-dev.json`, `SOURCES.md`, the run report and RFC-001 (input paths move to a git-ignored local config);

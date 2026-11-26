@@ -7,5 +7,5 @@
   "push_log": false,
   "log_branch": "ops/nightly-log",
   "pages_wait_seconds": 600,
-  "note": "publish_enabled and push_log stay false until the owner's GO on the exact head of a reviewed change that sets them; the routine also omits --publish until then"
+  "note": "publish_enabled and push_log stay false until the owner's GO on the exact head of a reviewed change that sets them; the routine also omits --publish until then; the push_log destination is pending a later reviewed decision"
 }

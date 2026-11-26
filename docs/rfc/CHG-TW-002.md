@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Change | CHG-TW-002 |
-| Environment | **DEV only** (local box, private repo). No TEST, PROD, Pages or publish under this record. |
+| Environment | **DEV only** (local box, private repo; historical: the repo has since been made public). No TEST, PROD, Pages or publish under this record. |
 | Branch | `dev/CHG-TW-002-supplier-type-v2`: one commit on `origin/main` at `f63f5d2ef02621f9a991c4c353788f7377ab2aa7` |
 | Pre-change commit (rollback) | `f63f5d2ef02621f9a991c4c353788f7377ab2aa7` (`main` after PR #2). Earlier snapshot tag `snapshot-2026-11-17-pre-tw-pr2` → `fb5a4bcc3ca25724a8c5ebdf0cf1fe0caf6ad17c` |
 | Author | the author (TenderWatch) |

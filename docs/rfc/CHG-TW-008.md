@@ -5,8 +5,8 @@
 | Change | CHG-TW-008 |
 | Type | Build change (site build input, checks, tests) in this repository, plus the regenerated static files on the public site repository. |
 | Environment | DEV: local build into `data/local/site-build/` (git-ignored). TEST: tests and the public-file scans. PROD: GitHub Pages from `main` of `GrokForum/tenderwatch-site`. |
-| Branches | Private repo: `dev/CHG-TW-008-tracked-holds` from `origin/main` at `df7c55d2` (PR #10), then brought forward by a merge of `main` at `5c7c09c2` (PR #11); no rebase, no force push. Public site repo: `dev/CHG-TW-008-masked-register` from `origin/main` at `33b794117075caa383a58a136b4d2cae99c1e92d` (after the owner-approved history rewrite). |
-| Rollback reference | Revert the merge (see §5). Pre-change states for reference: private repo `5c7c09c2` (`main` after PR #11), public site repo `33b794117075caa383a58a136b4d2cae99c1e92d`. |
+| Branches | Private repo (historical: the repo has since been made public): `dev/CHG-TW-008-tracked-holds` from `origin/main` at `df7c55d2` (PR #10), then brought forward by a merge of `main` at `5c7c09c2` (PR #11); no rebase, no force push. Public site repo: `dev/CHG-TW-008-masked-register` from `origin/main` at `33b794117075caa383a58a136b4d2cae99c1e92d` (after the owner-approved history rewrite). |
+| Rollback reference | Revert the merge (see §5). Pre-change states for reference: private repo (historical: the repo has since been made public) `5c7c09c2` (`main` after PR #11), public site repo `33b794117075caa383a58a136b4d2cae99c1e92d`. |
 | Author | the author (TenderWatch) |
 | Reviewers | the project lead and the critic |
 | Basis | Owner decision of 19 Nov 2026, relayed by the project lead: the public site can publish only after the three Confirmed firms whose names are personal names are masked the same way as the other masked rows. Owner decision of 19 Nov 2026, 13:31 SAST, on the critic's review point: the holds file is fixed before this change merges. |
@@ -52,4 +52,4 @@ The first revision's commit (`902dac4f`) is in this branch's history. The pull r
 
 ## 6. Rollback
 
-Revert the merge of this change in the private repository (`git revert` of its merge commit on `main`; no reset, no force push). On the site repository, reverting the published commit `14270cf5` returns the "coming soon" placeholder of `33b79411`, which never carried the three names, so it would not show them; like any site change it needs the owner's GO.
+Revert the merge of this change in this repository (`GrokForum/tenderwatch-sa`; historical: the repo has since been made public) (`git revert` of its merge commit on `main`; no reset, no force push). On the site repository, reverting the published commit `14270cf5` returns the "coming soon" placeholder of `33b79411`, which never carried the three names, so it would not show them; like any site change it needs the owner's GO.

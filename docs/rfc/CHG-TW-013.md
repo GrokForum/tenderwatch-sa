@@ -59,8 +59,10 @@ Repository users cannot delete `refs/pull/*`; only GitHub Support can remove the
    * the full test suite, the public-file scans and the review kit (names file of all DEV supplier names, `--scan-tree`) clean on the seed tree, reviewed by both reviewers on the exact head, then the owner's GO to push.
 3. After the fresh repository exists, squash merges there must keep the neutral identity (GitHub web merges carry the merger's address; merge from the box under the publisher identity, or check each merge).
 
+**Decided 2026-11-26 by owner (relayed by the orchestrator).** The fresh public seed (recommendations 2 and 3) is dropped, because the owner made this repository public himself. This record does not change visibility, rewrite history, or seed another repository. Counts only. The answers were given at 08:06 SAST.
+
 ## 6. Rollback
 
 Records only: revert the merge of this change.
 
-Result: SUCCEEDED (finding recorded; visibility unchanged).
+Result: SUCCEEDED (finding recorded; visibility unchanged at the time of this RFC). The fresh public seed was later dropped (owner decision of 2026-11-26, §5).

@@ -86,9 +86,22 @@ Revert the merge of this change on `main` (`git revert -m 1 <merge>`). The publi
 
 ## 9. Open questions for the owner
 
+**Decided 2026-11-26 by owner (relayed by the orchestrator).** Recorded only: this change does not publish, pin a certificate, or request permission. The answers were given at 08:06 SAST.
+
 * Q-011-1: Publish stage 1 (429 rows, 3 buyers) on the next site change? It adds 138 rows, none named (eTenders prints these buyers' names without suffixes). Needs the owner's GO naming a head and a site change of its own.
+
+  **Decided: yes.** Publish stage 1 (429 rows) as its own site change, with an owner GO on that head. This is not a GO to publish, and it does not name a head.
+
 * Q-011-2: A tender title that contains a loaded word (for example the name of an offence in a tender for a related service): show as published by the source, or blank it?
+
+  **Decided:** show titles exactly as published, with the source link.
+
 * Q-011-3: eThekwini, Ekurhuleni and Tshwane fail certificate verification from this box. Wait for the sites, or allow a pinned intermediate certificate per host (never switching verification off)?
+
+  **Decided:** wait and keep logging; pin per host only if still failing after 2 weeks.
+
 * Q-011-4: Mangaung's published terms (fetched 20 Nov 2026, 20:51 SAST) do not allow reuse of the award lists on a public register. Leave them unused, or request the municipality's express written permission if a second source for the 58 eTenders rows is still wanted?
 
-Result: SUCCEEDED for stage 1 in DEV and TEST (awaiting review); stage "all" NOT CLEAN, kept off. Mangaung municipal lists: terms forbid reuse; no collector (20 Nov 2026, 20:51 SAST).
+  **Decided:** leave Mangaung's own lists unused.
+
+Result: SUCCEEDED for stage 1 in DEV and TEST (merged); stage "all" NOT CLEAN, kept off. Mangaung municipal lists: terms forbid reuse; no collector (20 Nov 2026, 20:51 SAST); owner decision of 2026-11-26 leaves them unused. Questions Q-011-1 to Q-011-4 decided 2026-11-26 (records only).

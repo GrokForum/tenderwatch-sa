@@ -23,7 +23,7 @@ A registered firm whose name is a person's name ("<given name> <surname> Transpo
 * **`personal_stem`**: a head of two to four alphabetic words (name particles such as "van", "der", "du" not counted) → the row is held (`popia_hold`, reason `auto:personal_stem`). Initials written together ("JQ") count as a word.
 * **`single_word_stem`**: a stem of a single word (a surname alone or a coined brand cannot be told apart) → not held; listed for a person to review.
 * Only `confirmed_juristic` rows are looked at; every other row is already masked, pending or withheld. Both the source name and the linked legal name are checked; either one matching holds the row.
-* Over-holding is the safe side: a firm named after its founders is masked too, even a well-known one. The owner can decide later whether a reviewed "not a person" list should unmask such firms (open question, §7).
+* Over-holding is the safe side: a firm named after its founders is masked too, even a well-known one. A reviewed "not a person" list may unmask such firms (decided, §7); the default stays masked.
 
 ## 3. What changes (exact files)
 
@@ -49,7 +49,14 @@ Revert the merge of this change on `main` (`git revert -m 1 <merge>`). The publi
 
 ## 7. Open questions for the owner
 
+**Decided 2026-11-26 by owner (relayed by the orchestrator).** Recorded only: this change does not add or load a list. The answers were given at 08:06 SAST.
+
 * Q-010-1: Should a person-reviewed, git-ignored "not a person" list (name keys) be able to unmask a firm the detector holds (for example a well-known firm named after its founders)? Default until decided: no; the row stays masked.
+
+  **Decided: yes.** A private, person-checked, git-ignored "not a person" list, with a reason per entry, may unmask a firm the detector holds. The default stays masked.
+
 * Q-010-2: The 7 single-word names listed for review stay shown unless the owner adds holds for any of them (the CHG-TW-008 holds file).
 
-Result: SUCCEEDED in DEV and TEST (awaiting review).
+  **Decided:** keep the 7 single-word trading names shown.
+
+Result: SUCCEEDED in DEV and TEST (merged). Questions Q-010-1 and Q-010-2 decided 2026-11-26 (records only).

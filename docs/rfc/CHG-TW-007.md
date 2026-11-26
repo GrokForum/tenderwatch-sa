@@ -120,14 +120,17 @@ Git: drop the branch, or after a squash merge `git revert <merge commit>` throug
 
 * Merge: the standing GO (both reviewers give a plain PASS on the same head); it deploys nothing.
 * Creating the routine: the owner (§7).
-* Pushing the `ops/nightly-log` branch (`push_log: true`): owner GO.
+* Pushing the `ops/nightly-log` branch (`push_log: true`): owner GO recorded 2026-11-26 (§13). Not implemented in this records-only change.
 * Turning publishing on (`publish_enabled: true` plus `--publish` in the routine): owner GO on the exact head of that change. Every nightly publish after that pushes to the public site repository under that GO; whether that GO is a standing one for nightly data publishes (like PublicFunds' data-refresh exemption) is an owner question (Q1).
+* `publish_enabled` stays `false` until a later site-change GO naming a head (owner decision of 2026-11-26, §13). Q1 itself (standing GO vs GO per head once publishing is on) stays open.
 
 ## 13. Open questions
 
-1. When publishing is turned on, is the owner's GO a standing GO for nightly publishes of the same build code (only data and build output change), or a GO per head?
-2. Push the log branch to the private origin (recommended), or keep it on the box only?
-3. 04:10 SAST, or another time?
+**Decided 2026-11-26 by owner (relayed by the orchestrator).** Recorded only: this change does not create the nightly routine, edit `config/nightly.json`, or enable a publish. The answers were given at 08:06 SAST.
+
+1. When publishing is turned on, is the owner's GO a standing GO for nightly publishes of the same build code (only data and build output change), or a GO per head? **Still open.** Related decision: `publish_enabled` stays `false` until a later site-change GO naming a head.
+2. Push the log branch to the private origin (recommended), or keep it on the box only? **Decided: `push_log` true, to the private origin.** This repository's origin is now public (the owner made it public himself; the fresh public seed is dropped, see CHG-TW-013). The log holds counts and check results only. Setting the flag is a later, reviewed change.
+3. 04:10 SAST, or another time? **Decided: 04:10 SAST.**
 
 ---
 *POPIA check: PASS. No supplier or personal names; the log holds counts and check results only; test names invented.*

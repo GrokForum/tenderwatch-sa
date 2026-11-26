@@ -53,7 +53,9 @@ Revert the merge of this change on `main` (`git revert -m 1 <merge>`). The publi
 
 * Q-010-1: Should a person-reviewed, git-ignored "not a person" list (name keys) be able to unmask a firm the detector holds (for example a well-known firm named after its founders)? Default until decided: no; the row stays masked.
 
-  **Decided: yes.** A private, person-checked, git-ignored "not a person" list, with a reason per entry, may unmask a firm the detector holds. The default stays masked.
+  **Decided: yes.** A private, person-checked, git-ignored "not a person" list; the default stays masked.
+
+  Implementer note (not part of the owner's decision): a reason per entry.
 
 * Q-010-2: The 7 single-word names listed for review stay shown unless the owner adds holds for any of them (the CHG-TW-008 holds file).
 

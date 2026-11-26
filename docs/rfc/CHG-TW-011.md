@@ -90,11 +90,13 @@ Revert the merge of this change on `main` (`git revert -m 1 <merge>`). The publi
 
 * Q-011-1: Publish stage 1 (429 rows, 3 buyers) on the next site change? It adds 138 rows, none named (eTenders prints these buyers' names without suffixes). Needs the owner's GO naming a head and a site change of its own.
 
-  **Decided: yes.** Publish stage 1 (429 rows) as its own site change, with an owner GO on that head. This is not a GO to publish, and it does not name a head.
+  **Decided: yes, as its own later site change, needing a GO on that later head; not a publish GO.**
 
 * Q-011-2: A tender title that contains a loaded word (for example the name of an offence in a tender for a related service): show as published by the source, or blank it?
 
-  **Decided:** show titles exactly as published, with the source link.
+  **Decided:** show titles exactly as published.
+
+  Implementer note (not part of the owner's decision): with the source link.
 
 * Q-011-3: eThekwini, Ekurhuleni and Tshwane fail certificate verification from this box. Wait for the sites, or allow a pinned intermediate certificate per host (never switching verification off)?
 

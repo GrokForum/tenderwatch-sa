@@ -9,7 +9,7 @@
 | Rollback reference | `e4301ba9b4a1cf254faa21fb5dc40f7187b5fc80`. Revert the merge; no reset, no force push. |
 | Author | the author bot |
 | Reviewers | Reviewer A and the critic |
-| Basis | Owner GO of 27 Nov 2026 (relayed by the project lead): publish the registration-number explainer that the critic plain-PASSed (sha256 `6cd63235cf7bafb199510e341425a38fb56cfdb503da018e6eea8f21b12ace2c`). |
+| Basis | Owner GO of 27 Nov 2026 (t752u, relayed by the project lead): "GO on CIPC registration number explainer." This change is site-builder only; it does not push or publish `GrokForum/tenderwatch-site`. Publishing the live site needs a separate owner GO naming a later head. The critic plain-PASSed the explainer text (sha256 `6cd63235cf7bafb199510e341425a38fb56cfdb503da018e6eea8f21b12ace2c`). |
 | Status | Awaiting review. |
 
 ## 1. Goal
@@ -32,9 +32,9 @@ Add the approved explainer as a DRAFT site page (FAQ and methodology note), link
 
 ## 4. Success
 
-* The full pytest suite passes in the work tree: 401 passed. Counts from a clean export are recorded in the PR body if they differ (DEV-data and git-checkout tests skip by design).
+* The full pytest suite passes in the work tree: 401 passed. In a clean `git archive` export: 397 passed, 4 skipped (DEV-data and git-checkout tests skip by design).
 * The built page carries the site's DRAFT banner and noindex meta, names only `privacy@grokforum.site`, states that no site has a registration-number field today, and words the practice as intended policy.
-* Mutation of the new wording test: removing the intended-policy sentence or the shared survey string makes the test fail.
+* Mutation of the new wording test: removing the intended-policy sentence, or changing the survey count from 9,551 to 9,550, makes the test fail.
 
 ## 5. Rollback
 
@@ -47,7 +47,7 @@ No private person's personal information, no named firms, and no identity number
 ## 7. Seen, not touched
 
 * `STATUS.md` is left for a later docs PR.
-* An unpublished GoatCounter pixel RFC was previously drafted under the id CHG-TW-015, which `main` already used for the SA-ID scan (PR #23). This change takes the next free number, 016. That GoatCounter draft is not in this repository and is not edited here.
+* An unpublished GoatCounter pixel RFC is now CHG-TW-017 (local head `81b7f69e`, unpublished). `main` already used CHG-TW-015 for the SA-ID scan (PR #23). This change is 016. That GoatCounter draft is not in this repository and is not edited here.
 * The explainer's image card and social-media thread are out of scope for this change.
 * Implementing the intended registration-number field, or turning publishing on, needs a later change and a GO on that head.
 

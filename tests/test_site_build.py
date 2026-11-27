@@ -197,6 +197,11 @@ def test_registration_numbers_page_is_intended_policy(tmp_path: Path):
     assert 'href="/method/registration-numbers/"' in method
     assert page.count(site.REG_NUMBER_SURVEY_HTML) == 2
     assert method.count(site.REG_NUMBER_SURVEY_HTML) == 1
+    # Pin the survey figures and dates so a silent count change fails (9,551 -> 9,550).
+    for text in (page, method, site.REG_NUMBER_SURVEY_HTML):
+        assert "0 of 9,551" in text
+        assert "20 Sep 2026" in text
+        assert "17 Nov 2026" in text
     assert "Intended policy, not yet implemented on any of these sites" in page
     assert "has no registration-number field today" in page
     assert "Not published in source" in page

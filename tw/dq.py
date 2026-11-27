@@ -62,7 +62,7 @@ GROUPS = ("unmasked", "held", "personal", "pending", "withheld")
 MASK_RE = re.compile(r"^(?:[A-Z0-9]\*{5}[a-z0-9]|\*{7})$")
 NOINDEX = '<meta name="robots" content="noindex, nofollow">'
 DRAFT = "<strong>DRAFT.</strong>"
-PAGES = ("index.html", "method/index.html", "privacy/index.html", "404.html")
+PAGES = ("index.html", "method/index.html", "method/registration-numbers/index.html", "privacy/index.html", "404.html")
 ROBOTS = "User-agent: *\nDisallow: /\n"
 
 

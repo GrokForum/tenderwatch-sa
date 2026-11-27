@@ -51,6 +51,25 @@ GROUPS = ("unmasked", "held", "personal", "pending", "withheld")
 
 ETENDERS_DATASET_URL = "https://data.open-contracting.org/en/publication/143"
 ETENDERS_POLICY_URL = "https://data.etenders.gov.za/Home/LearnMore"
+CIPC_TERMS_URL = "https://www.cipc.co.za/?page_id=2241"
+CIPC_NOTICE_36_URL = (
+    "https://www.cipc.co.za/wp-content/uploads/2022/06/"
+    "Notice_36_of_2021_Discontinuation_of_Enterprise_search_Eservices_v1.pdf"
+)
+COMPANIES_ACT_S32_URL = "https://www.acts.co.za/companies_act_2008/32_use_of_company_name_and_registration_number"
+COMPANIES_ACT_S187_URL = "https://www.acts.co.za/companies_act_2008/187_functions_of_commission"
+POPIA_ACT_URL = "https://www.gov.za/sites/default/files/gcis_document/201409/3706726-11act4of2013popi.pdf"
+REG_NUMBERS_PATH = "/method/registration-numbers/"
+# The 9,551/0 survey wording is identical on the explainer and the method-page note.
+REG_NUMBER_SURVEY_HTML = (
+    "In the Open Contracting Partnership (OCP) eTenders OCDS full mirror "
+    "(last retrieved 20 Sep 2026; surveyed 17 Nov 2026), 0 of 9,551 award–supplier "
+    "rows carried a supplier CIPC registration number. An award–supplier row is one "
+    "supplier on one award. &quot;0&quot; means no <code>YYYY/NNNNNN/NN</code> match "
+    "in the supplier name or id; buyer registration numbers do appear in tender "
+    f'descriptions. (Count run on a PublicFunds copy of that file, fetched 19 Oct 2026; '
+    f'<a href="{ETENDERS_DATASET_URL}">OCP publication</a>.)'
+)
 CITY_INDEX_URL = (
     "https://www.capetown.gov.za/work-and-business/doing-business-with-the-city/"
     "tenders-rfqs-and-supply/tenders-awarded/"
@@ -85,6 +104,7 @@ CSP = (
 MANAGED_FILES = (
     "index.html",
     "method/index.html",
+    "method/registration-numbers/index.html",
     "privacy/index.html",
     "404.html",
     "robots.txt",
@@ -442,6 +462,7 @@ BANNER = (
 )
 
 NAV = ('<nav aria-label="Site"><a href="/">Register</a><a href="/method/">Sources and method</a>'
+       f'<a href="{REG_NUMBERS_PATH}">Registration numbers</a>'
        '<a href="/privacy/">Privacy and contact</a></nav>')
 
 
@@ -459,7 +480,9 @@ def page(title: str, body: str) -> str:
         f"{BANNER}\n<header><p><strong>{SITE_NAME}</strong> (DRAFT)</p>{NAV}</header>\n"
         f"<main id=\"main\">\n{body}\n</main>\n"
         f"<footer><p>{SITE_NAME} · DRAFT · Responsible party: {RESPONSIBLE_PARTY} · "
-        "<a href=\"/method/\">Sources and method</a> · <a href=\"/privacy/\">Privacy and contact</a></p></footer>\n"
+        f'<a href="/method/">Sources and method</a> · '
+        f'<a href="{REG_NUMBERS_PATH}">Registration numbers</a> · '
+        '<a href="/privacy/">Privacy and contact</a></p></footer>\n'
         "</body>\n</html>\n"
     )
 
@@ -583,6 +606,8 @@ def render_method(model: Mapping, *, etenders_retrieved: str) -> str:
 <li><strong>I1, repeat awards to one supplier</strong>: the number of awards and the total usable value to the same supplier from one buyer in one municipal financial year (1 July to 30 June). Shown for 2 or more awards; highlighted at 3 or more. Shown only on rows where the supplier is named.</li>
 <li>Indicators I2 to I7 are defined but not yet shown: each needs a source this draft does not hold.</li>
 </ul>
+<h2>Company registration numbers</h2>
+<p class="note"><em>Intended policy, not yet implemented on any of these sites: company registration numbers would be shown only where they appear in a public document we cite (for example an eTenders award notice or a company&#39;s own published page), with a link to that document. We do not use CIPC&#39;s website or searches, because CIPC&#39;s website terms restrict reproduction and publication (<a href="{CIPC_TERMS_URL}">CIPC Terms and conditions</a>). Where a source gives no number, the field would read &quot;Not published in source&quot;. {REG_NUMBER_SURVEY_HTML} This is a data gap, not a finding about any company. Not legal advice.</em> See <a href="{REG_NUMBERS_PATH}">Why we don&#39;t show company registration numbers</a>.</p>
 {_national_method(model)}""".strip()
     return page("Sources and method", body)
 
@@ -633,6 +658,35 @@ def render_privacy() -> str:
     return page("Privacy and contact", body)
 
 
+def render_registration_numbers() -> str:
+    """CHG-TW-016: FAQ and methodology note. Intended policy only; the register has no registration-number field."""
+    m = f'<a href="mailto:{ROLE_EMAIL}">{ROLE_EMAIL}</a>'
+    s32 = f'<a href="{COMPANIES_ACT_S32_URL}">s32(4)</a>'
+    s187c = f'<a href="{COMPANIES_ACT_S187_URL}">s187(4)(c)</a>'
+    s187_5 = f'<a href="{COMPANIES_ACT_S187_URL}">s187(5)</a>'
+    body = f"""
+<h1>Why we don&#39;t show company registration numbers (DRAFT)</h1>
+<p>Every South African company has a registration number, such as 2020/123456/07. The Companies Act requires companies to print it on letters, invoices and official publications ({s32}), and requires the companies register to be made &quot;efficiently and effectively available to the public&quot; ({s187c}). Anyone may inspect filed documents &quot;on payment of the prescribed fee&quot; ({s187_5}). This site (and any site that inherits this dataset, for example PublicFunds and watch.grokforum.site) has no registration-number field today. The intended policy, once implemented on each site, is as follows. Not legal advice.</p>
+<ol>
+<li><strong>CIPC&#39;s website terms restrict reproduction and publication.</strong> CIPC&#39;s website terms say a visitor may not &quot;reproduce, duplicate, publish, modify, copy, download, upload in any manner, post, broadcast or transmit … display, or distribute or in any way exploit any of the contents&quot; (§4(3)). They also say: &quot;Any information, content or material on CIPC website and/or channels can be used, transmitted or distributed for private or personal purposes&quot; (§4(4)). Business or commercial use must be &quot;part of the service provision to client(s)&quot; and &quot;limited to that specified client(s)&quot; (§4(5)). (<a href="{CIPC_TERMS_URL}">CIPC Terms and conditions</a>.) Searching needs a login and is limited to 20 a day (<a href="{CIPC_NOTICE_36_URL}">CIPC Notice 36 of 2021</a>). Our practice is not to look numbers up on CIPC&#39;s website or copy them from it.</li>
+<li><strong>The tender data usually leaves the number out.</strong> {REG_NUMBER_SURVEY_HTML} National Treasury&#39;s licence allows republication with a link to the source (<a href="{ETENDERS_POLICY_URL}">Transparency Portal publication policy</a>).</li>
+<li><strong>The Act requires companies to display the number; we have no compliance survey.</strong> We have not surveyed how many companies meet {s32}. Some public award notices include a supplier&#39;s registration number; that is not systematic in the award data we checked.</li>
+</ol>
+<h2>Intended policy</h2>
+<p>Intended policy (not yet implemented on any of these sites): when a registration number appears in a public document we cite, such as an award notice or a company&#39;s own published page, we intend to show it with a link to that document. Otherwise the field would read &quot;Not published in source&quot;.</p>
+<h2>FAQ</h2>
+<p><strong>Is the number secret?</strong> No. The register must be available to the public ({s187c}), and anyone may inspect filed documents on payment of the prescribed fee ({s187_5}).</p>
+<p><strong>Are you saying companies are breaking the law?</strong> No. We have no compliance survey, and we accuse no one.</p>
+<p><strong>Could you just use CIPC&#39;s data?</strong> Our practice is not to use CIPC&#39;s website or search, because its terms restrict reproduction and publication. Written permission from CIPC, or a clear reuse licence, would change that practice. This is not a legal ruling, and this note is not legal advice.</p>
+<p><strong>Does POPIA apply?</strong> POPIA&#39;s definition can cover an &quot;existing juristic person&quot; and &quot;any identifying number&quot; &quot;where it is applicable&quot; (<a href="{POPIA_ACT_URL}">POPIA s1</a>). Sole traders and one-person companies can blur business and personal information, so we mask where needed.</p>
+<p><strong>How can this be fixed?</strong> Reusable CIPC register data; clarity on how s32(4) is enforced; and registration numbers in Treasury award data. These are asks, not a claim about current enforcement.</p>
+<p><strong>Spot an error, or want a number shown or removed?</strong> Email {m}.</p>
+<h2>Methodology note</h2>
+<p class="note"><em>Intended policy, not yet implemented on any of these sites: company registration numbers would be shown only where they appear in a public document we cite (for example an eTenders award notice or a company&#39;s own published page), with a link to that document. We do not use CIPC&#39;s website or searches, because CIPC&#39;s website terms restrict reproduction and publication (<a href="{CIPC_TERMS_URL}">CIPC Terms and conditions</a>). Where a source gives no number, the field would read &quot;Not published in source&quot;. {REG_NUMBER_SURVEY_HTML} This is a data gap, not a finding about any company. Not legal advice.</em></p>
+""".strip()
+    return page("Why we don't show company registration numbers", body)
+
+
 def render_404() -> str:
     body = """
 <h1>Page not found</h1>
@@ -678,6 +732,7 @@ def build_site(rows: Sequence[Mapping], out_dir: Path, *, lookups: Mapping[str, 
     files = {
         "index.html": render_index(model, etenders_retrieved=etenders_retrieved),
         "method/index.html": render_method(model, etenders_retrieved=etenders_retrieved),
+        "method/registration-numbers/index.html": render_registration_numbers(),
         "privacy/index.html": render_privacy(),
         "404.html": render_404(),
         "robots.txt": ROBOTS,

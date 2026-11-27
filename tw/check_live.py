@@ -5,7 +5,7 @@ cookies or credentials. Standard library only. Pattern: PublicFunds scripts/chec
 
 Checks:
   tls_home        GET / over HTTPS with certificate verification returns 200
-  page:<path>     /, /method/ and /privacy/ return 200 with the DRAFT banner, the noindex meta and a privacy link
+  page:<path>     /, /method/, /method/registration-numbers/ and /privacy/ return 200 with the DRAFT banner, the noindex meta and a privacy link
   not_found       a missing path returns 404 with the DRAFT banner, the noindex meta and a privacy link
   robots          /robots.txt is exactly "User-agent: *" then "Disallow: /"
   privacy_page    the privacy page names GrokForum, the role address and the Information Regulator
@@ -30,7 +30,7 @@ from tw.fetch_log import classify_error
 DEFAULT_SITE = "https://tenderwatch.grokforum.site"
 USER_AGENT = "tenderwatch-check/1"
 PASS, FAIL = "PASS", "FAIL"
-PAGES = ("/", "/method/", "/privacy/")
+PAGES = ("/", "/method/", "/method/registration-numbers/", "/privacy/")
 MISSING_PATH = "/tw-live-check-missing-page/"
 NOINDEX_RE = re.compile(r'<meta name="robots" content="noindex,\s*nofollow">')
 DRAFT_MARK = "<strong>DRAFT.</strong>"

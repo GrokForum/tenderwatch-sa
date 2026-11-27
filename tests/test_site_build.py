@@ -170,7 +170,7 @@ def test_every_page_has_draft_noindex_privacy_csp(tmp_path: Path):
     site.build_site(fixture_rows(), tmp_path)
     pages = sorted(tmp_path.rglob("*.html"))
     assert {p.relative_to(tmp_path).as_posix() for p in pages} == {
-        "index.html", "method/index.html", "privacy/index.html", "404.html"}
+        "index.html", "method/index.html", "method/registration-numbers/index.html", "privacy/index.html", "404.html"}
     for p in pages:
         t = p.read_text(encoding="utf-8")
         assert '<meta name="robots" content="noindex, nofollow">' in t, p
@@ -184,6 +184,35 @@ def test_every_page_has_draft_noindex_privacy_csp(tmp_path: Path):
     assert "mailto:privacy@grokforum.site" in priv and "GrokForum" in priv
     assert "its buyer and the award value shown on the row" in priv  # masked rows have no tender reference
     assert "https://inforegulator.org.za/" in priv
+
+
+def test_registration_numbers_page_is_intended_policy(tmp_path: Path):
+    """CHG-TW-016: explainer page plus the method-page note; no live reg-number field is claimed."""
+    site.build_site(fixture_rows(), tmp_path)
+    page = (tmp_path / "method" / "registration-numbers" / "index.html").read_text(encoding="utf-8")
+    method = (tmp_path / "method" / "index.html").read_text(encoding="utf-8")
+    assert '<meta name="robots" content="noindex, nofollow">' in page
+    assert "<strong>DRAFT.</strong>" in page
+    assert 'href="/method/registration-numbers/"' in page  # nav and footer
+    assert 'href="/method/registration-numbers/"' in method
+    assert page.count(site.REG_NUMBER_SURVEY_HTML) == 2
+    assert method.count(site.REG_NUMBER_SURVEY_HTML) == 1
+    assert "Intended policy, not yet implemented on any of these sites" in page
+    assert "has no registration-number field today" in page
+    assert "Not published in source" in page
+    assert "Not legal advice" in page
+    assert "mailto:privacy@grokforum.site" in page
+    assert "CIPC's website terms restrict reproduction and publication" in page or "CIPC&#39;s website terms restrict reproduction and publication" in page
+    assert "CIPC Notice 36 of 2021" in page
+    assert "we have no compliance survey" in page
+    assert "These are asks, not a claim about current enforcement" in page
+    assert "brief.md" not in page and "[S1]" not in page and "[S2]" not in page
+    assert "the official register limits reuse" not in page.lower()
+    assert "confirm this address before publishing" not in page
+    # The register table itself is unchanged: no registration-number column.
+    register = (tmp_path / "index.html").read_text(encoding="utf-8")
+    assert "Registration year" in register
+    assert "registration-number field" not in register
 
 
 def test_build_is_deterministic(tmp_path: Path):

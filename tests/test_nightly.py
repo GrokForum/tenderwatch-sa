@@ -55,7 +55,8 @@ def test_check_live_passes_on_a_good_site(served):
     url, _root, manifest = served
     res = cl.check_live(url, expected=manifest, fetch=_fetch(url))
     assert cl.overall(res) == cl.PASS, res
-    assert {c for c, _, _ in res} >= {"tls_home", "page:/", "page:/method/", "page:/privacy/", "not_found", "robots",
+    assert {c for c, _, _ in res} >= {"tls_home", "page:/", "page:/method/",
+                                       "page:/method/registration-numbers/", "page:/privacy/", "not_found", "robots",
                                        "privacy_page", "manifest", "files"}
 
 

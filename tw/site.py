@@ -482,7 +482,8 @@ def page(title: str, body: str) -> str:
         f"<footer><p>{SITE_NAME} · DRAFT · Responsible party: {RESPONSIBLE_PARTY} · "
         f'<a href="/method/">Sources and method</a> · '
         f'<a href="{REG_NUMBERS_PATH}">Registration numbers</a> · '
-        '<a href="/privacy/">Privacy and contact</a></p></footer>\n'
+        '<a href="/privacy/">Privacy and contact</a></p>\n'
+        '<p><a href="https://watch.grokforum.site/">Part of the Watch network — watch.grokforum.site</a></p></footer>\n'
         "</body>\n</html>\n"
     )
 

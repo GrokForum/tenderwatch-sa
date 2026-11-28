@@ -179,6 +179,9 @@ def test_every_page_has_draft_noindex_privacy_csp(tmp_path: Path):
         assert 'http-equiv="Content-Security-Policy"' in t and "script-src" not in t.split("Content-Security-Policy")[0], p
         assert '<link rel="icon" href="data:,">' in t, p
         assert "<script" not in t, p
+        assert 'href="https://watch.grokforum.site/"' in t, p
+        assert "Part of the Watch network — watch.grokforum.site" in t, p
+        assert 'href="https://watch.grokforum.site/?"' not in t, p
     assert (tmp_path / "robots.txt").read_text() == "User-agent: *\nDisallow: /\n"
     priv = (tmp_path / "privacy" / "index.html").read_text(encoding="utf-8")
     assert "mailto:privacy@grokforum.site" in priv and "GrokForum" in priv
